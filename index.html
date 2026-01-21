@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>매장 찾기</title>
+    <title>달인대보칼국수 가맹점 안내</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Malgun Gothic', sans-serif; }
         body { background: #f5f5f5; }
         
         .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
-        h1 { text-align: center; padding: 20px; color: #8B4513; }
+        h1 { text-align: center; padding: 20px; color: #222; }
         
         .map-wrap { display: flex; height: 550px; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
         #map { flex: 1; }
@@ -30,12 +30,12 @@
             border-radius: 6px; 
             font-size: 14px; 
         }
-        .search-box input:focus { outline: none; border-color: #8B4513; }
+        .search-box input:focus { outline: none; border-color: #333; }
         
         .admin-btn {
             width: 42px;
             height: 42px;
-            background: #8B4513;
+            background: #333;
             color: #fff;
             border: none;
             border-radius: 8px;
@@ -45,17 +45,17 @@
             flex-shrink: 0;
         }
         .admin-btn:hover { 
-            background: #6B3510;
+            background: #111;
             transform: rotate(90deg);
         }
         
         .store-list { flex: 1; overflow-y: auto; }
         .store-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; }
-        .store-item:hover { background: #fff8f0; }
-        .store-item.active { background: #fff0e0; border-left: 3px solid #8B4513; }
-        .store-item h4 { color: #333; margin-bottom: 5px; font-size: 14px; }
+        .store-item:hover { background: #f9f9f9; }
+        .store-item.active { background: #f0f0f0; border-left: 3px solid #333; }
+        .store-item h4 { color: #222; margin-bottom: 5px; font-size: 14px; }
         .store-item p { color: #666; font-size: 12px; margin-bottom: 3px; }
-        .store-item .tel { color: #8B4513; font-weight: bold; }
+        .store-item .tel { color: #333; font-weight: bold; }
         
         .no-result { padding: 30px; text-align: center; color: #999; }
         
@@ -63,7 +63,7 @@
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
         .modal.show { display: flex; }
         .modal-content { background: #fff; width: 90%; max-width: 500px; border-radius: 10px; overflow: hidden; }
-        .modal-header { background: #8B4513; color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .modal-header { background: #333; color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
         .modal-header h2 { font-size: 18px; }
         .modal-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
         .modal-body { padding: 20px; max-height: 60vh; overflow-y: auto; }
@@ -79,18 +79,18 @@
             margin-bottom: 15px;
             text-align: center;
         }
-        .pw-input:focus { outline: none; border-color: #8B4513; }
+        .pw-input:focus { outline: none; border-color: #333; }
         .pw-error { color: #dc3545; font-size: 14px; text-align: center; margin-bottom: 10px; display: none; }
         
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
         .form-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        .form-group input:focus { border-color: #8B4513; outline: none; }
+        .form-group input:focus { border-color: #333; outline: none; }
         
-        .btn { width: 100%; padding: 12px; background: #8B4513; color: #fff; border: none; border-radius: 5px; font-size: 15px; cursor: pointer; font-weight: bold; }
-        .btn:hover { background: #6B3510; }
-        .btn-del { background: #dc3545; padding: 6px 12px; font-size: 12px; width: auto; }
-        .btn-del:hover { background: #c82333; }
+        .btn { width: 100%; padding: 12px; background: #333; color: #fff; border: none; border-radius: 5px; font-size: 15px; cursor: pointer; font-weight: bold; }
+        .btn:hover { background: #111; }
+        .btn-del { background: #666; padding: 6px 12px; font-size: 12px; width: auto; }
+        .btn-del:hover { background: #444; }
         
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #eee; border-radius: 5px; margin-bottom: 8px; }
         .list-item:hover { background: #f9f9f9; }
@@ -100,12 +100,12 @@
         .tabs { display: flex; border-bottom: 1px solid #ddd; }
         .tabs button { flex: 1; padding: 12px; border: none; background: #f5f5f5; cursor: pointer; font-weight: bold; color: #666; }
         .tabs button:hover { background: #e8e8e8; }
-        .tabs button.active { background: #fff; border-bottom: 2px solid #8B4513; color: #8B4513; }
+        .tabs button.active { background: #fff; border-bottom: 2px solid #333; color: #333; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         
-        .alert { position: fixed; top: 20px; right: 20px; padding: 15px 25px; background: #28a745; color: #fff; border-radius: 8px; z-index: 2000; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: slideIn 0.3s; }
-        .alert.error { background: #dc3545; }
+        .alert { position: fixed; top: 20px; right: 20px; padding: 15px 25px; background: #333; color: #fff; border-radius: 8px; z-index: 2000; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: slideIn 0.3s; }
+        .alert.error { background: #666; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         
         .store-count { background: #f0f0f0; padding: 10px 15px; border-radius: 5px; margin-bottom: 15px; font-weight: bold; color: #555; }
@@ -120,13 +120,13 @@
 <body>
 
 <div class="container">
-    <h1>🍜 매장 찾기</h1>
+    <h1>달인대보칼국수 가맹점 안내</h1>
     <div class="map-wrap">
         <div id="map"></div>
         <div class="search-panel">
             <div class="search-box">
                 <input type="text" id="searchInput" placeholder="매장명 또는 지역 검색">
-                <button class="admin-btn" id="adminBtn" title="매장 관리">⚙</button>
+                <button class="admin-btn" id="adminBtn" title="매장 관리">+</button>
             </div>
             <div class="store-list" id="storeList"></div>
         </div>
@@ -137,7 +137,7 @@
 <div class="modal" id="pwModal">
     <div class="modal-content pw-modal-content">
         <div class="modal-header">
-            <h2>🔒 비밀번호 입력</h2>
+            <h2>비밀번호 입력</h2>
             <button class="modal-close" id="pwModalClose">&times;</button>
         </div>
         <div class="modal-body">
@@ -153,12 +153,12 @@
 <div class="modal" id="modal">
     <div class="modal-content">
         <div class="modal-header">
-            <h2>🏪 매장 관리</h2>
+            <h2>매장 관리</h2>
             <button class="modal-close" id="modalClose">&times;</button>
         </div>
         <div class="tabs">
-            <button class="active" data-tab="add">➕ 추가</button>
-            <button data-tab="del">🗑️ 삭제</button>
+            <button class="active" data-tab="add">추가</button>
+            <button data-tab="del">삭제</button>
         </div>
         <div class="modal-body">
             <div class="tab-content active" id="tab-add">
@@ -174,7 +174,7 @@
                     <label>전화번호</label>
                     <input type="text" id="inputTel" placeholder="예: 02-1234-5678">
                 </div>
-                <button class="btn" id="addBtn">✓ 매장 추가하기</button>
+                <button class="btn" id="addBtn">매장 추가하기</button>
             </div>
             <div class="tab-content" id="tab-del">
                 <div class="store-count" id="storeCount">총 0개 매장</div>
@@ -286,9 +286,9 @@ function createMarkers(data) {
                 infoWindow = new naver.maps.InfoWindow({
                     content: `
                         <div style="padding:15px;min-width:200px;">
-                            <h4 style="margin:0 0 8px;color:#8B4513;">${store.name}</h4>
-                            <p style="margin:0 0 5px;font-size:13px;color:#666;">📍 ${store.address}</p>
-                            <p style="margin:0;font-size:14px;color:#8B4513;font-weight:bold;">📞 ${store.tel}</p>
+                            <h4 style="margin:0 0 8px;color:#222;">${store.name}</h4>
+                            <p style="margin:0 0 5px;font-size:13px;color:#666;">${store.address}</p>
+                            <p style="margin:0;font-size:14px;color:#333;font-weight:bold;">${store.tel}</p>
                         </div>
                     `,
                     borderWidth: 1,
@@ -318,8 +318,8 @@ function renderList(data) {
         return `
             <div class="store-item" data-idx="${idx}">
                 <h4>${s.name}</h4>
-                <p>📍 ${s.address}</p>
-                <p class="tel">📞 ${s.tel}</p>
+                <p>${s.address}</p>
+                <p class="tel">${s.tel}</p>
             </div>
         `;
     }).join('');
@@ -372,7 +372,7 @@ window.delStore = (i) => {
         renderList(stores);
         renderDelList();
         createMarkers(stores);
-        showAlert('삭제 완료!');
+        showAlert('삭제 완료');
     }
 };
 
@@ -413,11 +413,9 @@ document.getElementById('searchInput').addEventListener('input', function() {
 // 관리 버튼 클릭 → 비밀번호 모달 열기
 document.getElementById('adminBtn').onclick = () => {
     if (isAuthenticated) {
-        // 이미 인증됨 → 바로 관리 모달 열기
         document.getElementById('modal').classList.add('show');
         renderDelList();
     } else {
-        // 비밀번호 입력 모달 열기
         document.getElementById('pwModal').classList.add('show');
         document.getElementById('pwInput').value = '';
         document.getElementById('pwError').style.display = 'none';
@@ -430,14 +428,12 @@ document.getElementById('pwSubmit').onclick = () => {
     const input = document.getElementById('pwInput').value;
     
     if (input === ADMIN_PASSWORD) {
-        // 비밀번호 맞음
         isAuthenticated = true;
         document.getElementById('pwModal').classList.remove('show');
         document.getElementById('modal').classList.add('show');
         renderDelList();
-        showAlert('관리자 인증 성공!');
+        showAlert('관리자 인증 성공');
     } else {
-        // 비밀번호 틀림
         document.getElementById('pwError').style.display = 'block';
         document.getElementById('pwInput').value = '';
         document.getElementById('pwInput').focus();
@@ -502,12 +498,12 @@ document.getElementById('addBtn').onclick = () => {
     const tel = document.getElementById('inputTel').value.trim();
     
     if (!name || !address || !tel) {
-        alert('모든 항목을 입력해주세요!');
+        alert('모든 항목을 입력해주세요');
         return;
     }
     
     if (stores.some(s => s.name === name)) {
-        alert('이미 존재하는 매장명입니다!');
+        alert('이미 존재하는 매장명입니다');
         return;
     }
     
@@ -522,7 +518,7 @@ document.getElementById('addBtn').onclick = () => {
     renderDelList();
     createMarkers(stores);
     
-    showAlert(`"${name}" 추가 완료!`);
+    showAlert('"' + name + '" 추가 완료');
 };
 
 ['inputName', 'inputAddr', 'inputTel'].forEach(id => {
