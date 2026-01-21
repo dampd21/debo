@@ -59,7 +59,6 @@
         
         .no-result { padding: 30px; text-align: center; color: #999; }
         
-        /* 모달 공통 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
         .modal.show { display: flex; }
         .modal-content { background: #fff; width: 90%; max-width: 500px; border-radius: 10px; overflow: hidden; }
@@ -68,7 +67,6 @@
         .modal-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
         .modal-body { padding: 20px; max-height: 60vh; overflow-y: auto; }
         
-        /* 비밀번호 모달 */
         .pw-modal-content { max-width: 350px; }
         .pw-input { 
             width: 100%; 
@@ -174,6 +172,15 @@
                     <label>전화번호</label>
                     <input type="text" id="inputTel" placeholder="예: 02-1234-5678">
                 </div>
+                <div class="form-group">
+                    <label>위도 (lat)</label>
+                    <input type="text" id="inputLat" placeholder="예: 37.5665">
+                </div>
+                <div class="form-group">
+                    <label>경도 (lng)</label>
+                    <input type="text" id="inputLng" placeholder="예: 126.9780">
+                </div>
+                <p style="font-size:12px;color:#666;margin-bottom:15px;">* 좌표는 네이버/구글 지도에서 검색 후 입력</p>
                 <button class="btn" id="addBtn">매장 추가하기</button>
             </div>
             <div class="tab-content" id="tab-del">
@@ -184,46 +191,46 @@
     </div>
 </div>
 
-<!-- 네이버 지도 API -->
-<script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=twr2gaszdv&submodules=geocoder"></script>
+<!-- 네이버 지도 API (지도만 표시, Geocoding 없이) -->
+<script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=twr2gaszdv"></script>
 
 <script>
 // 관리자 비밀번호
 const ADMIN_PASSWORD = 'debo1992';
 let isAuthenticated = false;
 
-// 매장 데이터
+// 매장 데이터 (좌표 포함)
 let stores = [
-    { name: "달인대보칼국수 본점", address: "서울특별시 강서구 마곡중앙5로 6", tel: "02-3664-9571" },
-    { name: "달인대보칼국수 양평점", address: "서울 영등포구 선유로 130", tel: "0507-1370-1961" },
-    { name: "달인대보칼국수 강남논현점", address: "서울특별시 강남구 언주로 615", tel: "070-4010-1028" },
-    { name: "달인대보칼국수 등촌역점", address: "서울 강서구 등촌로 205", tel: "010-3411-7567" },
-    { name: "달인대보칼국수 화곡역점", address: "서울 강서구 강서로56길 17", tel: "0507-1477-8874" },
-    { name: "달인대보칼국수 NC백화점 강서점", address: "서울 강서구 강서로56길 17", tel: "02-2667-9884" },
-    { name: "달인대보칼국수 고척스카이돔점", address: "서울 구로구 경인로47길 26", tel: "0507-1497-9122" },
-    { name: "달인대보칼국수 신월IC점", address: "서울 양천구 남부순환로 399", tel: "000-0000-0000" },
-    { name: "달인대보칼국수 장항점", address: "경기 고양시 일산동구 정발산로 24", tel: "0507-1374-7495" },
-    { name: "달인대보칼국수 백석점", address: "경기 고양시 일산동구 호수로 358-39", tel: "031-902-8265" },
-    { name: "달인대보칼국수 향동점", address: "경기 고양시 덕양구 향동로 217", tel: "0507-1307-3029" },
-    { name: "달인대보칼국수 평택점", address: "경기 평택시 고덕여염10길 69", tel: "0507-1373-9859" },
-    { name: "달인대보칼국수 평택죽백점", address: "경기도 평택시 이화로 214", tel: "0507-1350-1429" },
-    { name: "달인대보칼국수 송탄서정점", address: "경기도 평택시 서정로 262", tel: "0507-1400-9859" },
-    { name: "달인대보칼국수 광교점", address: "경기 수원시 영통구 대학4로 9", tel: "0507-1463-1454" },
-    { name: "달인대보칼국수 뉴코아아울렛 부천점", address: "경기 부천시 원미구 송내대로 239", tel: "0507-1421-8343" },
-    { name: "달인대보칼국수 부천시청점", address: "경기 부천시 원미구 중동 1301", tel: "0507-1328-3097" },
-    { name: "달인대보칼국수 NC백화점 고잔점", address: "경기 안산시 단원구 광덕대로 194", tel: "0507-1362-4640" },
-    { name: "달인대보칼국수 뉴코아아울렛 평촌점", address: "경기 안양시 동안구 동안로 119", tel: "0507-1351-5133" },
-    { name: "달인대보칼국수 산본점", address: "경기 군포시 번영로 504", tel: "0507-1349-2384" },
-    { name: "달인대보칼국수 마석점", address: "경기 남양주시 화도읍 비룡로 221", tel: "031-511-5707" },
-    { name: "달인대보칼국수 검단사거리역점", address: "인천광역시 서구 완정로165번길 7", tel: "0507-1446-1410" },
-    { name: "달인대보칼국수 현풍점", address: "대구 달성군 현풍읍 테크노대로 40", tel: "0507-1377-3236" },
-    { name: "달인대보칼국수 동아백화점 쇼핑점", address: "대구 중구 달구벌대로 2085", tel: "0507-1403-3803" },
-    { name: "달인대보칼국수 죽전점", address: "대구광역시 달서구 달구벌대로 1581", tel: "0507-1323-0177" },
-    { name: "달인 대보칼국수 월배점", address: "대구광역시 달서구 조암남로32길 20-8", tel: "0507-1456-0182" },
-    { name: "달인대보칼국수 영천점", address: "경북 영천시 동부로 39", tel: "054-332-3232" },
-    { name: "달인대보칼국수 사상점", address: "부산광역시 사상구 사상로250번길 11", tel: "0507-1356-8529" },
-    { name: "달인대보칼국수 창원중동점", address: "경상남도 창원시 의창구 의창대로266번길 10", tel: "0507-1321-6538" },
-    { name: "달인대보칼국수 양산석산점", address: "경상남도 양산시 동면 석산3길 30", tel: "0507-1394-3071" }
+    { name: "달인대보칼국수 본점", address: "서울특별시 강서구 마곡중앙5로 6", tel: "02-3664-9571", lat: 37.5665, lng: 126.8374 },
+    { name: "달인대보칼국수 양평점", address: "서울 영등포구 선유로 130", tel: "0507-1370-1961", lat: 37.5347, lng: 126.8963 },
+    { name: "달인대보칼국수 강남논현점", address: "서울특별시 강남구 언주로 615", tel: "070-4010-1028", lat: 37.5172, lng: 127.0286 },
+    { name: "달인대보칼국수 등촌역점", address: "서울 강서구 등촌로 205", tel: "010-3411-7567", lat: 37.5503, lng: 126.8625 },
+    { name: "달인대보칼국수 화곡역점", address: "서울 강서구 강서로56길 17", tel: "0507-1477-8874", lat: 37.5412, lng: 126.8374 },
+    { name: "달인대보칼국수 NC백화점 강서점", address: "서울 강서구 강서로56길 17", tel: "02-2667-9884", lat: 37.5412, lng: 126.8374 },
+    { name: "달인대보칼국수 고척스카이돔점", address: "서울 구로구 경인로47길 26", tel: "0507-1497-9122", lat: 37.4982, lng: 126.8670 },
+    { name: "달인대보칼국수 신월IC점", address: "서울 양천구 남부순환로 399", tel: "000-0000-0000", lat: 37.5168, lng: 126.8334 },
+    { name: "달인대보칼국수 장항점", address: "경기 고양시 일산동구 정발산로 24", tel: "0507-1374-7495", lat: 37.6590, lng: 126.7692 },
+    { name: "달인대보칼국수 백석점", address: "경기 고양시 일산동구 호수로 358-39", tel: "031-902-8265", lat: 37.6441, lng: 126.7867 },
+    { name: "달인대보칼국수 향동점", address: "경기 고양시 덕양구 향동로 217", tel: "0507-1307-3029", lat: 37.6160, lng: 126.8320 },
+    { name: "달인대보칼국수 평택점", address: "경기 평택시 고덕여염10길 69", tel: "0507-1373-9859", lat: 37.0653, lng: 127.0570 },
+    { name: "달인대보칼국수 평택죽백점", address: "경기도 평택시 이화로 214", tel: "0507-1350-1429", lat: 37.0120, lng: 127.0854 },
+    { name: "달인대보칼국수 송탄서정점", address: "경기도 평택시 서정로 262", tel: "0507-1400-9859", lat: 37.0808, lng: 127.0570 },
+    { name: "달인대보칼국수 광교점", address: "경기 수원시 영통구 대학4로 9", tel: "0507-1463-1454", lat: 37.2848, lng: 127.0436 },
+    { name: "달인대보칼국수 뉴코아아울렛 부천점", address: "경기 부천시 원미구 송내대로 239", tel: "0507-1421-8343", lat: 37.4989, lng: 126.7536 },
+    { name: "달인대보칼국수 부천시청점", address: "경기 부천시 원미구 중동 1301", tel: "0507-1328-3097", lat: 37.5034, lng: 126.7660 },
+    { name: "달인대보칼국수 NC백화점 고잔점", address: "경기 안산시 단원구 광덕대로 194", tel: "0507-1362-4640", lat: 37.3189, lng: 126.8305 },
+    { name: "달인대보칼국수 뉴코아아울렛 평촌점", address: "경기 안양시 동안구 동안로 119", tel: "0507-1351-5133", lat: 37.3897, lng: 126.9516 },
+    { name: "달인대보칼국수 산본점", address: "경기 군포시 번영로 504", tel: "0507-1349-2384", lat: 37.3590, lng: 126.9316 },
+    { name: "달인대보칼국수 마석점", address: "경기 남양주시 화도읍 비룡로 221", tel: "031-511-5707", lat: 37.6507, lng: 127.3013 },
+    { name: "달인대보칼국수 검단사거리역점", address: "인천광역시 서구 완정로165번길 7", tel: "0507-1446-1410", lat: 37.5935, lng: 126.6731 },
+    { name: "달인대보칼국수 현풍점", address: "대구 달성군 현풍읍 테크노대로 40", tel: "0507-1377-3236", lat: 35.7035, lng: 128.4124 },
+    { name: "달인대보칼국수 동아백화점 쇼핑점", address: "대구 중구 달구벌대로 2085", tel: "0507-1403-3803", lat: 35.8668, lng: 128.5911 },
+    { name: "달인대보칼국수 죽전점", address: "대구광역시 달서구 달구벌대로 1581", tel: "0507-1323-0177", lat: 35.8352, lng: 128.5334 },
+    { name: "달인 대보칼국수 월배점", address: "대구광역시 달서구 조암남로32길 20-8", tel: "0507-1456-0182", lat: 35.8165, lng: 128.5271 },
+    { name: "달인대보칼국수 영천점", address: "경북 영천시 동부로 39", tel: "054-332-3232", lat: 35.9731, lng: 128.9388 },
+    { name: "달인대보칼국수 사상점", address: "부산광역시 사상구 사상로250번길 11", tel: "0507-1356-8529", lat: 35.1526, lng: 128.9823 },
+    { name: "달인대보칼국수 창원중동점", address: "경상남도 창원시 의창구 의창대로266번길 10", tel: "0507-1321-6538", lat: 35.2540, lng: 128.6401 },
+    { name: "달인대보칼국수 양산석산점", address: "경상남도 양산시 동면 석산3길 30", tel: "0507-1394-3071", lat: 35.3715, lng: 129.0364 }
 ];
 
 // 로컬스토리지에서 불러오기
@@ -255,52 +262,42 @@ const markerIcon = {
     anchor: new naver.maps.Point(20, 40)
 };
 
-// 주소 → 좌표 변환 후 마커 생성
+// 마커 생성 (좌표가 있는 데이터만)
 function createMarkers(data) {
     markers.forEach(m => m.setMap(null));
     markers = [];
     if (infoWindow) infoWindow.close();
 
     data.forEach(store => {
-        naver.maps.Service.geocode({ query: store.address }, (status, response) => {
-            if (status !== naver.maps.Service.Status.OK) return;
-            
-            const result = response.v2.addresses[0];
-            if (!result) return;
-            
-            const lat = parseFloat(result.y);
-            const lng = parseFloat(result.x);
-            store.lat = lat;
-            store.lng = lng;
-            
-            const marker = new naver.maps.Marker({
-                position: new naver.maps.LatLng(lat, lng),
-                map: map,
-                title: store.name,
-                icon: markerIcon
-            });
-            
-            naver.maps.Event.addListener(marker, 'click', () => {
-                if (infoWindow) infoWindow.close();
-                
-                infoWindow = new naver.maps.InfoWindow({
-                    content: `
-                        <div style="padding:15px;min-width:200px;">
-                            <h4 style="margin:0 0 8px;color:#222;">${store.name}</h4>
-                            <p style="margin:0 0 5px;font-size:13px;color:#666;">${store.address}</p>
-                            <p style="margin:0;font-size:14px;color:#333;font-weight:bold;">${store.tel}</p>
-                        </div>
-                    `,
-                    borderWidth: 1,
-                    borderColor: '#ddd',
-                    backgroundColor: '#fff'
-                });
-                
-                infoWindow.open(map, marker);
-            });
-            
-            markers.push(marker);
+        if (!store.lat || !store.lng) return;
+        
+        const marker = new naver.maps.Marker({
+            position: new naver.maps.LatLng(store.lat, store.lng),
+            map: map,
+            title: store.name,
+            icon: markerIcon
         });
+        
+        naver.maps.Event.addListener(marker, 'click', () => {
+            if (infoWindow) infoWindow.close();
+            
+            infoWindow = new naver.maps.InfoWindow({
+                content: `
+                    <div style="padding:15px;min-width:200px;">
+                        <h4 style="margin:0 0 8px;color:#222;">${store.name}</h4>
+                        <p style="margin:0 0 5px;font-size:13px;color:#666;">${store.address}</p>
+                        <p style="margin:0;font-size:14px;color:#333;font-weight:bold;">${store.tel}</p>
+                    </div>
+                `,
+                borderWidth: 1,
+                borderColor: '#ddd',
+                backgroundColor: '#fff'
+            });
+            
+            infoWindow.open(map, marker);
+        });
+        
+        markers.push(marker);
     });
 }
 
@@ -331,16 +328,6 @@ function renderList(data) {
             if (s.lat && s.lng) {
                 map.setCenter(new naver.maps.LatLng(s.lat, s.lng));
                 map.setZoom(16);
-            } else {
-                naver.maps.Service.geocode({ query: s.address }, (status, response) => {
-                    if (status === naver.maps.Service.Status.OK && response.v2.addresses[0]) {
-                        const result = response.v2.addresses[0];
-                        s.lat = parseFloat(result.y);
-                        s.lng = parseFloat(result.x);
-                        map.setCenter(new naver.maps.LatLng(s.lat, s.lng));
-                        map.setZoom(16);
-                    }
-                });
             }
             
             document.querySelectorAll('.store-item').forEach(el => el.classList.remove('active'));
@@ -408,9 +395,7 @@ document.getElementById('searchInput').addEventListener('input', function() {
     }
 });
 
-// ============ 비밀번호 관련 ============
-
-// 관리 버튼 클릭 → 비밀번호 모달 열기
+// 비밀번호 관련
 document.getElementById('adminBtn').onclick = () => {
     if (isAuthenticated) {
         document.getElementById('modal').classList.add('show');
@@ -423,7 +408,6 @@ document.getElementById('adminBtn').onclick = () => {
     }
 };
 
-// 비밀번호 확인
 document.getElementById('pwSubmit').onclick = () => {
     const input = document.getElementById('pwInput').value;
     
@@ -440,14 +424,12 @@ document.getElementById('pwSubmit').onclick = () => {
     }
 };
 
-// 비밀번호 입력창에서 Enter 키
 document.getElementById('pwInput').addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
         document.getElementById('pwSubmit').click();
     }
 });
 
-// 비밀번호 모달 닫기
 document.getElementById('pwModalClose').onclick = () => {
     document.getElementById('pwModal').classList.remove('show');
 };
@@ -458,8 +440,7 @@ document.getElementById('pwModal').onclick = (e) => {
     }
 };
 
-// ============ 관리 모달 ============
-
+// 관리 모달
 document.getElementById('modalClose').onclick = () => {
     document.getElementById('modal').classList.remove('show');
 };
@@ -491,14 +472,21 @@ document.querySelectorAll('.tabs button').forEach(btn => {
     };
 });
 
-// 매장 추가
+// 매장 추가 (좌표 포함)
 document.getElementById('addBtn').onclick = () => {
     const name = document.getElementById('inputName').value.trim();
     const address = document.getElementById('inputAddr').value.trim();
     const tel = document.getElementById('inputTel').value.trim();
+    const lat = parseFloat(document.getElementById('inputLat').value.trim());
+    const lng = parseFloat(document.getElementById('inputLng').value.trim());
     
     if (!name || !address || !tel) {
-        alert('모든 항목을 입력해주세요');
+        alert('매장명, 주소, 전화번호를 입력해주세요');
+        return;
+    }
+    
+    if (isNaN(lat) || isNaN(lng)) {
+        alert('위도와 경도를 숫자로 입력해주세요');
         return;
     }
     
@@ -507,12 +495,14 @@ document.getElementById('addBtn').onclick = () => {
         return;
     }
     
-    stores.push({ name, address, tel });
+    stores.push({ name, address, tel, lat, lng });
     saveStores();
     
     document.getElementById('inputName').value = '';
     document.getElementById('inputAddr').value = '';
     document.getElementById('inputTel').value = '';
+    document.getElementById('inputLat').value = '';
+    document.getElementById('inputLng').value = '';
     
     renderList(stores);
     renderDelList();
@@ -521,7 +511,7 @@ document.getElementById('addBtn').onclick = () => {
     showAlert('"' + name + '" 추가 완료');
 };
 
-['inputName', 'inputAddr', 'inputTel'].forEach(id => {
+['inputName', 'inputAddr', 'inputTel', 'inputLat', 'inputLng'].forEach(id => {
     document.getElementById(id).addEventListener('keypress', (e) => {
         if (e.key === 'Enter') {
             document.getElementById('addBtn').click();
@@ -531,7 +521,7 @@ document.getElementById('addBtn').onclick = () => {
 
 // 초기화
 renderList(stores);
-setTimeout(() => createMarkers(stores), 500);
+setTimeout(() => createMarkers(stores), 300);
 </script>
 
 </body>
