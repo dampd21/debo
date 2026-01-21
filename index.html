@@ -27,35 +27,51 @@
         .store-item p { color: #666; font-size: 12px; margin-bottom: 3px; }
         .store-item .tel { color: #8B4513; font-weight: bold; }
         
-        .admin-btn { position: fixed; bottom: 20px; right: 20px; width: 55px; height: 55px; background: #8B4513; color: #fff; border: none; border-radius: 50%; font-size: 22px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
-        .admin-btn:hover { transform: scale(1.1); }
+        .no-result { padding: 30px; text-align: center; color: #999; }
+        
+        .admin-btn { position: fixed; bottom: 20px; right: 20px; width: 55px; height: 55px; background: #8B4513; color: #fff; border: none; border-radius: 50%; font-size: 22px; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: transform 0.3s; }
+        .admin-btn:hover { transform: scale(1.1) rotate(90deg); }
         
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
         .modal.show { display: flex; }
         .modal-content { background: #fff; width: 90%; max-width: 500px; border-radius: 10px; overflow: hidden; }
-        .modal-header { background: #8B4513; color: #fff; padding: 20px; display: flex; justify-content: space-between; }
+        .modal-header { background: #8B4513; color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
         .modal-header h2 { font-size: 18px; }
         .modal-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
         .modal-body { padding: 20px; max-height: 60vh; overflow-y: auto; }
         
         .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
         .form-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        .btn { width: 100%; padding: 12px; background: #8B4513; color: #fff; border: none; border-radius: 5px; font-size: 15px; cursor: pointer; }
+        .form-group input:focus { border-color: #8B4513; outline: none; }
+        
+        .btn { width: 100%; padding: 12px; background: #8B4513; color: #fff; border: none; border-radius: 5px; font-size: 15px; cursor: pointer; font-weight: bold; }
         .btn:hover { background: #6B3510; }
         .btn-del { background: #dc3545; padding: 6px 12px; font-size: 12px; width: auto; }
+        .btn-del:hover { background: #c82333; }
         
         .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #eee; border-radius: 5px; margin-bottom: 8px; }
-        .list-item h4 { font-size: 13px; margin-bottom: 3px; }
+        .list-item:hover { background: #f9f9f9; }
+        .list-item h4 { font-size: 13px; margin-bottom: 3px; color: #333; }
         .list-item p { font-size: 11px; color: #666; }
         
         .tabs { display: flex; border-bottom: 1px solid #ddd; }
-        .tabs button { flex: 1; padding: 12px; border: none; background: #f5f5f5; cursor: pointer; }
+        .tabs button { flex: 1; padding: 12px; border: none; background: #f5f5f5; cursor: pointer; font-weight: bold; color: #666; }
+        .tabs button:hover { background: #e8e8e8; }
         .tabs button.active { background: #fff; border-bottom: 2px solid #8B4513; color: #8B4513; }
         .tab-content { display: none; }
         .tab-content.active { display: block; }
         
-        .alert { position: fixed; top: 20px; right: 20px; padding: 15px 25px; background: #28a745; color: #fff; border-radius: 5px; z-index: 2000; }
+        .alert { position: fixed; top: 20px; right: 20px; padding: 15px 25px; background: #28a745; color: #fff; border-radius: 8px; z-index: 2000; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: slideIn 0.3s; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        
+        .store-count { background: #f0f0f0; padding: 10px 15px; border-radius: 5px; margin-bottom: 15px; font-weight: bold; color: #555; }
+
+        @media (max-width: 768px) {
+            .map-wrap { flex-direction: column; height: auto; }
+            #map { height: 350px; }
+            .search-panel { width: 100%; height: 300px; border-left: none; border-top: 1px solid #ddd; }
+        }
     </style>
 </head>
 <body>
@@ -73,7 +89,7 @@
     </div>
 </div>
 
-<button class="admin-btn" id="adminBtn">⚙</button>
+<button class="admin-btn" id="adminBtn" title="매장 관리">⚙</button>
 
 <div class="modal" id="modal">
     <div class="modal-content">
@@ -82,133 +98,209 @@
             <button class="modal-close" id="modalClose">&times;</button>
         </div>
         <div class="tabs">
-            <button class="active" data-tab="add">추가</button>
-            <button data-tab="del">삭제</button>
+            <button class="active" data-tab="add">➕ 추가</button>
+            <button data-tab="del">🗑️ 삭제</button>
         </div>
         <div class="modal-body">
             <div class="tab-content active" id="tab-add">
                 <div class="form-group">
                     <label>매장명</label>
-                    <input type="text" id="inputName" placeholder="달인대보칼국수 OO점">
+                    <input type="text" id="inputName" placeholder="예: 달인대보칼국수 OO점">
                 </div>
                 <div class="form-group">
                     <label>주소</label>
-                    <input type="text" id="inputAddr" placeholder="서울시 강서구...">
+                    <input type="text" id="inputAddr" placeholder="예: 서울시 강서구 마곡중앙5로 6">
                 </div>
                 <div class="form-group">
                     <label>전화번호</label>
-                    <input type="text" id="inputTel" placeholder="02-1234-5678">
+                    <input type="text" id="inputTel" placeholder="예: 02-1234-5678">
                 </div>
-                <button class="btn" id="addBtn">추가하기</button>
+                <button class="btn" id="addBtn">✓ 매장 추가하기</button>
             </div>
             <div class="tab-content" id="tab-del">
+                <div class="store-count" id="storeCount">총 0개 매장</div>
                 <div id="delList"></div>
             </div>
         </div>
     </div>
 </div>
 
-<script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=95450ab9ca9b3bbb765fa26d952f2094&libraries=services"></script>
+<!-- 네이버 지도 API -->
+<script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=JmgLo9QIoUXgpckUEcn4TevmM1Ol1hbtuHCvs3ro&submodules=geocoder"></script>
+
 <script>
+// 매장 데이터
 let stores = [
     { name: "달인대보칼국수 본점", address: "서울특별시 강서구 마곡중앙5로 6", tel: "02-3664-9571" },
     { name: "달인대보칼국수 양평점", address: "서울 영등포구 선유로 130", tel: "0507-1370-1961" },
     { name: "달인대보칼국수 강남논현점", address: "서울특별시 강남구 언주로 615", tel: "070-4010-1028" },
     { name: "달인대보칼국수 등촌역점", address: "서울 강서구 등촌로 205", tel: "010-3411-7567" },
     { name: "달인대보칼국수 화곡역점", address: "서울 강서구 강서로56길 17", tel: "0507-1477-8874" },
+    { name: "달인대보칼국수 NC백화점 강서점", address: "서울 강서구 강서로56길 17", tel: "02-2667-9884" },
     { name: "달인대보칼국수 고척스카이돔점", address: "서울 구로구 경인로47길 26", tel: "0507-1497-9122" },
+    { name: "달인대보칼국수 신월IC점", address: "서울 양천구 남부순환로 399", tel: "000-0000-0000" },
     { name: "달인대보칼국수 장항점", address: "경기 고양시 일산동구 정발산로 24", tel: "0507-1374-7495" },
     { name: "달인대보칼국수 백석점", address: "경기 고양시 일산동구 호수로 358-39", tel: "031-902-8265" },
+    { name: "달인대보칼국수 향동점", address: "경기 고양시 덕양구 향동로 217", tel: "0507-1307-3029" },
     { name: "달인대보칼국수 평택점", address: "경기 평택시 고덕여염10길 69", tel: "0507-1373-9859" },
-    { name: "달인대보칼국수 광교점", address: "경기 수원시 영통구 대학4로 9", tel: "0507-1463-1454" }
+    { name: "달인대보칼국수 평택죽백점", address: "경기도 평택시 이화로 214", tel: "0507-1350-1429" },
+    { name: "달인대보칼국수 송탄서정점", address: "경기도 평택시 서정로 262", tel: "0507-1400-9859" },
+    { name: "달인대보칼국수 광교점", address: "경기 수원시 영통구 대학4로 9", tel: "0507-1463-1454" },
+    { name: "달인대보칼국수 뉴코아아울렛 부천점", address: "경기 부천시 원미구 송내대로 239", tel: "0507-1421-8343" },
+    { name: "달인대보칼국수 부천시청점", address: "경기 부천시 원미구 중동 1301", tel: "0507-1328-3097" },
+    { name: "달인대보칼국수 NC백화점 고잔점", address: "경기 안산시 단원구 광덕대로 194", tel: "0507-1362-4640" },
+    { name: "달인대보칼국수 뉴코아아울렛 평촌점", address: "경기 안양시 동안구 동안로 119", tel: "0507-1351-5133" },
+    { name: "달인대보칼국수 산본점", address: "경기 군포시 번영로 504", tel: "0507-1349-2384" },
+    { name: "달인대보칼국수 마석점", address: "경기 남양주시 화도읍 비룡로 221", tel: "031-511-5707" },
+    { name: "달인대보칼국수 검단사거리역점", address: "인천광역시 서구 완정로165번길 7", tel: "0507-1446-1410" },
+    { name: "달인대보칼국수 현풍점", address: "대구 달성군 현풍읍 테크노대로 40", tel: "0507-1377-3236" },
+    { name: "달인대보칼국수 동아백화점 쇼핑점", address: "대구 중구 달구벌대로 2085", tel: "0507-1403-3803" },
+    { name: "달인대보칼국수 죽전점", address: "대구광역시 달서구 달구벌대로 1581", tel: "0507-1323-0177" },
+    { name: "달인 대보칼국수 월배점", address: "대구광역시 달서구 조암남로32길 20-8", tel: "0507-1456-0182" },
+    { name: "달인대보칼국수 영천점", address: "경북 영천시 동부로 39", tel: "054-332-3232" },
+    { name: "달인대보칼국수 사상점", address: "부산광역시 사상구 사상로250번길 11", tel: "0507-1356-8529" },
+    { name: "달인대보칼국수 창원중동점", address: "경상남도 창원시 의창구 의창대로266번길 10", tel: "0507-1321-6538" },
+    { name: "달인대보칼국수 양산석산점", address: "경상남도 양산시 동면 석산3길 30", tel: "0507-1394-3071" }
 ];
 
-// 로컬스토리지
-const saved = localStorage.getItem('stores');
+// 로컬스토리지에서 불러오기
+const saved = localStorage.getItem('daebok_stores');
 if (saved) stores = JSON.parse(saved);
-const save = () => localStorage.setItem('stores', JSON.stringify(stores));
 
-// 지도
-const map = new kakao.maps.Map(document.getElementById('map'), {
-    center: new kakao.maps.LatLng(37.5, 127),
-    level: 10
+// 저장 함수
+const saveStores = () => localStorage.setItem('daebok_stores', JSON.stringify(stores));
+
+// 지도 초기화
+const map = new naver.maps.Map('map', {
+    center: new naver.maps.LatLng(36.5, 127.5),
+    zoom: 7,
+    zoomControl: true,
+    zoomControlOptions: {
+        position: naver.maps.Position.TOP_RIGHT
+    }
 });
-const geocoder = new kakao.maps.services.Geocoder();
-let markers = [], overlay = null;
 
-// 마커 생성
+let markers = [];
+let infoWindow = null;
+
+// 주소 → 좌표 변환 후 마커 생성
 function createMarkers(data) {
+    // 기존 마커 제거
     markers.forEach(m => m.setMap(null));
     markers = [];
-    if (overlay) overlay.setMap(null);
-    
+    if (infoWindow) infoWindow.close();
+
     data.forEach(store => {
-        geocoder.addressSearch(store.address, (result, status) => {
-            if (status === kakao.maps.services.Status.OK) {
-                const pos = new kakao.maps.LatLng(result[0].y, result[0].x);
-                const marker = new kakao.maps.Marker({ map, position: pos, title: store.name });
+        naver.maps.Service.geocode({ query: store.address }, (status, response) => {
+            if (status !== naver.maps.Service.Status.OK) return;
+            
+            const result = response.v2.addresses[0];
+            if (!result) return;
+            
+            const lat = parseFloat(result.y);
+            const lng = parseFloat(result.x);
+            store.lat = lat;
+            store.lng = lng;
+            
+            const marker = new naver.maps.Marker({
+                position: new naver.maps.LatLng(lat, lng),
+                map: map,
+                title: store.name
+            });
+            
+            // 마커 클릭 이벤트
+            naver.maps.Event.addListener(marker, 'click', () => {
+                if (infoWindow) infoWindow.close();
                 
-                kakao.maps.event.addListener(marker, 'click', () => {
-                    if (overlay) overlay.setMap(null);
-                    overlay = new kakao.maps.CustomOverlay({
-                        content: `<div style="padding:15px;background:#fff;border-radius:8px;box-shadow:0 3px 10px rgba(0,0,0,0.2);min-width:180px;">
-                            <b style="color:#8B4513">${store.name}</b><br>
-                            <small style="color:#666">${store.address}</small><br>
-                            <b style="color:#8B4513">${store.tel}</b>
-                        </div>`,
-                        position: pos,
-                        yAnchor: 1.3
-                    });
-                    overlay.setMap(map);
+                infoWindow = new naver.maps.InfoWindow({
+                    content: `
+                        <div style="padding:15px;min-width:200px;">
+                            <h4 style="margin:0 0 8px;color:#8B4513;">${store.name}</h4>
+                            <p style="margin:0 0 5px;font-size:13px;color:#666;">📍 ${store.address}</p>
+                            <p style="margin:0;font-size:14px;color:#8B4513;font-weight:bold;">📞 ${store.tel}</p>
+                        </div>
+                    `,
+                    borderWidth: 1,
+                    borderColor: '#ddd',
+                    backgroundColor: '#fff'
                 });
                 
-                markers.push(marker);
-                store.lat = result[0].y;
-                store.lng = result[0].x;
-            }
+                infoWindow.open(map, marker);
+            });
+            
+            markers.push(marker);
         });
     });
 }
 
-// 목록 렌더링
+// 매장 목록 렌더링
 function renderList(data) {
     const list = document.getElementById('storeList');
-    list.innerHTML = data.map((s, i) => `
-        <div class="store-item" data-idx="${stores.indexOf(s)}">
-            <h4>${s.name}</h4>
-            <p>${s.address}</p>
-            <p class="tel">📞 ${s.tel}</p>
-        </div>
-    `).join('');
     
+    if (data.length === 0) {
+        list.innerHTML = '<div class="no-result">검색 결과가 없습니다</div>';
+        return;
+    }
+    
+    list.innerHTML = data.map((s) => {
+        const idx = stores.indexOf(s);
+        return `
+            <div class="store-item" data-idx="${idx}">
+                <h4>${s.name}</h4>
+                <p>📍 ${s.address}</p>
+                <p class="tel">📞 ${s.tel}</p>
+            </div>
+        `;
+    }).join('');
+    
+    // 클릭 이벤트
     list.querySelectorAll('.store-item').forEach(item => {
         item.onclick = () => {
             const s = stores[item.dataset.idx];
-            if (s.lat) {
-                map.setCenter(new kakao.maps.LatLng(s.lat, s.lng));
-                map.setLevel(3);
+            
+            if (s.lat && s.lng) {
+                map.setCenter(new naver.maps.LatLng(s.lat, s.lng));
+                map.setZoom(16);
+            } else {
+                // 좌표 없으면 검색
+                naver.maps.Service.geocode({ query: s.address }, (status, response) => {
+                    if (status === naver.maps.Service.Status.OK && response.v2.addresses[0]) {
+                        const result = response.v2.addresses[0];
+                        s.lat = parseFloat(result.y);
+                        s.lng = parseFloat(result.x);
+                        map.setCenter(new naver.maps.LatLng(s.lat, s.lng));
+                        map.setZoom(16);
+                    }
+                });
             }
+            
+            // 활성화 표시
             document.querySelectorAll('.store-item').forEach(el => el.classList.remove('active'));
             item.classList.add('active');
         };
     });
 }
 
-// 삭제 목록
+// 삭제 목록 렌더링
 function renderDelList() {
+    document.getElementById('storeCount').textContent = `총 ${stores.length}개 매장`;
     document.getElementById('delList').innerHTML = stores.map((s, i) => `
         <div class="list-item">
-            <div><h4>${s.name}</h4><p>${s.address}</p></div>
+            <div>
+                <h4>${s.name}</h4>
+                <p>${s.address}</p>
+            </div>
             <button class="btn btn-del" onclick="delStore(${i})">삭제</button>
         </div>
     `).join('');
 }
 
-// 삭제
+// 매장 삭제
 window.delStore = (i) => {
-    if (confirm(`"${stores[i].name}" 삭제?`)) {
+    const name = stores[i].name;
+    if (confirm(`"${name}"을(를) 삭제하시겠습니까?`)) {
         stores.splice(i, 1);
-        save();
+        saveStores();
         renderList(stores);
         renderDelList();
         createMarkers(stores);
@@ -222,66 +314,113 @@ function showAlert(msg) {
     el.className = 'alert';
     el.textContent = msg;
     document.body.appendChild(el);
-    setTimeout(() => el.remove(), 2000);
+    setTimeout(() => el.remove(), 2500);
 }
 
 // 검색
-document.getElementById('searchInput').oninput = function() {
-    const v = this.value.toLowerCase();
+document.getElementById('searchInput').addEventListener('input', function() {
+    const keyword = this.value.toLowerCase().trim();
+    
+    if (keyword === '') {
+        renderList(stores);
+        createMarkers(stores);
+        return;
+    }
+    
     const filtered = stores.filter(s => 
-        s.name.toLowerCase().includes(v) || 
-        s.address.toLowerCase().includes(v)
+        s.name.toLowerCase().includes(keyword) || 
+        s.address.toLowerCase().includes(keyword) ||
+        s.tel.replace(/-/g, '').includes(keyword.replace(/-/g, ''))
     );
+    
     renderList(filtered);
-    if (v.length >= 2) createMarkers(filtered);
-};
+    
+    if (keyword.length >= 2) {
+        createMarkers(filtered);
+    }
+});
 
-// 모달
+// 모달 열기/닫기
 document.getElementById('adminBtn').onclick = () => {
     document.getElementById('modal').classList.add('show');
     renderDelList();
 };
+
 document.getElementById('modalClose').onclick = () => {
     document.getElementById('modal').classList.remove('show');
 };
+
 document.getElementById('modal').onclick = (e) => {
-    if (e.target.id === 'modal') document.getElementById('modal').classList.remove('show');
+    if (e.target.id === 'modal') {
+        document.getElementById('modal').classList.remove('show');
+    }
 };
 
-// 탭
+// ESC 키로 닫기
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        document.getElementById('modal').classList.remove('show');
+    }
+});
+
+// 탭 전환
 document.querySelectorAll('.tabs button').forEach(btn => {
     btn.onclick = () => {
         document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+        
+        if (btn.dataset.tab === 'del') {
+            renderDelList();
+        }
     };
 });
 
-// 추가
+// 매장 추가
 document.getElementById('addBtn').onclick = () => {
     const name = document.getElementById('inputName').value.trim();
     const address = document.getElementById('inputAddr').value.trim();
     const tel = document.getElementById('inputTel').value.trim();
     
-    if (!name || !address || !tel) return alert('모든 항목을 입력하세요');
+    if (!name || !address || !tel) {
+        alert('모든 항목을 입력해주세요!');
+        return;
+    }
+    
+    // 중복 체크
+    if (stores.some(s => s.name === name)) {
+        alert('이미 존재하는 매장명입니다!');
+        return;
+    }
     
     stores.push({ name, address, tel });
-    save();
-    renderList(stores);
-    renderDelList();
-    createMarkers(stores);
+    saveStores();
     
+    // 입력 초기화
     document.getElementById('inputName').value = '';
     document.getElementById('inputAddr').value = '';
     document.getElementById('inputTel').value = '';
     
-    showAlert('추가 완료!');
+    renderList(stores);
+    renderDelList();
+    createMarkers(stores);
+    
+    showAlert(`"${name}" 추가 완료!`);
 };
+
+// Enter 키로 추가
+['inputName', 'inputAddr', 'inputTel'].forEach(id => {
+    document.getElementById(id).addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            document.getElementById('addBtn').click();
+        }
+    });
+});
 
 // 초기화
 renderList(stores);
-setTimeout(() => createMarkers(stores), 300);
+setTimeout(() => createMarkers(stores), 500);
 </script>
 
 </body>
