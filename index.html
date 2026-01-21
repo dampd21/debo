@@ -59,6 +59,7 @@
         
         .no-result { padding: 30px; text-align: center; color: #999; }
         
+        /* 모달 공통 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
         .modal.show { display: flex; }
         .modal-content { background: #fff; width: 90%; max-width: 500px; border-radius: 10px; overflow: hidden; }
@@ -66,6 +67,20 @@
         .modal-header h2 { font-size: 18px; }
         .modal-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
         .modal-body { padding: 20px; max-height: 60vh; overflow-y: auto; }
+        
+        /* 비밀번호 모달 */
+        .pw-modal-content { max-width: 350px; }
+        .pw-input { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #ddd; 
+            border-radius: 6px; 
+            font-size: 16px; 
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .pw-input:focus { outline: none; border-color: #8B4513; }
+        .pw-error { color: #dc3545; font-size: 14px; text-align: center; margin-bottom: 10px; display: none; }
         
         .form-group { margin-bottom: 15px; }
         .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
@@ -90,6 +105,7 @@
         .tab-content.active { display: block; }
         
         .alert { position: fixed; top: 20px; right: 20px; padding: 15px 25px; background: #28a745; color: #fff; border-radius: 8px; z-index: 2000; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: slideIn 0.3s; }
+        .alert.error { background: #dc3545; }
         @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         
         .store-count { background: #f0f0f0; padding: 10px 15px; border-radius: 5px; margin-bottom: 15px; font-weight: bold; color: #555; }
@@ -117,6 +133,23 @@
     </div>
 </div>
 
+<!-- 비밀번호 입력 모달 -->
+<div class="modal" id="pwModal">
+    <div class="modal-content pw-modal-content">
+        <div class="modal-header">
+            <h2>🔒 비밀번호 입력</h2>
+            <button class="modal-close" id="pwModalClose">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p style="text-align:center;margin-bottom:15px;color:#666;">관리자 비밀번호를 입력하세요</p>
+            <input type="password" class="pw-input" id="pwInput" placeholder="비밀번호">
+            <p class="pw-error" id="pwError">비밀번호가 틀렸습니다</p>
+            <button class="btn" id="pwSubmit">확인</button>
+        </div>
+    </div>
+</div>
+
+<!-- 관리 모달 -->
 <div class="modal" id="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -155,6 +188,10 @@
 <script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=JmgLo9QIoUXgpckUEcn4TevmM1Ol1hbtuHCvs3ro&submodules=geocoder"></script>
 
 <script>
+// 관리자 비밀번호
+const ADMIN_PASSWORD = 'debo1992';
+let isAuthenticated = false;
+
 // 매장 데이터
 let stores = [
     { name: "달인대보칼국수 본점", address: "서울특별시 강서구 마곡중앙5로 6", tel: "02-3664-9571" },
@@ -209,14 +246,13 @@ const map = new naver.maps.Map('map', {
 let markers = [];
 let infoWindow = null;
 
-// 커스텀 마커 이미지 (1.png)
-// 이미지 크기에 맞게 size와 anchor 조정하세요
+// 커스텀 마커 이미지 (1.png - 300x300)
 const markerIcon = {
     url: './1.png',
-    size: new naver.maps.Size(40, 50),      // 마커 이미지 크기
-    scaledSize: new naver.maps.Size(40, 50), // 표시할 크기
+    size: new naver.maps.Size(300, 300),
+    scaledSize: new naver.maps.Size(40, 40),
     origin: new naver.maps.Point(0, 0),
-    anchor: new naver.maps.Point(20, 50)     // 마커 기준점 (하단 중앙)
+    anchor: new naver.maps.Point(20, 40)
 };
 
 // 주소 → 좌표 변환 후 마커 생성
@@ -237,12 +273,11 @@ function createMarkers(data) {
             store.lat = lat;
             store.lng = lng;
             
-            // 커스텀 마커 생성
             const marker = new naver.maps.Marker({
                 position: new naver.maps.LatLng(lat, lng),
                 map: map,
                 title: store.name,
-                icon: markerIcon  // 커스텀 마커 이미지 적용
+                icon: markerIcon
             });
             
             naver.maps.Event.addListener(marker, 'click', () => {
@@ -342,9 +377,9 @@ window.delStore = (i) => {
 };
 
 // 알림
-function showAlert(msg) {
+function showAlert(msg, isError = false) {
     const el = document.createElement('div');
-    el.className = 'alert';
+    el.className = 'alert' + (isError ? ' error' : '');
     el.textContent = msg;
     document.body.appendChild(el);
     setTimeout(() => el.remove(), 2500);
@@ -373,11 +408,61 @@ document.getElementById('searchInput').addEventListener('input', function() {
     }
 });
 
-// 모달 열기/닫기
+// ============ 비밀번호 관련 ============
+
+// 관리 버튼 클릭 → 비밀번호 모달 열기
 document.getElementById('adminBtn').onclick = () => {
-    document.getElementById('modal').classList.add('show');
-    renderDelList();
+    if (isAuthenticated) {
+        // 이미 인증됨 → 바로 관리 모달 열기
+        document.getElementById('modal').classList.add('show');
+        renderDelList();
+    } else {
+        // 비밀번호 입력 모달 열기
+        document.getElementById('pwModal').classList.add('show');
+        document.getElementById('pwInput').value = '';
+        document.getElementById('pwError').style.display = 'none';
+        document.getElementById('pwInput').focus();
+    }
 };
+
+// 비밀번호 확인
+document.getElementById('pwSubmit').onclick = () => {
+    const input = document.getElementById('pwInput').value;
+    
+    if (input === ADMIN_PASSWORD) {
+        // 비밀번호 맞음
+        isAuthenticated = true;
+        document.getElementById('pwModal').classList.remove('show');
+        document.getElementById('modal').classList.add('show');
+        renderDelList();
+        showAlert('관리자 인증 성공!');
+    } else {
+        // 비밀번호 틀림
+        document.getElementById('pwError').style.display = 'block';
+        document.getElementById('pwInput').value = '';
+        document.getElementById('pwInput').focus();
+    }
+};
+
+// 비밀번호 입력창에서 Enter 키
+document.getElementById('pwInput').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        document.getElementById('pwSubmit').click();
+    }
+});
+
+// 비밀번호 모달 닫기
+document.getElementById('pwModalClose').onclick = () => {
+    document.getElementById('pwModal').classList.remove('show');
+};
+
+document.getElementById('pwModal').onclick = (e) => {
+    if (e.target.id === 'pwModal') {
+        document.getElementById('pwModal').classList.remove('show');
+    }
+};
+
+// ============ 관리 모달 ============
 
 document.getElementById('modalClose').onclick = () => {
     document.getElementById('modal').classList.remove('show');
@@ -392,6 +477,7 @@ document.getElementById('modal').onclick = (e) => {
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         document.getElementById('modal').classList.remove('show');
+        document.getElementById('pwModal').classList.remove('show');
     }
 });
 
