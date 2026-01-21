@@ -6,132 +6,393 @@
     <title>달인대보칼국수 가맹점 안내</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Malgun Gothic', sans-serif; }
-        body { background: #f5f5f5; }
         
-        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
-        h1 { text-align: center; padding: 20px; color: #222; }
+        .rltv { position: relative; }
+        .absol { position: absolute; }
+        .show { display: block; }
+        .hide { display: none; }
         
-        .map-wrap { display: flex; height: 550px; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
-        #map { flex: 1; }
+        .map_content_div {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
         
-        .search-panel { width: 320px; border-left: 1px solid #ddd; display: flex; flex-direction: column; }
+        .map_content {
+            width: 100%;
+        }
         
-        .search-box { 
-            padding: 15px; 
-            border-bottom: 1px solid #ddd; 
-            display: flex; 
-            gap: 8px; 
+        .map_mid {
+            display: flex;
+            height: 500px;
+            background: #fff;
+        }
+        
+        #map {
+            flex: 1;
+            height: 100%;
+        }
+        
+        .mid_map_search {
+            width: 350px;
+            right: 0;
+            top: 0;
+            height: 100%;
+            background: #fff;
+            display: flex;
+            flex-direction: column;
+            border-left: 1px solid #ddd;
+        }
+        
+        .mid_map_search_top {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .mid_map_search_top > div {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .mid_map_search_top .on2 {
+            background: #333;
+            color: #fff;
+        }
+        
+        .mid_map_search_top .off2 {
+            background: #f5f5f5;
+            color: #666;
+        }
+        
+        .mid_map_search_mid {
+            padding: 15px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            gap: 8px;
             align-items: center;
         }
-        .search-box input { 
+        
+        .mid_map_search_mid input {
             flex: 1;
-            padding: 12px; 
-            border: 2px solid #ddd; 
-            border-radius: 6px; 
-            font-size: 14px; 
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
         }
-        .search-box input:focus { outline: none; border-color: #333; }
+        
+        .mid_map_search_mid input:focus {
+            outline: none;
+            border-color: #333;
+        }
+        
+        .map_icon {
+            display: none;
+        }
         
         .admin-btn {
-            width: 42px;
-            height: 42px;
+            width: 40px;
+            height: 40px;
             background: #333;
             color: #fff;
             border: none;
-            border-radius: 8px;
-            font-size: 18px;
+            border-radius: 5px;
+            font-size: 20px;
             cursor: pointer;
-            transition: all 0.3s;
             flex-shrink: 0;
         }
-        .admin-btn:hover { 
+        
+        .admin-btn:hover {
             background: #111;
-            transform: rotate(90deg);
         }
         
-        .store-list { flex: 1; overflow-y: auto; }
-        .store-item { padding: 15px; border-bottom: 1px solid #eee; cursor: pointer; }
-        .store-item:hover { background: #f9f9f9; }
-        .store-item.active { background: #f0f0f0; border-left: 3px solid #333; }
-        .store-item h4 { color: #222; margin-bottom: 5px; font-size: 14px; }
-        .store-item p { color: #666; font-size: 12px; margin-bottom: 3px; }
-        .store-item .tel { color: #333; font-weight: bold; }
+        .mid_map_search_bottom {
+            flex: 1;
+            overflow-y: auto;
+        }
         
-        .no-result { padding: 30px; text-align: center; color: #999; }
+        .mid_map_search_item {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+        }
         
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
-        .modal.show { display: flex; }
-        .modal-content { background: #fff; width: 90%; max-width: 500px; border-radius: 10px; overflow: hidden; }
-        .modal-header { background: #333; color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center; }
-        .modal-header h2 { font-size: 18px; }
-        .modal-close { background: none; border: none; color: #fff; font-size: 24px; cursor: pointer; }
-        .modal-body { padding: 20px; max-height: 60vh; overflow-y: auto; }
+        .mid_map_search_item:hover {
+            background: #f9f9f9;
+        }
         
-        .pw-modal-content { max-width: 350px; }
-        .pw-input { 
-            width: 100%; 
-            padding: 12px; 
-            border: 2px solid #ddd; 
-            border-radius: 6px; 
-            font-size: 16px; 
+        .mid_map_search_item.active {
+            background: #f0f0f0;
+            border-left: 3px solid #333;
+        }
+        
+        .mid_map_search_item_title {
+            font-weight: bold;
+            font-size: 14px;
+            color: #222;
+            margin-bottom: 5px;
+        }
+        
+        .mid_map_search_item_addres {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 3px;
+        }
+        
+        .mid_map_search_item_tel {
+            font-size: 13px;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.6);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.show {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: #fff;
+            width: 90%;
+            max-width: 500px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        
+        .modal-header {
+            background: #333;
+            color: #fff;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            font-size: 18px;
+            margin: 0;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: #fff;
+            font-size: 24px;
+            cursor: pointer;
+        }
+        
+        .modal-body {
+            padding: 20px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+        
+        .pw-modal-content {
+            max-width: 350px;
+        }
+        
+        .pw-input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
             margin-bottom: 15px;
             text-align: center;
         }
-        .pw-input:focus { outline: none; border-color: #333; }
-        .pw-error { color: #dc3545; font-size: 14px; text-align: center; margin-bottom: 10px; display: none; }
         
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
-        .form-group input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        .form-group input:focus { border-color: #333; outline: none; }
+        .pw-input:focus {
+            outline: none;
+            border-color: #333;
+        }
         
-        .btn { width: 100%; padding: 12px; background: #333; color: #fff; border: none; border-radius: 5px; font-size: 15px; cursor: pointer; font-weight: bold; }
-        .btn:hover { background: #111; }
-        .btn-del { background: #666; padding: 6px 12px; font-size: 12px; width: auto; }
-        .btn-del:hover { background: #444; }
+        .pw-error {
+            color: #c00;
+            font-size: 14px;
+            text-align: center;
+            margin-bottom: 10px;
+            display: none;
+        }
         
-        .list-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border: 1px solid #eee; border-radius: 5px; margin-bottom: 8px; }
-        .list-item:hover { background: #f9f9f9; }
-        .list-item h4 { font-size: 13px; margin-bottom: 3px; color: #333; }
-        .list-item p { font-size: 11px; color: #666; }
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid #ddd;
+        }
         
-        .tabs { display: flex; border-bottom: 1px solid #ddd; }
-        .tabs button { flex: 1; padding: 12px; border: none; background: #f5f5f5; cursor: pointer; font-weight: bold; color: #666; }
-        .tabs button:hover { background: #e8e8e8; }
-        .tabs button.active { background: #fff; border-bottom: 2px solid #333; color: #333; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
+        .tabs button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: #f5f5f5;
+            cursor: pointer;
+            font-weight: bold;
+            color: #666;
+        }
         
-        .alert { position: fixed; top: 20px; right: 20px; padding: 15px 25px; background: #333; color: #fff; border-radius: 8px; z-index: 2000; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: slideIn 0.3s; }
-        .alert.error { background: #666; }
-        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .tabs button:hover {
+            background: #e8e8e8;
+        }
         
-        .store-count { background: #f0f0f0; padding: 10px 15px; border-radius: 5px; margin-bottom: 15px; font-weight: bold; color: #555; }
-
-        @media (max-width: 768px) {
-            .map-wrap { flex-direction: column; height: auto; }
-            #map { height: 350px; }
-            .search-panel { width: 100%; height: 300px; border-left: none; border-top: 1px solid #ddd; }
+        .tabs button.active {
+            background: #fff;
+            border-bottom: 2px solid #333;
+            color: #333;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .form-group {
+            margin-bottom: 15px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .form-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        
+        .form-group input:focus {
+            border-color: #333;
+            outline: none;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: #333;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            font-size: 15px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        
+        .btn:hover {
+            background: #111;
+        }
+        
+        .btn-del {
+            background: #666;
+            padding: 6px 12px;
+            font-size: 12px;
+            width: auto;
+        }
+        
+        .btn-del:hover {
+            background: #444;
+        }
+        
+        .list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            border: 1px solid #eee;
+            border-radius: 5px;
+            margin-bottom: 8px;
+        }
+        
+        .list-item:hover {
+            background: #f9f9f9;
+        }
+        
+        .list-item h4 {
+            font-size: 13px;
+            margin: 0 0 3px 0;
+            color: #333;
+        }
+        
+        .list-item p {
+            font-size: 11px;
+            color: #666;
+            margin: 0;
+        }
+        
+        .store-count {
+            background: #f0f0f0;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #555;
+        }
+        
+        .alert {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            background: #333;
+            color: #fff;
+            border-radius: 8px;
+            z-index: 99999;
+            font-weight: bold;
+            animation: slideIn 0.3s;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .no-result {
+            padding: 30px;
+            text-align: center;
+            color: #999;
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>달인대보칼국수 가맹점 안내</h1>
-    <div class="map-wrap">
-        <div id="map"></div>
-        <div class="search-panel">
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="매장명 또는 지역 검색">
-                <button class="admin-btn" id="adminBtn" title="매장 관리">+</button>
+<div class="map_content_div rltv" id="move7">
+    <div class="map_content">
+        <div class="map_mid rltv">
+            <div class="map" id="map"></div>
+            <div class="mid_map_search">
+                <div class="mid_map_search_top">
+                    <div class="mid_map_search_direct on2" data-map="direct">직접검색</div>
+                    <div class="mid_map_search_location off2" data-map="location">지역검색</div>
+                </div>
+                <div class="mid_map_search_mid rltv">
+                    <input class="direct show" type="text" placeholder="매장명 또는 전화번호" id="direct">
+                    <input class="direct_addres hide" type="text" placeholder="지역명" id="direct_addres">
+                    <button class="admin-btn" id="adminBtn" title="매장 관리">+</button>
+                </div>
+                <div class="mid_map_search_bottom" id="storeListContainer">
+                </div>
             </div>
-            <div class="store-list" id="storeList"></div>
         </div>
     </div>
 </div>
 
-<!-- 비밀번호 입력 모달 -->
 <div class="modal" id="pwModal">
     <div class="modal-content pw-modal-content">
         <div class="modal-header">
@@ -147,7 +408,6 @@
     </div>
 </div>
 
-<!-- 관리 모달 -->
 <div class="modal" id="modal">
     <div class="modal-content">
         <div class="modal-header">
@@ -162,25 +422,16 @@
             <div class="tab-content active" id="tab-add">
                 <div class="form-group">
                     <label>매장명</label>
-                    <input type="text" id="inputName" placeholder="예: 달인대보칼국수 OO점">
+                    <input type="text" id="inputName" placeholder="달인대보칼국수 OO점">
                 </div>
                 <div class="form-group">
                     <label>주소</label>
-                    <input type="text" id="inputAddr" placeholder="예: 서울시 강서구 마곡중앙5로 6">
+                    <input type="text" id="inputAddr" placeholder="서울시 강서구 마곡중앙5로 6">
                 </div>
                 <div class="form-group">
                     <label>전화번호</label>
-                    <input type="text" id="inputTel" placeholder="예: 02-1234-5678">
+                    <input type="text" id="inputTel" placeholder="02-1234-5678">
                 </div>
-                <div class="form-group">
-                    <label>위도 (lat)</label>
-                    <input type="text" id="inputLat" placeholder="예: 37.5665">
-                </div>
-                <div class="form-group">
-                    <label>경도 (lng)</label>
-                    <input type="text" id="inputLng" placeholder="예: 126.9780">
-                </div>
-                <p style="font-size:12px;color:#666;margin-bottom:15px;">* 좌표는 네이버/구글 지도에서 검색 후 입력</p>
                 <button class="btn" id="addBtn">매장 추가하기</button>
             </div>
             <div class="tab-content" id="tab-del">
@@ -191,212 +442,282 @@
     </div>
 </div>
 
-<!-- 네이버 지도 API (지도만 표시, Geocoding 없이) -->
-<script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=twr2gaszdv"></script>
+<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_KAKAO_APP_KEY&libraries=services"></script>
 
 <script>
-// 관리자 비밀번호
-const ADMIN_PASSWORD = 'debo1992';
-let isAuthenticated = false;
+var ADMIN_PASSWORD = 'debo1992';
+var isAuthenticated = false;
 
-// 매장 데이터 (좌표 포함)
-let stores = [
-    { name: "달인대보칼국수 본점", address: "서울특별시 강서구 마곡중앙5로 6", tel: "02-3664-9571", lat: 37.5665, lng: 126.8374 },
-    { name: "달인대보칼국수 양평점", address: "서울 영등포구 선유로 130", tel: "0507-1370-1961", lat: 37.5347, lng: 126.8963 },
-    { name: "달인대보칼국수 강남논현점", address: "서울특별시 강남구 언주로 615", tel: "070-4010-1028", lat: 37.5172, lng: 127.0286 },
-    { name: "달인대보칼국수 등촌역점", address: "서울 강서구 등촌로 205", tel: "010-3411-7567", lat: 37.5503, lng: 126.8625 },
-    { name: "달인대보칼국수 화곡역점", address: "서울 강서구 강서로56길 17", tel: "0507-1477-8874", lat: 37.5412, lng: 126.8374 },
-    { name: "달인대보칼국수 NC백화점 강서점", address: "서울 강서구 강서로56길 17", tel: "02-2667-9884", lat: 37.5412, lng: 126.8374 },
-    { name: "달인대보칼국수 고척스카이돔점", address: "서울 구로구 경인로47길 26", tel: "0507-1497-9122", lat: 37.4982, lng: 126.8670 },
-    { name: "달인대보칼국수 신월IC점", address: "서울 양천구 남부순환로 399", tel: "000-0000-0000", lat: 37.5168, lng: 126.8334 },
-    { name: "달인대보칼국수 장항점", address: "경기 고양시 일산동구 정발산로 24", tel: "0507-1374-7495", lat: 37.6590, lng: 126.7692 },
-    { name: "달인대보칼국수 백석점", address: "경기 고양시 일산동구 호수로 358-39", tel: "031-902-8265", lat: 37.6441, lng: 126.7867 },
-    { name: "달인대보칼국수 향동점", address: "경기 고양시 덕양구 향동로 217", tel: "0507-1307-3029", lat: 37.6160, lng: 126.8320 },
-    { name: "달인대보칼국수 평택점", address: "경기 평택시 고덕여염10길 69", tel: "0507-1373-9859", lat: 37.0653, lng: 127.0570 },
-    { name: "달인대보칼국수 평택죽백점", address: "경기도 평택시 이화로 214", tel: "0507-1350-1429", lat: 37.0120, lng: 127.0854 },
-    { name: "달인대보칼국수 송탄서정점", address: "경기도 평택시 서정로 262", tel: "0507-1400-9859", lat: 37.0808, lng: 127.0570 },
-    { name: "달인대보칼국수 광교점", address: "경기 수원시 영통구 대학4로 9", tel: "0507-1463-1454", lat: 37.2848, lng: 127.0436 },
-    { name: "달인대보칼국수 뉴코아아울렛 부천점", address: "경기 부천시 원미구 송내대로 239", tel: "0507-1421-8343", lat: 37.4989, lng: 126.7536 },
-    { name: "달인대보칼국수 부천시청점", address: "경기 부천시 원미구 중동 1301", tel: "0507-1328-3097", lat: 37.5034, lng: 126.7660 },
-    { name: "달인대보칼국수 NC백화점 고잔점", address: "경기 안산시 단원구 광덕대로 194", tel: "0507-1362-4640", lat: 37.3189, lng: 126.8305 },
-    { name: "달인대보칼국수 뉴코아아울렛 평촌점", address: "경기 안양시 동안구 동안로 119", tel: "0507-1351-5133", lat: 37.3897, lng: 126.9516 },
-    { name: "달인대보칼국수 산본점", address: "경기 군포시 번영로 504", tel: "0507-1349-2384", lat: 37.3590, lng: 126.9316 },
-    { name: "달인대보칼국수 마석점", address: "경기 남양주시 화도읍 비룡로 221", tel: "031-511-5707", lat: 37.6507, lng: 127.3013 },
-    { name: "달인대보칼국수 검단사거리역점", address: "인천광역시 서구 완정로165번길 7", tel: "0507-1446-1410", lat: 37.5935, lng: 126.6731 },
-    { name: "달인대보칼국수 현풍점", address: "대구 달성군 현풍읍 테크노대로 40", tel: "0507-1377-3236", lat: 35.7035, lng: 128.4124 },
-    { name: "달인대보칼국수 동아백화점 쇼핑점", address: "대구 중구 달구벌대로 2085", tel: "0507-1403-3803", lat: 35.8668, lng: 128.5911 },
-    { name: "달인대보칼국수 죽전점", address: "대구광역시 달서구 달구벌대로 1581", tel: "0507-1323-0177", lat: 35.8352, lng: 128.5334 },
-    { name: "달인 대보칼국수 월배점", address: "대구광역시 달서구 조암남로32길 20-8", tel: "0507-1456-0182", lat: 35.8165, lng: 128.5271 },
-    { name: "달인대보칼국수 영천점", address: "경북 영천시 동부로 39", tel: "054-332-3232", lat: 35.9731, lng: 128.9388 },
-    { name: "달인대보칼국수 사상점", address: "부산광역시 사상구 사상로250번길 11", tel: "0507-1356-8529", lat: 35.1526, lng: 128.9823 },
-    { name: "달인대보칼국수 창원중동점", address: "경상남도 창원시 의창구 의창대로266번길 10", tel: "0507-1321-6538", lat: 35.2540, lng: 128.6401 },
-    { name: "달인대보칼국수 양산석산점", address: "경상남도 양산시 동면 석산3길 30", tel: "0507-1394-3071", lat: 35.3715, lng: 129.0364 }
+var stores = [
+    { name: "달인대보칼국수 본점", address: "서울특별시 강서구 마곡중앙5로 6 보타닉푸르지오시티 서관 211호", tel: "02-3664-9571" },
+    { name: "달인대보칼국수 양평점", address: "서울 영등포구 선유로 130 1층", tel: "0507-1370-1961" },
+    { name: "달인대보칼국수 장항점", address: "경기 고양시 일산동구 정발산로 24 2층", tel: "0507-1374-7495" },
+    { name: "달인대보칼국수 평택점", address: "경기 평택시 고덕여염10길 69 1층", tel: "0507-1373-9859" },
+    { name: "달인대보칼국수 강남논현점", address: "서울특별시 강남구 언주로 615 103동 113호", tel: "070-4010-1028" },
+    { name: "달인대보칼국수 뉴코아아울렛 부천점", address: "경기 부천시 원미구 송내대로 239 1층", tel: "0507-1421-8343" },
+    { name: "달인대보칼국수 현풍점", address: "대구 달성군 현풍읍 테크노대로 40 1층", tel: "0507-1377-3236" },
+    { name: "달인대보칼국수 NC백화점 강서점", address: "서울 강서구 강서로56길 17 B1층", tel: "02-2667-9884" },
+    { name: "달인대보칼국수 NC백화점 고잔점", address: "경기 안산시 단원구 광덕대로 194 지하1층", tel: "0507-1362-4640" },
+    { name: "달인대보칼국수 뉴코아아울렛 평촌점", address: "경기 안양시 동안구 동안로 119 킴스아울렛 9층", tel: "0507-1351-5133" },
+    { name: "달인대보칼국수 광교점", address: "경기 수원시 영통구 대학4로 9 114호", tel: "0507-1463-1454" },
+    { name: "달인대보칼국수 등촌역점", address: "서울 강서구 등촌로 205 102호", tel: "010-3411-7567" },
+    { name: "달인대보칼국수 고척스카이돔점", address: "서울 구로구 경인로47길 26 2층", tel: "0507-1497-9122" },
+    { name: "달인대보칼국수 백석점", address: "경기 고양시 일산동구 호수로 358-39 1층", tel: "031-902-8265" },
+    { name: "달인대보칼국수 부천시청점", address: "경기 부천시 원미구 중동 1301", tel: "0507-1328-3097" },
+    { name: "달인대보칼국수 산본점", address: "경기 군포시 번영로 504 뉴코아아울렛 푸드코트 1층 1-1호", tel: "0507-1349-2384" },
+    { name: "달인대보칼국수 영천점", address: "경북 영천시 동부로 39", tel: "054-332-3232" },
+    { name: "달인대보칼국수 동아백화점 쇼핑점", address: "대구 중구 달구벌대로 2085 지하1층", tel: "0507-1403-3803" },
+    { name: "달인대보칼국수 향동점", address: "경기 고양시 덕양구 향동로 217 1층 R147호", tel: "0507-1307-3029" },
+    { name: "달인대보칼국수 마석점", address: "경기 남양주시 화도읍 비룡로 221 1층 101호", tel: "031-511-5707" },
+    { name: "달인대보칼국수 신월IC점", address: "서울 양천구 남부순환로 399 진성빌딩 1층 102호", tel: "000-0000-0000" },
+    { name: "달인대보칼국수 화곡역점", address: "서울특별시 강서구 강서로56길 17 B1층", tel: "0507-1477-8874" },
+    { name: "달인대보칼국수 검단사거리역점", address: "인천광역시 서구 완정로165번길 7 2층", tel: "0507-1446-1410" },
+    { name: "달인대보칼국수 사상점", address: "부산광역시 사상구 사상로250번길 11 1층", tel: "0507-1356-8529" },
+    { name: "달인대보칼국수 평택죽백점", address: "경기도 평택시 이화로 214 1층", tel: "0507-1350-1429" },
+    { name: "달인대보칼국수 죽전점", address: "대구광역시 달서구 달구벌대로 1581 402동 1층 113호", tel: "0507-1323-0177" },
+    { name: "달인 대보칼국수 월배점", address: "대구광역시 달서구 조암남로32길 20-8 113호", tel: "0507-1456-0182" },
+    { name: "달인대보칼국수 창원중동점", address: "경상남도 창원시 의창구 의창대로266번길 10 1층 101호", tel: "0507-1321-6538" },
+    { name: "달인대보칼국수 양산석산점", address: "경상남도 양산시 동면 석산3길 30", tel: "0507-1394-3071" },
+    { name: "달인대보칼국수 송탄서정점", address: "경기도 평택시 서정로 262 1층", tel: "0507-1400-9859" }
 ];
 
-// 로컬스토리지에서 불러오기
-const saved = localStorage.getItem('daebok_stores');
-if (saved) stores = JSON.parse(saved);
+var saved = localStorage.getItem('daebok_stores');
+if (saved) {
+    stores = JSON.parse(saved);
+}
 
-// 저장 함수
-const saveStores = () => localStorage.setItem('daebok_stores', JSON.stringify(stores));
+function saveStores() {
+    localStorage.setItem('daebok_stores', JSON.stringify(stores));
+}
 
-// 지도 초기화
-const map = new naver.maps.Map('map', {
-    center: new naver.maps.LatLng(36.5, 127.5),
-    zoom: 7,
-    zoomControl: true,
-    zoomControlOptions: {
-        position: naver.maps.Position.TOP_RIGHT
-    }
-});
-
-let markers = [];
-let infoWindow = null;
-
-// 커스텀 마커 이미지 (1.png - 300x300)
-const markerIcon = {
-    url: './1.png',
-    size: new naver.maps.Size(300, 300),
-    scaledSize: new naver.maps.Size(40, 40),
-    origin: new naver.maps.Point(0, 0),
-    anchor: new naver.maps.Point(20, 40)
+var mapContainer = document.getElementById('map');
+var mapOption = {
+    center: new kakao.maps.LatLng(36.5, 127.5),
+    level: 13
 };
 
-// 마커 생성 (좌표가 있는 데이터만)
-function createMarkers(data) {
-    markers.forEach(m => m.setMap(null));
-    markers = [];
-    if (infoWindow) infoWindow.close();
+var map = new kakao.maps.Map(mapContainer, mapOption);
+var geocoder = new kakao.maps.services.Geocoder();
+var markers = [];
+var currentOverlay = null;
 
-    data.forEach(store => {
-        if (!store.lat || !store.lng) return;
-        
-        const marker = new naver.maps.Marker({
-            position: new naver.maps.LatLng(store.lat, store.lng),
-            map: map,
-            title: store.name,
-            icon: markerIcon
+var markerImage = new kakao.maps.MarkerImage(
+    '/images/map_make.png',
+    new kakao.maps.Size(44, 50),
+    { offset: new kakao.maps.Point(22, 50) }
+);
+
+function createMarkers(data) {
+    markers.forEach(function(marker) {
+        marker.setMap(null);
+    });
+    markers = [];
+    
+    if (currentOverlay) {
+        currentOverlay.setMap(null);
+    }
+    
+    data.forEach(function(store) {
+        geocoder.addressSearch(store.address, function(result, status) {
+            if (status === kakao.maps.services.Status.OK) {
+                var coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+                
+                var marker = new kakao.maps.Marker({
+                    map: map,
+                    position: coords,
+                    title: store.name,
+                    image: markerImage
+                });
+                
+                kakao.maps.event.addListener(marker, 'click', function() {
+                    showOverlay(store, coords);
+                });
+                
+                markers.push(marker);
+                
+                store.lat = parseFloat(result[0].y);
+                store.lng = parseFloat(result[0].x);
+            }
         });
-        
-        naver.maps.Event.addListener(marker, 'click', () => {
-            if (infoWindow) infoWindow.close();
-            
-            infoWindow = new naver.maps.InfoWindow({
-                content: `
-                    <div style="padding:15px;min-width:200px;">
-                        <h4 style="margin:0 0 8px;color:#222;">${store.name}</h4>
-                        <p style="margin:0 0 5px;font-size:13px;color:#666;">${store.address}</p>
-                        <p style="margin:0;font-size:14px;color:#333;font-weight:bold;">${store.tel}</p>
-                    </div>
-                `,
-                borderWidth: 1,
-                borderColor: '#ddd',
-                backgroundColor: '#fff'
-            });
-            
-            infoWindow.open(map, marker);
-        });
-        
-        markers.push(marker);
     });
 }
 
-// 매장 목록 렌더링
+function showOverlay(store, position) {
+    if (currentOverlay) {
+        currentOverlay.setMap(null);
+    }
+    
+    var content = '<div style="padding:10px;background:#fff;border:1px solid #ddd;border-radius:5px;min-width:150px;">';
+    content += '<div class="markerdesc" style="font-size:12px;font-weight:bold;">' + store.name + '</div>';
+    content += '</div>';
+    
+    currentOverlay = new kakao.maps.CustomOverlay({
+        content: content,
+        position: position,
+        yAnchor: 1.5
+    });
+    
+    currentOverlay.setMap(map);
+}
+
 function renderList(data) {
-    const list = document.getElementById('storeList');
+    var container = document.getElementById('storeListContainer');
     
     if (data.length === 0) {
-        list.innerHTML = '<div class="no-result">검색 결과가 없습니다</div>';
+        container.innerHTML = '<div class="no-result">검색 결과가 없습니다</div>';
         return;
     }
     
-    list.innerHTML = data.map((s) => {
-        const idx = stores.indexOf(s);
-        return `
-            <div class="store-item" data-idx="${idx}">
-                <h4>${s.name}</h4>
-                <p>${s.address}</p>
-                <p class="tel">${s.tel}</p>
-            </div>
-        `;
-    }).join('');
+    var html = '';
+    data.forEach(function(store, index) {
+        var originalIndex = stores.indexOf(store);
+        html += '<div class="store mid_map_search_item" data-value="' + originalIndex + '" data-subject="' + store.name + '">';
+        html += '<p class="mid_map_search_item_title">' + store.name + '</p>';
+        html += '<p class="mid_map_search_item_addres">' + store.address + '</p>';
+        html += '<p class="mid_map_search_item_tel">' + store.tel + '</p>';
+        html += '</div>';
+    });
     
-    list.querySelectorAll('.store-item').forEach(item => {
-        item.onclick = () => {
-            const s = stores[item.dataset.idx];
+    container.innerHTML = html;
+    
+    container.querySelectorAll('.mid_map_search_item').forEach(function(item) {
+        item.addEventListener('click', function() {
+            var idx = parseInt(this.dataset.value);
+            var store = stores[idx];
             
-            if (s.lat && s.lng) {
-                map.setCenter(new naver.maps.LatLng(s.lat, s.lng));
-                map.setZoom(16);
+            if (store.lat && store.lng) {
+                var position = new kakao.maps.LatLng(store.lat, store.lng);
+                map.setCenter(position);
+                map.setLevel(3);
+                showOverlay(store, position);
+            } else {
+                geocoder.addressSearch(store.address, function(result, status) {
+                    if (status === kakao.maps.services.Status.OK) {
+                        var coords = new kakao.maps.LatLng(result[0].y, result[0].x);
+                        map.setCenter(coords);
+                        map.setLevel(3);
+                        showOverlay(store, coords);
+                        store.lat = parseFloat(result[0].y);
+                        store.lng = parseFloat(result[0].x);
+                    }
+                });
             }
             
-            document.querySelectorAll('.store-item').forEach(el => el.classList.remove('active'));
-            item.classList.add('active');
-        };
+            document.querySelectorAll('.mid_map_search_item').forEach(function(el) {
+                el.classList.remove('active');
+            });
+            this.classList.add('active');
+        });
     });
 }
 
-// 삭제 목록 렌더링
 function renderDelList() {
-    document.getElementById('storeCount').textContent = `총 ${stores.length}개 매장`;
-    document.getElementById('delList').innerHTML = stores.map((s, i) => `
-        <div class="list-item">
-            <div>
-                <h4>${s.name}</h4>
-                <p>${s.address}</p>
-            </div>
-            <button class="btn btn-del" onclick="delStore(${i})">삭제</button>
-        </div>
-    `).join('');
+    document.getElementById('storeCount').textContent = '총 ' + stores.length + '개 매장';
+    
+    var html = '';
+    stores.forEach(function(store, index) {
+        html += '<div class="list-item">';
+        html += '<div>';
+        html += '<h4>' + store.name + '</h4>';
+        html += '<p>' + store.address + '</p>';
+        html += '</div>';
+        html += '<button class="btn btn-del" onclick="deleteStore(' + index + ')">삭제</button>';
+        html += '</div>';
+    });
+    
+    document.getElementById('delList').innerHTML = html;
 }
 
-// 매장 삭제
-window.delStore = (i) => {
-    const name = stores[i].name;
-    if (confirm(`"${name}"을(를) 삭제하시겠습니까?`)) {
-        stores.splice(i, 1);
+function deleteStore(index) {
+    var name = stores[index].name;
+    if (confirm('"' + name + '"을(를) 삭제하시겠습니까?')) {
+        stores.splice(index, 1);
         saveStores();
         renderList(stores);
         renderDelList();
         createMarkers(stores);
         showAlert('삭제 완료');
     }
-};
-
-// 알림
-function showAlert(msg, isError = false) {
-    const el = document.createElement('div');
-    el.className = 'alert' + (isError ? ' error' : '');
-    el.textContent = msg;
-    document.body.appendChild(el);
-    setTimeout(() => el.remove(), 2500);
 }
 
-// 검색
-document.getElementById('searchInput').addEventListener('input', function() {
-    const keyword = this.value.toLowerCase().trim();
-    
-    if (keyword === '') {
+function showAlert(msg) {
+    var el = document.createElement('div');
+    el.className = 'alert';
+    el.textContent = msg;
+    document.body.appendChild(el);
+    setTimeout(function() {
+        el.remove();
+    }, 2500);
+}
+
+function searchStores(keyword, type) {
+    if (!keyword || keyword.length < 2) {
         renderList(stores);
         createMarkers(stores);
         return;
     }
     
-    const filtered = stores.filter(s => 
-        s.name.toLowerCase().includes(keyword) || 
-        s.address.toLowerCase().includes(keyword) ||
-        s.tel.replace(/-/g, '').includes(keyword.replace(/-/g, ''))
-    );
+    var filtered;
+    var lowerKeyword = keyword.toLowerCase();
+    
+    if (type === 'location') {
+        filtered = stores.filter(function(store) {
+            return store.address.toLowerCase().indexOf(lowerKeyword) > -1;
+        });
+    } else {
+        filtered = stores.filter(function(store) {
+            return store.name.toLowerCase().indexOf(lowerKeyword) > -1 || 
+                   store.tel.replace(/-/g, '').indexOf(keyword.replace(/-/g, '')) > -1;
+        });
+    }
     
     renderList(filtered);
     
-    if (keyword.length >= 2) {
+    if (filtered.length > 0) {
         createMarkers(filtered);
     }
+}
+
+document.querySelectorAll('.mid_map_search_top > div').forEach(function(tab) {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.mid_map_search_top > div').forEach(function(t) {
+            t.classList.remove('on2');
+            t.classList.add('off2');
+        });
+        this.classList.remove('off2');
+        this.classList.add('on2');
+        
+        var directInput = document.getElementById('direct');
+        var addressInput = document.getElementById('direct_addres');
+        
+        if (this.dataset.map === 'direct') {
+            directInput.classList.remove('hide');
+            directInput.classList.add('show');
+            directInput.value = '';
+            addressInput.classList.remove('show');
+            addressInput.classList.add('hide');
+        } else {
+            directInput.classList.remove('show');
+            directInput.classList.add('hide');
+            addressInput.classList.remove('hide');
+            addressInput.classList.add('show');
+            addressInput.value = '';
+        }
+        
+        renderList(stores);
+        createMarkers(stores);
+    });
 });
 
-// 비밀번호 관련
-document.getElementById('adminBtn').onclick = () => {
+document.getElementById('direct').addEventListener('input', function() {
+    searchStores(this.value, 'direct');
+});
+
+document.getElementById('direct_addres').addEventListener('input', function() {
+    searchStores(this.value, 'location');
+});
+
+document.getElementById('adminBtn').addEventListener('click', function() {
     if (isAuthenticated) {
         document.getElementById('modal').classList.add('show');
         renderDelList();
@@ -406,10 +727,10 @@ document.getElementById('adminBtn').onclick = () => {
         document.getElementById('pwError').style.display = 'none';
         document.getElementById('pwInput').focus();
     }
-};
+});
 
-document.getElementById('pwSubmit').onclick = () => {
-    const input = document.getElementById('pwInput').value;
+document.getElementById('pwSubmit').addEventListener('click', function() {
+    var input = document.getElementById('pwInput').value;
     
     if (input === ADMIN_PASSWORD) {
         isAuthenticated = true;
@@ -422,106 +743,103 @@ document.getElementById('pwSubmit').onclick = () => {
         document.getElementById('pwInput').value = '';
         document.getElementById('pwInput').focus();
     }
-};
+});
 
-document.getElementById('pwInput').addEventListener('keypress', (e) => {
+document.getElementById('pwInput').addEventListener('keypress', function(e) {
     if (e.key === 'Enter') {
         document.getElementById('pwSubmit').click();
     }
 });
 
-document.getElementById('pwModalClose').onclick = () => {
+document.getElementById('pwModalClose').addEventListener('click', function() {
     document.getElementById('pwModal').classList.remove('show');
-};
+});
 
-document.getElementById('pwModal').onclick = (e) => {
-    if (e.target.id === 'pwModal') {
-        document.getElementById('pwModal').classList.remove('show');
+document.getElementById('pwModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        this.classList.remove('show');
     }
-};
+});
 
-// 관리 모달
-document.getElementById('modalClose').onclick = () => {
+document.getElementById('modalClose').addEventListener('click', function() {
     document.getElementById('modal').classList.remove('show');
-};
+});
 
-document.getElementById('modal').onclick = (e) => {
-    if (e.target.id === 'modal') {
-        document.getElementById('modal').classList.remove('show');
+document.getElementById('modal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        this.classList.remove('show');
     }
-};
+});
 
-document.addEventListener('keydown', (e) => {
+document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
         document.getElementById('modal').classList.remove('show');
         document.getElementById('pwModal').classList.remove('show');
     }
 });
 
-// 탭 전환
-document.querySelectorAll('.tabs button').forEach(btn => {
-    btn.onclick = () => {
-        document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+document.querySelectorAll('.tabs button').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.tabs button').forEach(function(b) {
+            b.classList.remove('active');
+        });
+        document.querySelectorAll('.tab-content').forEach(function(c) {
+            c.classList.remove('active');
+        });
+        this.classList.add('active');
+        document.getElementById('tab-' + this.dataset.tab).classList.add('active');
         
-        if (btn.dataset.tab === 'del') {
+        if (this.dataset.tab === 'del') {
             renderDelList();
         }
-    };
+    });
 });
 
-// 매장 추가 (좌표 포함)
-document.getElementById('addBtn').onclick = () => {
-    const name = document.getElementById('inputName').value.trim();
-    const address = document.getElementById('inputAddr').value.trim();
-    const tel = document.getElementById('inputTel').value.trim();
-    const lat = parseFloat(document.getElementById('inputLat').value.trim());
-    const lng = parseFloat(document.getElementById('inputLng').value.trim());
+document.getElementById('addBtn').addEventListener('click', function() {
+    var name = document.getElementById('inputName').value.trim();
+    var address = document.getElementById('inputAddr').value.trim();
+    var tel = document.getElementById('inputTel').value.trim();
     
     if (!name || !address || !tel) {
-        alert('매장명, 주소, 전화번호를 입력해주세요');
+        alert('모든 항목을 입력해주세요');
         return;
     }
     
-    if (isNaN(lat) || isNaN(lng)) {
-        alert('위도와 경도를 숫자로 입력해주세요');
-        return;
-    }
+    var exists = stores.some(function(s) {
+        return s.name === name;
+    });
     
-    if (stores.some(s => s.name === name)) {
+    if (exists) {
         alert('이미 존재하는 매장명입니다');
         return;
     }
     
-    stores.push({ name, address, tel, lat, lng });
+    stores.push({ name: name, address: address, tel: tel });
     saveStores();
     
     document.getElementById('inputName').value = '';
     document.getElementById('inputAddr').value = '';
     document.getElementById('inputTel').value = '';
-    document.getElementById('inputLat').value = '';
-    document.getElementById('inputLng').value = '';
     
     renderList(stores);
     renderDelList();
     createMarkers(stores);
     
     showAlert('"' + name + '" 추가 완료');
-};
+});
 
-['inputName', 'inputAddr', 'inputTel', 'inputLat', 'inputLng'].forEach(id => {
-    document.getElementById(id).addEventListener('keypress', (e) => {
+['inputName', 'inputAddr', 'inputTel'].forEach(function(id) {
+    document.getElementById(id).addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             document.getElementById('addBtn').click();
         }
     });
 });
 
-// 초기화
 renderList(stores);
-setTimeout(() => createMarkers(stores), 300);
+setTimeout(function() {
+    createMarkers(stores);
+}, 500);
 </script>
 
 </body>
