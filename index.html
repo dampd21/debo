@@ -3,151 +3,558 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>달인대보칼국수 가맹점 안내</title>
+    <title>매장찾기 | 달인 대보 칼국수</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Malgun Gothic', sans-serif; }
-        
-        .rltv { position: relative; }
-        .absol { position: absolute; }
-        .show { display: block; }
-        .hide { display: none; }
-        
-        .map_content_div {
-            width: 100%;
-            max-width: 1200px;
+        :root {
+            --primary: #8B0000;
+            --primary-dark: #5C0000;
+            --primary-light: #A52A2A;
+            --gold: #D4AF37;
+            --gold-light: #F4E4BC;
+            --dark: #1A1A1A;
+            --gray-dark: #333333;
+            --gray: #666666;
+            --gray-light: #999999;
+            --bg-light: #FAFAFA;
+            --white: #FFFFFF;
+            --shadow: 0 10px 40px rgba(0,0,0,0.1);
+            --shadow-hover: 0 20px 60px rgba(0,0,0,0.15);
+            --transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-light);
+            color: var(--dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* 애니메이션 키프레임 */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInLeft {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes scaleIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .animate-fadeInUp {
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        .animate-fadeInLeft {
+            animation: fadeInLeft 0.8s ease forwards;
+        }
+
+        .animate-fadeInRight {
+            animation: fadeInRight 0.8s ease forwards;
+        }
+
+        .animate-scaleIn {
+            animation: scaleIn 0.6s ease forwards;
+        }
+
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
+
+        /* 헤더 */
+        .header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 80px 20px 100px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+            opacity: 0.5;
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+            max-width: 800px;
             margin: 0 auto;
         }
-        
-        .map_content {
-            width: 100%;
+
+        .header-badge {
+            display: inline-block;
+            background: var(--gold);
+            color: var(--dark);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+            animation: fadeInUp 0.6s ease forwards;
         }
-        
-        .map_mid {
+
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(2.5rem, 6vw, 4rem);
+            color: var(--white);
+            margin-bottom: 15px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            animation: fadeInUp 0.8s ease forwards;
+            animation-delay: 0.1s;
+            opacity: 0;
+        }
+
+        .header p {
+            color: rgba(255,255,255,0.85);
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+            font-weight: 300;
+            animation: fadeInUp 0.8s ease forwards;
+            animation-delay: 0.2s;
+            opacity: 0;
+        }
+
+        .header-stats {
             display: flex;
-            height: 500px;
-            background: #fff;
+            justify-content: center;
+            gap: 40px;
+            margin-top: 40px;
+            animation: fadeInUp 0.8s ease forwards;
+            animation-delay: 0.3s;
+            opacity: 0;
         }
-        
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-family: 'Playfair Display', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--gold);
+            display: block;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: rgba(255,255,255,0.7);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* 메인 컨테이너 */
+        .main-container {
+            max-width: 1400px;
+            margin: -50px auto 60px;
+            padding: 0 20px;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* 지도 섹션 */
+        .map-section {
+            background: var(--white);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            animation: scaleIn 0.8s ease forwards;
+            animation-delay: 0.2s;
+            opacity: 0;
+        }
+
+        .map-wrapper {
+            display: flex;
+            min-height: 600px;
+        }
+
         #map {
             flex: 1;
-            height: 100%;
+            min-height: 500px;
         }
-        
-        .mid_map_search {
-            width: 350px;
-            right: 0;
-            top: 0;
-            height: 100%;
-            background: #fff;
+
+        /* 검색 패널 */
+        .search-panel {
+            width: 380px;
             display: flex;
             flex-direction: column;
-            border-left: 1px solid #ddd;
+            border-left: 1px solid rgba(0,0,0,0.08);
+            background: var(--white);
         }
-        
-        .mid_map_search_top {
+
+        .search-header {
+            padding: 25px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+        }
+
+        .search-title {
+            color: var(--white);
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
             display: flex;
-            border-bottom: 1px solid #ddd;
+            align-items: center;
+            gap: 10px;
         }
-        
-        .mid_map_search_top > div {
+
+        .search-title i {
+            color: var(--gold);
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-input-wrap {
             flex: 1;
-            padding: 15px;
-            text-align: center;
+            position: relative;
+        }
+
+        .search-input-wrap i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--gray-light);
+            font-size: 14px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 14px 14px 14px 42px;
+            border: none;
+            border-radius: 12px;
+            font-size: 15px;
+            font-family: inherit;
+            background: var(--white);
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.3);
+        }
+
+        .search-input::placeholder {
+            color: var(--gray-light);
+        }
+
+        .admin-btn {
+            width: 48px;
+            height: 48px;
+            background: var(--gold);
+            color: var(--dark);
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
             cursor: pointer;
-            font-weight: bold;
-        }
-        
-        .mid_map_search_top .on2 {
-            background: #333;
-            color: #fff;
-        }
-        
-        .mid_map_search_top .off2 {
-            background: #f5f5f5;
-            color: #666;
-        }
-        
-        .mid_map_search_mid {
-            padding: 15px;
-            border-bottom: 1px solid #ddd;
+            transition: var(--transition);
             display: flex;
-            gap: 8px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .admin-btn:hover {
+            background: var(--gold-light);
+            transform: rotate(90deg);
+        }
+
+        /* 매장 카운트 */
+        .store-count-bar {
+            padding: 15px 25px;
+            background: var(--bg-light);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
             align-items: center;
         }
-        
-        .mid_map_search_mid input {
-            flex: 1;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
+
+        .store-count-text {
             font-size: 14px;
+            color: var(--gray);
         }
-        
-        .mid_map_search_mid input:focus {
-            outline: none;
-            border-color: #333;
+
+        .store-count-text strong {
+            color: var(--primary);
+            font-weight: 700;
         }
-        
-        .map_icon {
-            display: none;
+
+        .view-toggle {
+            display: flex;
+            gap: 5px;
         }
-        
-        .admin-btn {
-            width: 40px;
-            height: 40px;
-            background: #333;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
-            font-size: 20px;
+
+        .view-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid rgba(0,0,0,0.1);
+            background: var(--white);
+            border-radius: 8px;
             cursor: pointer;
-            flex-shrink: 0;
+            color: var(--gray-light);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        
-        .admin-btn:hover {
-            background: #111;
+
+        .view-btn.active,
+        .view-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--white);
         }
-        
-        .mid_map_search_bottom {
+
+        /* 매장 리스트 */
+        .store-list {
             flex: 1;
             overflow-y: auto;
+            padding: 10px;
         }
-        
-        .mid_map_search_item {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
+
+        .store-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .store-list::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .store-list::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.1);
+            border-radius: 10px;
+        }
+
+        .store-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(0,0,0,0.2);
+        }
+
+        .store-item {
+            padding: 20px;
+            border-radius: 16px;
             cursor: pointer;
+            transition: var(--transition);
+            margin-bottom: 8px;
+            border: 1px solid transparent;
+            position: relative;
+            overflow: hidden;
         }
-        
-        .mid_map_search_item:hover {
-            background: #f9f9f9;
+
+        .store-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--primary);
+            transform: scaleY(0);
+            transition: var(--transition);
         }
-        
-        .mid_map_search_item.active {
-            background: #f0f0f0;
-            border-left: 3px solid #333;
+
+        .store-item:hover {
+            background: var(--bg-light);
+            border-color: rgba(0,0,0,0.05);
+            transform: translateX(5px);
         }
-        
-        .mid_map_search_item_title {
-            font-weight: bold;
-            font-size: 14px;
-            color: #222;
-            margin-bottom: 5px;
+
+        .store-item:hover::before {
+            transform: scaleY(1);
         }
-        
-        .mid_map_search_item_addres {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 3px;
+
+        .store-item.active {
+            background: linear-gradient(135deg, rgba(139,0,0,0.05) 0%, rgba(139,0,0,0.02) 100%);
+            border-color: var(--primary);
         }
-        
-        .mid_map_search_item_tel {
+
+        .store-item.active::before {
+            transform: scaleY(1);
+        }
+
+        .store-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 8px;
+        }
+
+        .store-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--dark);
+            line-height: 1.4;
+        }
+
+        .store-badge {
+            font-size: 10px;
+            padding: 4px 8px;
+            background: var(--gold-light);
+            color: var(--primary-dark);
+            border-radius: 20px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .store-address {
             font-size: 13px;
-            color: #333;
-            font-weight: bold;
+            color: var(--gray);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: flex-start;
+            gap: 6px;
+            line-height: 1.5;
         }
-        
-        .modal {
+
+        .store-address i {
+            color: var(--primary);
+            font-size: 12px;
+            margin-top: 3px;
+        }
+
+        .store-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .store-tel {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .store-tel:hover {
+            color: var(--primary-dark);
+        }
+
+        .store-tel i {
+            font-size: 12px;
+        }
+
+        .store-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            border: 1px solid rgba(0,0,0,0.1);
+            background: var(--white);
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--gray);
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        .action-btn:hover {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: var(--white);
+        }
+
+        .no-result {
+            padding: 60px 20px;
+            text-align: center;
+            color: var(--gray-light);
+        }
+
+        .no-result i {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.3;
+        }
+
+        .no-result p {
+            font-size: 15px;
+        }
+
+        /* 모달 */
+        .modal-overlay {
             display: none;
             position: fixed;
             top: 0;
@@ -155,692 +562,1122 @@
             width: 100%;
             height: 100%;
             background: rgba(0,0,0,0.6);
-            z-index: 9999;
+            backdrop-filter: blur(5px);
+            z-index: 1000;
             justify-content: center;
             align-items: center;
-        }
-        
-        .modal.show {
-            display: flex;
-        }
-        
-        .modal-content {
-            background: #fff;
-            width: 90%;
-            max-width: 500px;
-            border-radius: 10px;
-            overflow: hidden;
-        }
-        
-        .modal-header {
-            background: #333;
-            color: #fff;
             padding: 20px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .modal {
+            background: var(--white);
+            width: 100%;
+            max-width: 500px;
+            border-radius: 20px;
+            overflow: hidden;
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.3s ease;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .modal-overlay.show .modal {
+            transform: scale(1) translateY(0);
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            padding: 25px 30px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        
-        .modal-header h2 {
-            font-size: 18px;
-            margin: 0;
-        }
-        
-        .modal-close {
-            background: none;
-            border: none;
-            color: #fff;
-            font-size: 24px;
-            cursor: pointer;
-        }
-        
-        .modal-body {
-            padding: 20px;
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-        
-        .pw-modal-content {
-            max-width: 350px;
-        }
-        
-        .pw-input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-            font-size: 16px;
-            margin-bottom: 15px;
-            text-align: center;
-        }
-        
-        .pw-input:focus {
-            outline: none;
-            border-color: #333;
-        }
-        
-        .pw-error {
-            color: #c00;
-            font-size: 14px;
-            text-align: center;
-            margin-bottom: 10px;
-            display: none;
-        }
-        
-        .tabs {
+
+        .modal-title {
+            color: var(--white);
+            font-size: 1.2rem;
+            font-weight: 600;
             display: flex;
-            border-bottom: 1px solid #ddd;
+            align-items: center;
+            gap: 10px;
         }
-        
-        .tabs button {
-            flex: 1;
-            padding: 12px;
+
+        .modal-title i {
+            color: var(--gold);
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.1);
             border: none;
-            background: #f5f5f5;
+            border-radius: 50%;
+            color: var(--white);
+            font-size: 18px;
             cursor: pointer;
-            font-weight: bold;
-            color: #666;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        
-        .tabs button:hover {
-            background: #e8e8e8;
+
+        .modal-close:hover {
+            background: rgba(255,255,255,0.2);
+            transform: rotate(90deg);
         }
-        
-        .tabs button.active {
-            background: #fff;
-            border-bottom: 2px solid #333;
-            color: #333;
+
+        .modal-tabs {
+            display: flex;
+            background: var(--bg-light);
+            border-bottom: 1px solid rgba(0,0,0,0.05);
         }
-        
+
+        .modal-tab {
+            flex: 1;
+            padding: 16px;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--gray);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .modal-tab::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 3px;
+            background: var(--primary);
+            transition: var(--transition);
+        }
+
+        .modal-tab:hover {
+            color: var(--primary);
+        }
+
+        .modal-tab.active {
+            color: var(--primary);
+        }
+
+        .modal-tab.active::after {
+            width: 40px;
+        }
+
+        .modal-body {
+            padding: 30px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
         .tab-content {
             display: none;
         }
-        
+
         .tab-content.active {
             display: block;
+            animation: fadeInUp 0.4s ease;
         }
-        
+
         .form-group {
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
-        
-        .form-group label {
+
+        .form-label {
             display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #333;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--gray-dark);
+            margin-bottom: 8px;
         }
-        
-        .form-group input {
+
+        .form-input {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 5px;
-        }
-        
-        .form-group input:focus {
-            border-color: #333;
-            outline: none;
-        }
-        
-        .btn {
-            width: 100%;
-            padding: 12px;
-            background: #333;
-            color: #fff;
-            border: none;
-            border-radius: 5px;
+            padding: 14px 16px;
+            border: 2px solid rgba(0,0,0,0.08);
+            border-radius: 12px;
             font-size: 15px;
-            cursor: pointer;
-            font-weight: bold;
+            font-family: inherit;
+            transition: var(--transition);
+            background: var(--bg-light);
         }
-        
-        .btn:hover {
-            background: #111;
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--white);
         }
-        
-        .btn-del {
-            background: #666;
-            padding: 6px 12px;
+
+        .form-input::placeholder {
+            color: var(--gray-light);
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        .form-help {
             font-size: 12px;
-            width: auto;
+            color: var(--gray-light);
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
-        
-        .btn-del:hover {
-            background: #444;
+
+        .form-help i {
+            color: var(--gold);
         }
-        
-        .list-item {
+
+        .btn-primary {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: var(--white);
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139,0,0,0.3);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        /* 삭제 리스트 */
+        .delete-list-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 12px;
-            border: 1px solid #eee;
-            border-radius: 5px;
+            padding: 15px 20px;
+            background: var(--bg-light);
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        .delete-list-count {
+            font-size: 14px;
+            color: var(--gray);
+        }
+
+        .delete-list-count strong {
+            color: var(--primary);
+            font-weight: 700;
+        }
+
+        .delete-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border: 1px solid rgba(0,0,0,0.08);
+            border-radius: 12px;
+            margin-bottom: 10px;
+            transition: var(--transition);
+        }
+
+        .delete-item:hover {
+            border-color: var(--primary);
+            background: rgba(139,0,0,0.02);
+        }
+
+        .delete-item-info h4 {
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+
+        .delete-item-info p {
+            font-size: 12px;
+            color: var(--gray);
+        }
+
+        .btn-delete {
+            padding: 8px 16px;
+            background: transparent;
+            border: 1px solid var(--gray-light);
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--gray);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .btn-delete:hover {
+            background: #dc3545;
+            border-color: #dc3545;
+            color: var(--white);
+        }
+
+        /* 비밀번호 모달 */
+        .pw-modal .modal {
+            max-width: 380px;
+        }
+
+        .pw-modal .modal-body {
+            text-align: center;
+        }
+
+        .pw-icon {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold) 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 28px;
+            color: var(--primary-dark);
+        }
+
+        .pw-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: var(--dark);
             margin-bottom: 8px;
         }
-        
-        .list-item:hover {
-            background: #f9f9f9;
+
+        .pw-desc {
+            font-size: 14px;
+            color: var(--gray);
+            margin-bottom: 25px;
         }
-        
-        .list-item h4 {
-            font-size: 13px;
-            margin: 0 0 3px 0;
-            color: #333;
-        }
-        
-        .list-item p {
-            font-size: 11px;
-            color: #666;
-            margin: 0;
-        }
-        
-        .store-count {
-            background: #f0f0f0;
-            padding: 10px 15px;
-            border-radius: 5px;
-            margin-bottom: 15px;
-            font-weight: bold;
-            color: #555;
-        }
-        
-        .alert {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            background: #333;
-            color: #fff;
-            border-radius: 8px;
-            z-index: 99999;
-            font-weight: bold;
-            animation: slideIn 0.3s;
-        }
-        
-        @keyframes slideIn {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        
-        .no-result {
-            padding: 30px;
+
+        .pw-input {
+            width: 100%;
+            padding: 16px;
+            border: 2px solid rgba(0,0,0,0.08);
+            border-radius: 12px;
+            font-size: 18px;
             text-align: center;
-            color: #999;
+            letter-spacing: 8px;
+            font-family: inherit;
+            transition: var(--transition);
+            background: var(--bg-light);
+            margin-bottom: 15px;
+        }
+
+        .pw-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--white);
+        }
+
+        .pw-error {
+            color: #dc3545;
+            font-size: 13px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .pw-error.show {
+            display: block;
+            animation: fadeInUp 0.3s ease;
+        }
+
+        /* 알림 토스트 */
+        .toast {
+            position: fixed;
+            top: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-100px);
+            padding: 16px 30px;
+            background: var(--dark);
+            color: var(--white);
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        .toast.success {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        }
+
+        .toast.error {
+            background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        }
+
+        .toast i {
+            font-size: 18px;
+        }
+
+        /* 푸터 */
+        .footer {
+            background: var(--dark);
+            padding: 60px 20px;
+            text-align: center;
+        }
+
+        .footer-logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.8rem;
+            color: var(--white);
+            margin-bottom: 20px;
+        }
+
+        .footer-info {
+            color: rgba(255,255,255,0.5);
+            font-size: 13px;
+            line-height: 2;
+            margin-bottom: 30px;
+        }
+
+        .footer-social {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .social-link {
+            width: 44px;
+            height: 44px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--white);
+            font-size: 18px;
+            transition: var(--transition);
+        }
+
+        .social-link:hover {
+            background: var(--primary);
+            transform: translateY(-3px);
+        }
+
+        .footer-copyright {
+            color: rgba(255,255,255,0.3);
+            font-size: 12px;
+            padding-top: 30px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* 반응형 - 태블릿 */
+        @media (max-width: 1024px) {
+            .map-wrapper {
+                flex-direction: column;
+                min-height: auto;
+            }
+
+            #map {
+                height: 450px;
+            }
+
+            .search-panel {
+                width: 100%;
+                border-left: none;
+                border-top: 1px solid rgba(0,0,0,0.08);
+            }
+
+            .store-list {
+                max-height: 400px;
+            }
+
+            .header-stats {
+                gap: 30px;
+            }
+
+            .stat-number {
+                font-size: 2rem;
+            }
+        }
+
+        /* 반응형 - 모바일 */
+        @media (max-width: 600px) {
+            .header {
+                padding: 60px 20px 80px;
+            }
+
+            .header-badge {
+                font-size: 11px;
+                padding: 6px 16px;
+            }
+
+            .header-stats {
+                gap: 20px;
+            }
+
+            .stat-number {
+                font-size: 1.6rem;
+            }
+
+            .stat-label {
+                font-size: 0.75rem;
+            }
+
+            .main-container {
+                margin-top: -40px;
+                padding: 0 15px;
+            }
+
+            .map-section {
+                border-radius: 16px;
+            }
+
+            #map {
+                height: 350px;
+            }
+
+            .search-header {
+                padding: 20px;
+            }
+
+            .search-title {
+                font-size: 1rem;
+            }
+
+            .search-input {
+                padding: 12px 12px 12px 38px;
+                font-size: 14px;
+            }
+
+            .admin-btn {
+                width: 44px;
+                height: 44px;
+            }
+
+            .store-count-bar {
+                padding: 12px 20px;
+            }
+
+            .store-list {
+                padding: 8px;
+                max-height: 350px;
+            }
+
+            .store-item {
+                padding: 16px;
+            }
+
+            .store-name {
+                font-size: 14px;
+            }
+
+            .store-address {
+                font-size: 12px;
+            }
+
+            .modal {
+                border-radius: 16px;
+            }
+
+            .modal-header {
+                padding: 20px;
+            }
+
+            .modal-body {
+                padding: 20px;
+            }
+
+            .form-row {
+                flex-direction: column;
+                gap: 0;
+            }
+
+            .footer {
+                padding: 40px 20px;
+            }
+
+            .footer-logo {
+                font-size: 1.5rem;
+            }
+        }
+
+        /* 반응형 - 작은 모바일 */
+        @media (max-width: 380px) {
+            #map {
+                height: 280px;
+            }
+
+            .store-list {
+                max-height: 300px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- 헤더 -->
+    <header class="header">
+        <div class="header-content">
+            <span class="header-badge">Since 1992</span>
+            <h1>매장 찾기</h1>
+            <p>전국 어디서나 만나는 정통 칼국수의 맛</p>
+            <div class="header-stats">
+                <div class="stat-item">
+                    <span class="stat-number" id="totalStores">30</span>
+                    <span class="stat-label">전국 매장</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">32</span>
+                    <span class="stat-label">Years</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number">No.1</span>
+                    <span class="stat-label">칼국수 브랜드</span>
+                </div>
+            </div>
+        </div>
+    </header>
 
-<div class="map_content_div rltv" id="move7">
-    <div class="map_content">
-        <div class="map_mid rltv">
-            <div class="map" id="map"></div>
-            <div class="mid_map_search">
-                <div class="mid_map_search_top">
-                    <div class="mid_map_search_direct on2" data-map="direct">직접검색</div>
-                    <div class="mid_map_search_location off2" data-map="location">지역검색</div>
+    <!-- 메인 -->
+    <main class="main-container">
+        <div class="map-section">
+            <div class="map-wrapper">
+                <div id="map"></div>
+                <div class="search-panel">
+                    <div class="search-header">
+                        <div class="search-title">
+                            <i class="fas fa-store"></i>
+                            가까운 매장 찾기
+                        </div>
+                        <div class="search-box">
+                            <div class="search-input-wrap">
+                                <i class="fas fa-search"></i>
+                                <input type="text" class="search-input" id="searchInput" placeholder="매장명, 지역으로 검색" autocomplete="off">
+                            </div>
+                            <button class="admin-btn" id="adminBtn" title="매장 관리">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="store-count-bar">
+                        <span class="store-count-text">
+                            검색결과 <strong id="resultCount">30</strong>개 매장
+                        </span>
+                        <div class="view-toggle">
+                            <button class="view-btn active" title="리스트 보기">
+                                <i class="fas fa-list"></i>
+                            </button>
+                            <button class="view-btn" title="지도 보기">
+                                <i class="fas fa-map"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="store-list" id="storeList"></div>
                 </div>
-                <div class="mid_map_search_mid rltv">
-                    <input class="direct show" type="text" placeholder="매장명 또는 전화번호" id="direct">
-                    <input class="direct_addres hide" type="text" placeholder="지역명" id="direct_addres">
-                    <button class="admin-btn" id="adminBtn" title="매장 관리">+</button>
+            </div>
+        </div>
+    </main>
+
+    <!-- 푸터 -->
+    <footer class="footer">
+        <div class="footer-logo">달인 대보 칼국수</div>
+        <div class="footer-info">
+            상호명 : 달인대보칼국수 | 대표자 : 오수빈 | 사업자등록번호 : 356-14-00915<br>
+            소재지 : 서울 강서구 마곡중앙로5로 6, 2층 211호 (마곡동, 보타닉푸르지오시티)<br>
+            대표번호 : 1833-9571
+        </div>
+        <div class="footer-social">
+            <a href="#" class="social-link"><i class="fab fa-instagram"></i></a>
+            <a href="#" class="social-link"><i class="fab fa-youtube"></i></a>
+            <a href="#" class="social-link"><i class="fas fa-blog"></i></a>
+        </div>
+        <div class="footer-copyright">
+            Copyright © 2024 달인 대보 칼국수. All Rights Reserved.
+        </div>
+    </footer>
+
+    <!-- 비밀번호 모달 -->
+    <div class="modal-overlay pw-modal" id="pwModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">
+                    <i class="fas fa-lock"></i>
+                    관리자 인증
+                </span>
+                <button class="modal-close" id="pwModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="pw-icon">
+                    <i class="fas fa-shield-alt"></i>
                 </div>
-                <div class="mid_map_search_bottom" id="storeListContainer">
+                <h3 class="pw-title">비밀번호 입력</h3>
+                <p class="pw-desc">관리자 비밀번호를 입력해주세요</p>
+                <input type="password" class="pw-input" id="pwInput" placeholder="••••••" autocomplete="off">
+                <p class="pw-error" id="pwError">
+                    <i class="fas fa-exclamation-circle"></i>
+                    비밀번호가 일치하지 않습니다
+                </p>
+                <button class="btn-primary" id="pwSubmit">
+                    <i class="fas fa-unlock"></i>
+                    확인
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 관리 모달 -->
+    <div class="modal-overlay" id="adminModal">
+        <div class="modal">
+            <div class="modal-header">
+                <span class="modal-title">
+                    <i class="fas fa-store-alt"></i>
+                    매장 관리
+                </span>
+                <button class="modal-close" id="adminModalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-tabs">
+                <button class="modal-tab active" data-tab="add">
+                    <i class="fas fa-plus"></i> 매장 추가
+                </button>
+                <button class="modal-tab" data-tab="del">
+                    <i class="fas fa-trash-alt"></i> 매장 삭제
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="tab-content active" id="tab-add">
+                    <div class="form-group">
+                        <label class="form-label">매장명</label>
+                        <input type="text" class="form-input" id="inputName" placeholder="달인대보칼국수 OO점">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">주소</label>
+                        <input type="text" class="form-input" id="inputAddr" placeholder="서울시 강서구 마곡중앙5로 6">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">전화번호</label>
+                        <input type="tel" class="form-input" id="inputTel" placeholder="02-1234-5678">
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">위도 (Latitude)</label>
+                            <input type="text" class="form-input" id="inputLat" placeholder="37.5665" inputmode="decimal">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">경도 (Longitude)</label>
+                            <input type="text" class="form-input" id="inputLng" placeholder="126.9780" inputmode="decimal">
+                        </div>
+                    </div>
+                    <p class="form-help">
+                        <i class="fas fa-info-circle"></i>
+                        구글맵에서 위치를 우클릭하면 좌표를 확인할 수 있습니다
+                    </p>
+                    <button class="btn-primary" id="addBtn">
+                        <i class="fas fa-plus-circle"></i>
+                        매장 추가하기
+                    </button>
+                </div>
+                <div class="tab-content" id="tab-del">
+                    <div class="delete-list-header">
+                        <span class="delete-list-count">전체 <strong id="storeCount">0</strong>개 매장</span>
+                    </div>
+                    <div id="delList"></div>
                 </div>
             </div>
         </div>
     </div>
-</div>
 
-<div class="modal" id="pwModal">
-    <div class="modal-content pw-modal-content">
-        <div class="modal-header">
-            <h2>비밀번호 입력</h2>
-            <button class="modal-close" id="pwModalClose">&times;</button>
-        </div>
-        <div class="modal-body">
-            <p style="text-align:center;margin-bottom:15px;color:#666;">관리자 비밀번호를 입력하세요</p>
-            <input type="password" class="pw-input" id="pwInput" placeholder="비밀번호">
-            <p class="pw-error" id="pwError">비밀번호가 틀렸습니다</p>
-            <button class="btn" id="pwSubmit">확인</button>
-        </div>
+    <!-- 토스트 알림 -->
+    <div class="toast" id="toast">
+        <i class="fas fa-check-circle"></i>
+        <span id="toastMessage">알림 메시지</span>
     </div>
-</div>
 
-<div class="modal" id="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>매장 관리</h2>
-            <button class="modal-close" id="modalClose">&times;</button>
-        </div>
-        <div class="tabs">
-            <button class="active" data-tab="add">추가</button>
-            <button data-tab="del">삭제</button>
-        </div>
-        <div class="modal-body">
-            <div class="tab-content active" id="tab-add">
-                <div class="form-group">
-                    <label>매장명</label>
-                    <input type="text" id="inputName" placeholder="달인대보칼국수 OO점">
-                </div>
-                <div class="form-group">
-                    <label>주소</label>
-                    <input type="text" id="inputAddr" placeholder="서울시 강서구 마곡중앙5로 6">
-                </div>
-                <div class="form-group">
-                    <label>전화번호</label>
-                    <input type="text" id="inputTel" placeholder="02-1234-5678">
-                </div>
-                <button class="btn" id="addBtn">매장 추가하기</button>
-            </div>
-            <div class="tab-content" id="tab-del">
-                <div class="store-count" id="storeCount">총 0개 매장</div>
-                <div id="delList"></div>
-            </div>
-        </div>
-    </div>
-</div>
+    <!-- Google Maps API -->
+    <script>
+        (function() {
+            var script = document.createElement('script');
+            script.src = 'https://maps.googleapis.com/maps/api/js?key=AIzaSyBDJV3yRvR9pa_D_J5N8Evvw2WLSm7EfMQ&callback=initGoogleMap';
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+        })();
 
-<script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=YOUR_KAKAO_APP_KEY&libraries=services"></script>
+        function initGoogleMap() {
+            var ADMIN_PASSWORD = 'debo1992';
+            var isAuthenticated = false;
 
-<script>
-var ADMIN_PASSWORD = 'debo1992';
-var isAuthenticated = false;
+            var stores = [
+                { name: "달인대보칼국수 본점", address: "서울특별시 강서구 마곡중앙5로 6", tel: "02-3664-9571", lat: 37.5594, lng: 126.8294, badge: "본점" },
+                { name: "달인대보칼국수 양평점", address: "서울 영등포구 선유로 130", tel: "0507-1370-1961", lat: 37.5340, lng: 126.8945 },
+                { name: "달인대보칼국수 강남논현점", address: "서울특별시 강남구 언주로 615", tel: "070-4010-1028", lat: 37.5172, lng: 127.0342 },
+                { name: "달인대보칼국수 등촌역점", address: "서울 강서구 등촌로 205", tel: "010-3411-7567", lat: 37.5503, lng: 126.8556 },
+                { name: "달인대보칼국수 화곡역점", address: "서울 강서구 강서로56길 17", tel: "0507-1477-8874", lat: 37.5416, lng: 126.8375 },
+                { name: "달인대보칼국수 NC백화점 강서점", address: "서울 강서구 강서로56길 17", tel: "02-2667-9884", lat: 37.5416, lng: 126.8375 },
+                { name: "달인대보칼국수 고척스카이돔점", address: "서울 구로구 경인로47길 26", tel: "0507-1497-9122", lat: 37.4982, lng: 126.8670 },
+                { name: "달인대보칼국수 신월IC점", address: "서울 양천구 남부순환로 399", tel: "02-2222-3333", lat: 37.5246, lng: 126.8356 },
+                { name: "달인대보칼국수 장항점", address: "경기 고양시 일산동구 정발산로 24", tel: "0507-1374-7495", lat: 37.6596, lng: 126.7693 },
+                { name: "달인대보칼국수 백석점", address: "경기 고양시 일산동구 호수로 358-39", tel: "031-902-8265", lat: 37.6463, lng: 126.7795 },
+                { name: "달인대보칼국수 향동점", address: "경기 고양시 덕양구 향동로 217", tel: "0507-1307-3029", lat: 37.6176, lng: 126.8332 },
+                { name: "달인대보칼국수 평택점", address: "경기 평택시 고덕여염10길 69", tel: "0507-1373-9859", lat: 37.0833, lng: 127.0651 },
+                { name: "달인대보칼국수 평택죽백점", address: "경기도 평택시 이화로 214", tel: "0507-1350-1429", lat: 37.0041, lng: 127.0855 },
+                { name: "달인대보칼국수 송탄서정점", address: "경기도 평택시 서정로 262", tel: "0507-1400-9859", lat: 37.0741, lng: 127.0574 },
+                { name: "달인대보칼국수 광교점", address: "경기 수원시 영통구 대학4로 9", tel: "0507-1463-1454", lat: 37.2866, lng: 127.0485 },
+                { name: "달인대보칼국수 뉴코아아울렛 부천점", address: "경기 부천시 원미구 송내대로 239", tel: "0507-1421-8343", lat: 37.4889, lng: 126.7546 },
+                { name: "달인대보칼국수 부천시청점", address: "경기 부천시 원미구 중동 1301", tel: "0507-1328-3097", lat: 37.5034, lng: 126.7660 },
+                { name: "달인대보칼국수 NC백화점 고잔점", address: "경기 안산시 단원구 광덕대로 194", tel: "0507-1362-4640", lat: 37.3175, lng: 126.8332 },
+                { name: "달인대보칼국수 뉴코아아울렛 평촌점", address: "경기 안양시 동안구 동안로 119", tel: "0507-1351-5133", lat: 37.3894, lng: 126.9516 },
+                { name: "달인대보칼국수 산본점", address: "경기 군포시 번영로 504", tel: "0507-1349-2384", lat: 37.3590, lng: 126.9345 },
+                { name: "달인대보칼국수 마석점", address: "경기 남양주시 화도읍 비룡로 221", tel: "031-511-5707", lat: 37.6489, lng: 127.3106 },
+                { name: "달인대보칼국수 검단사거리역점", address: "인천광역시 서구 완정로165번길 7", tel: "0507-1446-1410", lat: 37.5963, lng: 126.6751 },
+                { name: "달인대보칼국수 현풍점", address: "대구 달성군 현풍읍 테크노대로 40", tel: "0507-1377-3236", lat: 35.7031, lng: 128.4255 },
+                { name: "달인대보칼국수 동아백화점 쇼핑점", address: "대구 중구 달구벌대로 2085", tel: "0507-1403-3803", lat: 35.8678, lng: 128.5945 },
+                { name: "달인대보칼국수 죽전점", address: "대구광역시 달서구 달구벌대로 1581", tel: "0507-1323-0177", lat: 35.8297, lng: 128.5412 },
+                { name: "달인대보칼국수 월배점", address: "대구광역시 달서구 조암남로32길 20-8", tel: "0507-1456-0182", lat: 35.8132, lng: 128.5246 },
+                { name: "달인대보칼국수 영천점", address: "경북 영천시 동부로 39", tel: "054-332-3232", lat: 35.9731, lng: 128.9387 },
+                { name: "달인대보칼국수 사상점", address: "부산광역시 사상구 사상로250번길 11", tel: "0507-1356-8529", lat: 35.1524, lng: 128.9823 },
+                { name: "달인대보칼국수 창원중동점", address: "경상남도 창원시 의창구 의창대로266번길 10", tel: "0507-1321-6538", lat: 35.2540, lng: 128.6407 },
+                { name: "달인대보칼국수 양산석산점", address: "경상남도 양산시 동면 석산3길 30", tel: "0507-1394-3071", lat: 35.3352, lng: 129.0568 }
+            ];
 
-var stores = [
-    { name: "달인대보칼국수 본점", address: "서울특별시 강서구 마곡중앙5로 6 보타닉푸르지오시티 서관 211호", tel: "02-3664-9571" },
-    { name: "달인대보칼국수 양평점", address: "서울 영등포구 선유로 130 1층", tel: "0507-1370-1961" },
-    { name: "달인대보칼국수 장항점", address: "경기 고양시 일산동구 정발산로 24 2층", tel: "0507-1374-7495" },
-    { name: "달인대보칼국수 평택점", address: "경기 평택시 고덕여염10길 69 1층", tel: "0507-1373-9859" },
-    { name: "달인대보칼국수 강남논현점", address: "서울특별시 강남구 언주로 615 103동 113호", tel: "070-4010-1028" },
-    { name: "달인대보칼국수 뉴코아아울렛 부천점", address: "경기 부천시 원미구 송내대로 239 1층", tel: "0507-1421-8343" },
-    { name: "달인대보칼국수 현풍점", address: "대구 달성군 현풍읍 테크노대로 40 1층", tel: "0507-1377-3236" },
-    { name: "달인대보칼국수 NC백화점 강서점", address: "서울 강서구 강서로56길 17 B1층", tel: "02-2667-9884" },
-    { name: "달인대보칼국수 NC백화점 고잔점", address: "경기 안산시 단원구 광덕대로 194 지하1층", tel: "0507-1362-4640" },
-    { name: "달인대보칼국수 뉴코아아울렛 평촌점", address: "경기 안양시 동안구 동안로 119 킴스아울렛 9층", tel: "0507-1351-5133" },
-    { name: "달인대보칼국수 광교점", address: "경기 수원시 영통구 대학4로 9 114호", tel: "0507-1463-1454" },
-    { name: "달인대보칼국수 등촌역점", address: "서울 강서구 등촌로 205 102호", tel: "010-3411-7567" },
-    { name: "달인대보칼국수 고척스카이돔점", address: "서울 구로구 경인로47길 26 2층", tel: "0507-1497-9122" },
-    { name: "달인대보칼국수 백석점", address: "경기 고양시 일산동구 호수로 358-39 1층", tel: "031-902-8265" },
-    { name: "달인대보칼국수 부천시청점", address: "경기 부천시 원미구 중동 1301", tel: "0507-1328-3097" },
-    { name: "달인대보칼국수 산본점", address: "경기 군포시 번영로 504 뉴코아아울렛 푸드코트 1층 1-1호", tel: "0507-1349-2384" },
-    { name: "달인대보칼국수 영천점", address: "경북 영천시 동부로 39", tel: "054-332-3232" },
-    { name: "달인대보칼국수 동아백화점 쇼핑점", address: "대구 중구 달구벌대로 2085 지하1층", tel: "0507-1403-3803" },
-    { name: "달인대보칼국수 향동점", address: "경기 고양시 덕양구 향동로 217 1층 R147호", tel: "0507-1307-3029" },
-    { name: "달인대보칼국수 마석점", address: "경기 남양주시 화도읍 비룡로 221 1층 101호", tel: "031-511-5707" },
-    { name: "달인대보칼국수 신월IC점", address: "서울 양천구 남부순환로 399 진성빌딩 1층 102호", tel: "000-0000-0000" },
-    { name: "달인대보칼국수 화곡역점", address: "서울특별시 강서구 강서로56길 17 B1층", tel: "0507-1477-8874" },
-    { name: "달인대보칼국수 검단사거리역점", address: "인천광역시 서구 완정로165번길 7 2층", tel: "0507-1446-1410" },
-    { name: "달인대보칼국수 사상점", address: "부산광역시 사상구 사상로250번길 11 1층", tel: "0507-1356-8529" },
-    { name: "달인대보칼국수 평택죽백점", address: "경기도 평택시 이화로 214 1층", tel: "0507-1350-1429" },
-    { name: "달인대보칼국수 죽전점", address: "대구광역시 달서구 달구벌대로 1581 402동 1층 113호", tel: "0507-1323-0177" },
-    { name: "달인 대보칼국수 월배점", address: "대구광역시 달서구 조암남로32길 20-8 113호", tel: "0507-1456-0182" },
-    { name: "달인대보칼국수 창원중동점", address: "경상남도 창원시 의창구 의창대로266번길 10 1층 101호", tel: "0507-1321-6538" },
-    { name: "달인대보칼국수 양산석산점", address: "경상남도 양산시 동면 석산3길 30", tel: "0507-1394-3071" },
-    { name: "달인대보칼국수 송탄서정점", address: "경기도 평택시 서정로 262 1층", tel: "0507-1400-9859" }
-];
+            var saved = localStorage.getItem('daebok_stores');
+            if (saved) stores = JSON.parse(saved);
 
-var saved = localStorage.getItem('daebok_stores');
-if (saved) {
-    stores = JSON.parse(saved);
-}
-
-function saveStores() {
-    localStorage.setItem('daebok_stores', JSON.stringify(stores));
-}
-
-var mapContainer = document.getElementById('map');
-var mapOption = {
-    center: new kakao.maps.LatLng(36.5, 127.5),
-    level: 13
-};
-
-var map = new kakao.maps.Map(mapContainer, mapOption);
-var geocoder = new kakao.maps.services.Geocoder();
-var markers = [];
-var currentOverlay = null;
-
-var markerImage = new kakao.maps.MarkerImage(
-    '/images/map_make.png',
-    new kakao.maps.Size(44, 50),
-    { offset: new kakao.maps.Point(22, 50) }
-);
-
-function createMarkers(data) {
-    markers.forEach(function(marker) {
-        marker.setMap(null);
-    });
-    markers = [];
-    
-    if (currentOverlay) {
-        currentOverlay.setMap(null);
-    }
-    
-    data.forEach(function(store) {
-        geocoder.addressSearch(store.address, function(result, status) {
-            if (status === kakao.maps.services.Status.OK) {
-                var coords = new kakao.maps.LatLng(result[0].y, result[0].x);
-                
-                var marker = new kakao.maps.Marker({
-                    map: map,
-                    position: coords,
-                    title: store.name,
-                    image: markerImage
-                });
-                
-                kakao.maps.event.addListener(marker, 'click', function() {
-                    showOverlay(store, coords);
-                });
-                
-                markers.push(marker);
-                
-                store.lat = parseFloat(result[0].y);
-                store.lng = parseFloat(result[0].x);
+            function saveStores() {
+                localStorage.setItem('daebok_stores', JSON.stringify(stores));
             }
-        });
-    });
-}
 
-function showOverlay(store, position) {
-    if (currentOverlay) {
-        currentOverlay.setMap(null);
-    }
-    
-    var content = '<div style="padding:10px;background:#fff;border:1px solid #ddd;border-radius:5px;min-width:150px;">';
-    content += '<div class="markerdesc" style="font-size:12px;font-weight:bold;">' + store.name + '</div>';
-    content += '</div>';
-    
-    currentOverlay = new kakao.maps.CustomOverlay({
-        content: content,
-        position: position,
-        yAnchor: 1.5
-    });
-    
-    currentOverlay.setMap(map);
-}
-
-function renderList(data) {
-    var container = document.getElementById('storeListContainer');
-    
-    if (data.length === 0) {
-        container.innerHTML = '<div class="no-result">검색 결과가 없습니다</div>';
-        return;
-    }
-    
-    var html = '';
-    data.forEach(function(store, index) {
-        var originalIndex = stores.indexOf(store);
-        html += '<div class="store mid_map_search_item" data-value="' + originalIndex + '" data-subject="' + store.name + '">';
-        html += '<p class="mid_map_search_item_title">' + store.name + '</p>';
-        html += '<p class="mid_map_search_item_addres">' + store.address + '</p>';
-        html += '<p class="mid_map_search_item_tel">' + store.tel + '</p>';
-        html += '</div>';
-    });
-    
-    container.innerHTML = html;
-    
-    container.querySelectorAll('.mid_map_search_item').forEach(function(item) {
-        item.addEventListener('click', function() {
-            var idx = parseInt(this.dataset.value);
-            var store = stores[idx];
-            
-            if (store.lat && store.lng) {
-                var position = new kakao.maps.LatLng(store.lat, store.lng);
-                map.setCenter(position);
-                map.setLevel(3);
-                showOverlay(store, position);
-            } else {
-                geocoder.addressSearch(store.address, function(result, status) {
-                    if (status === kakao.maps.services.Status.OK) {
-                        var coords = new kakao.maps.LatLng(result[0].y, result[0].x);
-                        map.setCenter(coords);
-                        map.setLevel(3);
-                        showOverlay(store, coords);
-                        store.lat = parseFloat(result[0].y);
-                        store.lng = parseFloat(result[0].x);
-                    }
-                });
+            // 통계 업데이트
+            function updateStats() {
+                document.getElementById('totalStores').textContent = stores.length;
+                document.getElementById('resultCount').textContent = stores.length;
+                document.getElementById('storeCount').textContent = stores.length;
             }
-            
-            document.querySelectorAll('.mid_map_search_item').forEach(function(el) {
-                el.classList.remove('active');
+
+            var map = new google.maps.Map(document.getElementById('map'), {
+                center: { lat: 36.5, lng: 127.5 },
+                zoom: 7,
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: true,
+                zoomControl: true,
+                gestureHandling: 'greedy',
+                styles: [
+                    { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] }
+                ]
             });
-            this.classList.add('active');
-        });
-    });
-}
 
-function renderDelList() {
-    document.getElementById('storeCount').textContent = '총 ' + stores.length + '개 매장';
-    
-    var html = '';
-    stores.forEach(function(store, index) {
-        html += '<div class="list-item">';
-        html += '<div>';
-        html += '<h4>' + store.name + '</h4>';
-        html += '<p>' + store.address + '</p>';
-        html += '</div>';
-        html += '<button class="btn btn-del" onclick="deleteStore(' + index + ')">삭제</button>';
-        html += '</div>';
-    });
-    
-    document.getElementById('delList').innerHTML = html;
-}
+            var markers = [];
+            var infoWindow = new google.maps.InfoWindow();
 
-function deleteStore(index) {
-    var name = stores[index].name;
-    if (confirm('"' + name + '"을(를) 삭제하시겠습니까?')) {
-        stores.splice(index, 1);
-        saveStores();
-        renderList(stores);
-        renderDelList();
-        createMarkers(stores);
-        showAlert('삭제 완료');
-    }
-}
+            var markerIcon = {
+                url: 'https://daebo1992.kr/wp-content/uploads/2026/01/map_make.png',
+                scaledSize: new google.maps.Size(40, 40),
+                anchor: new google.maps.Point(20, 40)
+            };
 
-function showAlert(msg) {
-    var el = document.createElement('div');
-    el.className = 'alert';
-    el.textContent = msg;
-    document.body.appendChild(el);
-    setTimeout(function() {
-        el.remove();
-    }, 2500);
-}
+            function createMarkers(data) {
+                markers.forEach(function(m) { m.setMap(null); });
+                markers = [];
+                infoWindow.close();
 
-function searchStores(keyword, type) {
-    if (!keyword || keyword.length < 2) {
-        renderList(stores);
-        createMarkers(stores);
-        return;
-    }
-    
-    var filtered;
-    var lowerKeyword = keyword.toLowerCase();
-    
-    if (type === 'location') {
-        filtered = stores.filter(function(store) {
-            return store.address.toLowerCase().indexOf(lowerKeyword) > -1;
-        });
-    } else {
-        filtered = stores.filter(function(store) {
-            return store.name.toLowerCase().indexOf(lowerKeyword) > -1 || 
-                   store.tel.replace(/-/g, '').indexOf(keyword.replace(/-/g, '')) > -1;
-        });
-    }
-    
-    renderList(filtered);
-    
-    if (filtered.length > 0) {
-        createMarkers(filtered);
-    }
-}
+                data.forEach(function(store) {
+                    if (!store.lat || !store.lng) return;
+                    
+                    var marker = new google.maps.Marker({
+                        position: { lat: store.lat, lng: store.lng },
+                        map: map,
+                        title: store.name,
+                        icon: markerIcon,
+                        animation: google.maps.Animation.DROP
+                    });
+                    
+                    marker.addListener('click', function() {
+                        var content = '<div style="padding:15px;min-width:220px;max-width:300px;font-family:Noto Sans KR,sans-serif;">' +
+                            '<h4 style="margin:0 0 10px;color:#1A1A1A;font-size:15px;font-weight:700;">' + store.name + '</h4>' +
+                            '<p style="margin:0 0 8px;font-size:13px;color:#666;line-height:1.5;">' +
+                            '<i class="fas fa-map-marker-alt" style="color:#8B0000;margin-right:6px;"></i>' + store.address + '</p>' +
+                            '<a href="tel:' + store.tel + '" style="display:inline-flex;align-items:center;gap:6px;font-size:14px;color:#8B0000;font-weight:600;text-decoration:none;">' +
+                            '<i class="fas fa-phone-alt"></i>' + store.tel + '</a>' +
+                            '</div>';
+                        infoWindow.setContent(content);
+                        infoWindow.open(map, marker);
+                    });
+                    
+                    markers.push(marker);
+                });
+            }
 
-document.querySelectorAll('.mid_map_search_top > div').forEach(function(tab) {
-    tab.addEventListener('click', function() {
-        document.querySelectorAll('.mid_map_search_top > div').forEach(function(t) {
-            t.classList.remove('on2');
-            t.classList.add('off2');
-        });
-        this.classList.remove('off2');
-        this.classList.add('on2');
-        
-        var directInput = document.getElementById('direct');
-        var addressInput = document.getElementById('direct_addres');
-        
-        if (this.dataset.map === 'direct') {
-            directInput.classList.remove('hide');
-            directInput.classList.add('show');
-            directInput.value = '';
-            addressInput.classList.remove('show');
-            addressInput.classList.add('hide');
-        } else {
-            directInput.classList.remove('show');
-            directInput.classList.add('hide');
-            addressInput.classList.remove('hide');
-            addressInput.classList.add('show');
-            addressInput.value = '';
+            function renderList(data) {
+                var list = document.getElementById('storeList');
+                document.getElementById('resultCount').textContent = data.length;
+                
+                if (data.length === 0) {
+                    list.innerHTML = '<div class="no-result"><i class="fas fa-search"></i><p>검색 결과가 없습니다</p></div>';
+                    return;
+                }
+                
+                var html = '';
+                data.forEach(function(s, index) {
+                    var idx = stores.indexOf(s);
+                    var badgeHtml = s.badge ? '<span class="store-badge">' + s.badge + '</span>' : '';
+                    html += '<div class="store-item" data-idx="' + idx + '" style="animation-delay:' + (index * 0.05) + 's">' +
+                        '<div class="store-item-header">' +
+                        '<span class="store-name">' + s.name + '</span>' +
+                        badgeHtml +
+                        '</div>' +
+                        '<div class="store-address"><i class="fas fa-map-marker-alt"></i><span>' + s.address + '</span></div>' +
+                        '<div class="store-footer">' +
+                        '<a href="tel:' + s.tel + '" class="store-tel"><i class="fas fa-phone-alt"></i>' + s.tel + '</a>' +
+                        '<div class="store-actions">' +
+                        '<button class="action-btn" title="길찾기" onclick="event.stopPropagation();window.open(\'https://map.google.com/maps?daddr=' + s.lat + ',' + s.lng + '\')"><i class="fas fa-directions"></i></button>' +
+                        '<button class="action-btn" title="공유하기"><i class="fas fa-share-alt"></i></button>' +
+                        '</div>' +
+                        '</div>' +
+                        '</div>';
+                });
+                list.innerHTML = html;
+                
+                var items = list.querySelectorAll('.store-item');
+                items.forEach(function(item) {
+                    item.onclick = function() {
+                        var s = stores[item.dataset.idx];
+                        
+                        if (s.lat && s.lng) {
+                            map.setCenter({ lat: s.lat, lng: s.lng });
+                            map.setZoom(16);
+                        }
+                        
+                        document.querySelectorAll('.store-item').forEach(function(el) { el.classList.remove('active'); });
+                        item.classList.add('active');
+                        
+                        if (window.innerWidth <= 1024) {
+                            document.getElementById('map').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    };
+                });
+            }
+
+            function renderDelList() {
+                document.getElementById('storeCount').textContent = stores.length;
+                var html = '';
+                stores.forEach(function(s, i) {
+                    html += '<div class="delete-item">' +
+                        '<div class="delete-item-info"><h4>' + s.name + '</h4><p>' + s.address + '</p></div>' +
+                        '<button class="btn-delete" onclick="window.delStore(' + i + ')"><i class="fas fa-trash-alt"></i> 삭제</button>' +
+                        '</div>';
+                });
+                document.getElementById('delList').innerHTML = html;
+            }
+
+            window.delStore = function(i) {
+                var name = stores[i].name;
+                if (confirm('"' + name + '" 매장을 삭제하시겠습니까?')) {
+                    stores.splice(i, 1);
+                    saveStores();
+                    renderList(stores);
+                    renderDelList();
+                    createMarkers(stores);
+                    updateStats();
+                    showToast('매장이 삭제되었습니다', 'success');
+                }
+            };
+
+            function showToast(message, type) {
+                var toast = document.getElementById('toast');
+                var toastMessage = document.getElementById('toastMessage');
+                toastMessage.textContent = message;
+                toast.className = 'toast ' + (type || '');
+                toast.classList.add('show');
+                setTimeout(function() {
+                    toast.classList.remove('show');
+                }, 3000);
+            }
+
+            // 검색
+            document.getElementById('searchInput').addEventListener('input', function() {
+                var keyword = this.value.toLowerCase().trim();
+                
+                if (keyword === '') {
+                    renderList(stores);
+                    createMarkers(stores);
+                    return;
+                }
+                
+                var filtered = stores.filter(function(s) {
+                    return s.name.toLowerCase().indexOf(keyword) !== -1 || 
+                        s.address.toLowerCase().indexOf(keyword) !== -1 ||
+                        s.tel.replace(/-/g, '').indexOf(keyword.replace(/-/g, '')) !== -1;
+                });
+                
+                renderList(filtered);
+                createMarkers(filtered);
+            });
+
+            // 관리자 버튼
+            document.getElementById('adminBtn').onclick = function() {
+                if (isAuthenticated) {
+                    document.getElementById('adminModal').classList.add('show');
+                    renderDelList();
+                } else {
+                    document.getElementById('pwModal').classList.add('show');
+                    document.getElementById('pwInput').value = '';
+                    document.getElementById('pwError').classList.remove('show');
+                    setTimeout(function() {
+                        document.getElementById('pwInput').focus();
+                    }, 100);
+                }
+            };
+
+            // 비밀번호 확인
+            document.getElementById('pwSubmit').onclick = function() {
+                var input = document.getElementById('pwInput').value;
+                
+                if (input === ADMIN_PASSWORD) {
+                    isAuthenticated = true;
+                    document.getElementById('pwModal').classList.remove('show');
+                    document.getElementById('adminModal').classList.add('show');
+                    renderDelList();
+                    showToast('관리자 인증 완료', 'success');
+                } else {
+                    document.getElementById('pwError').classList.add('show');
+                    document.getElementById('pwInput').value = '';
+                    document.getElementById('pwInput').focus();
+                }
+            };
+
+            document.getElementById('pwInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') document.getElementById('pwSubmit').click();
+            });
+
+            // 모달 닫기
+            document.getElementById('pwModalClose').onclick = function() {
+                document.getElementById('pwModal').classList.remove('show');
+            };
+
+            document.getElementById('adminModalClose').onclick = function() {
+                document.getElementById('adminModal').classList.remove('show');
+            };
+
+            document.getElementById('pwModal').onclick = function(e) {
+                if (e.target.id === 'pwModal') {
+                    document.getElementById('pwModal').classList.remove('show');
+                }
+            };
+
+            document.getElementById('adminModal').onclick = function(e) {
+                if (e.target.id === 'adminModal') {
+                    document.getElementById('adminModal').classList.remove('show');
+                }
+            };
+
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    document.getElementById('pwModal').classList.remove('show');
+                    document.getElementById('adminModal').classList.remove('show');
+                }
+            });
+
+            // 탭 전환
+            var tabBtns = document.querySelectorAll('.modal-tab');
+            tabBtns.forEach(function(btn) {
+                btn.onclick = function() {
+                    document.querySelectorAll('.modal-tab').forEach(function(b) { b.classList.remove('active'); });
+                    document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+                    btn.classList.add('active');
+                    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+                    
+                    if (btn.dataset.tab === 'del') renderDelList();
+                };
+            });
+
+            // 매장 추가
+            document.getElementById('addBtn').onclick = function() {
+                var name = document.getElementById('inputName').value.trim();
+                var address = document.getElementById('inputAddr').value.trim();
+                var tel = document.getElementById('inputTel').value.trim();
+                var lat = parseFloat(document.getElementById('inputLat').value.trim());
+                var lng = parseFloat(document.getElementById('inputLng').value.trim());
+                
+                if (!name || !address || !tel || !lat || !lng) {
+                    showToast('모든 항목을 입력해주세요', 'error');
+                    return;
+                }
+                
+                if (isNaN(lat) || isNaN(lng)) {
+                    showToast('위도/경도는 숫자로 입력해주세요', 'error');
+                    return;
+                }
+                
+                var exists = stores.some(function(s) { return s.name === name; });
+                if (exists) {
+                    showToast('이미 존재하는 매장명입니다', 'error');
+                    return;
+                }
+                
+                stores.push({ name: name, address: address, tel: tel, lat: lat, lng: lng });
+                saveStores();
+                
+                document.getElementById('inputName').value = '';
+                document.getElementById('inputAddr').value = '';
+                document.getElementById('inputTel').value = '';
+                document.getElementById('inputLat').value = '';
+                document.getElementById('inputLng').value = '';
+                
+                renderList(stores);
+                renderDelList();
+                createMarkers(stores);
+                updateStats();
+                
+                showToast('"' + name + '" 매장이 추가되었습니다', 'success');
+            };
+
+            // 지도 리사이즈
+            window.addEventListener('resize', function() {
+                google.maps.event.trigger(map, 'resize');
+            });
+
+            // 초기화
+            updateStats();
+            renderList(stores);
+            createMarkers(stores);
         }
-        
-        renderList(stores);
-        createMarkers(stores);
-    });
-});
-
-document.getElementById('direct').addEventListener('input', function() {
-    searchStores(this.value, 'direct');
-});
-
-document.getElementById('direct_addres').addEventListener('input', function() {
-    searchStores(this.value, 'location');
-});
-
-document.getElementById('adminBtn').addEventListener('click', function() {
-    if (isAuthenticated) {
-        document.getElementById('modal').classList.add('show');
-        renderDelList();
-    } else {
-        document.getElementById('pwModal').classList.add('show');
-        document.getElementById('pwInput').value = '';
-        document.getElementById('pwError').style.display = 'none';
-        document.getElementById('pwInput').focus();
-    }
-});
-
-document.getElementById('pwSubmit').addEventListener('click', function() {
-    var input = document.getElementById('pwInput').value;
-    
-    if (input === ADMIN_PASSWORD) {
-        isAuthenticated = true;
-        document.getElementById('pwModal').classList.remove('show');
-        document.getElementById('modal').classList.add('show');
-        renderDelList();
-        showAlert('관리자 인증 성공');
-    } else {
-        document.getElementById('pwError').style.display = 'block';
-        document.getElementById('pwInput').value = '';
-        document.getElementById('pwInput').focus();
-    }
-});
-
-document.getElementById('pwInput').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-        document.getElementById('pwSubmit').click();
-    }
-});
-
-document.getElementById('pwModalClose').addEventListener('click', function() {
-    document.getElementById('pwModal').classList.remove('show');
-});
-
-document.getElementById('pwModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        this.classList.remove('show');
-    }
-});
-
-document.getElementById('modalClose').addEventListener('click', function() {
-    document.getElementById('modal').classList.remove('show');
-});
-
-document.getElementById('modal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        this.classList.remove('show');
-    }
-});
-
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-        document.getElementById('modal').classList.remove('show');
-        document.getElementById('pwModal').classList.remove('show');
-    }
-});
-
-document.querySelectorAll('.tabs button').forEach(function(btn) {
-    btn.addEventListener('click', function() {
-        document.querySelectorAll('.tabs button').forEach(function(b) {
-            b.classList.remove('active');
-        });
-        document.querySelectorAll('.tab-content').forEach(function(c) {
-            c.classList.remove('active');
-        });
-        this.classList.add('active');
-        document.getElementById('tab-' + this.dataset.tab).classList.add('active');
-        
-        if (this.dataset.tab === 'del') {
-            renderDelList();
-        }
-    });
-});
-
-document.getElementById('addBtn').addEventListener('click', function() {
-    var name = document.getElementById('inputName').value.trim();
-    var address = document.getElementById('inputAddr').value.trim();
-    var tel = document.getElementById('inputTel').value.trim();
-    
-    if (!name || !address || !tel) {
-        alert('모든 항목을 입력해주세요');
-        return;
-    }
-    
-    var exists = stores.some(function(s) {
-        return s.name === name;
-    });
-    
-    if (exists) {
-        alert('이미 존재하는 매장명입니다');
-        return;
-    }
-    
-    stores.push({ name: name, address: address, tel: tel });
-    saveStores();
-    
-    document.getElementById('inputName').value = '';
-    document.getElementById('inputAddr').value = '';
-    document.getElementById('inputTel').value = '';
-    
-    renderList(stores);
-    renderDelList();
-    createMarkers(stores);
-    
-    showAlert('"' + name + '" 추가 완료');
-});
-
-['inputName', 'inputAddr', 'inputTel'].forEach(function(id) {
-    document.getElementById(id).addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') {
-            document.getElementById('addBtn').click();
-        }
-    });
-});
-
-renderList(stores);
-setTimeout(function() {
-    createMarkers(stores);
-}, 500);
-</script>
-
+    </script>
 </body>
 </html>
