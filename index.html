@@ -24,7 +24,7 @@ body {
 }
 
 .header-inner {
-    max-width: 800px;
+    max-width: 900px;
     margin: 0 auto;
     padding: 0 20px;
 }
@@ -41,7 +41,7 @@ body {
 }
 
 .container {
-    max-width: 800px;
+    max-width: 900px;
     margin: 0 auto;
     padding: 20px;
 }
@@ -195,21 +195,23 @@ body {
 .rank-table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 13px;
+    font-size: 12px;
     margin-top: 16px;
 }
 
 .rank-table th {
     background: #f8f8f8;
-    padding: 10px 12px;
+    padding: 8px 6px;
     text-align: left;
     font-weight: 600;
     border-bottom: 2px solid #ddd;
+    white-space: nowrap;
 }
 
 .rank-table td {
-    padding: 10px 12px;
+    padding: 8px 6px;
     border-bottom: 1px solid #eee;
+    vertical-align: top;
 }
 
 .rank-table tbody tr:hover {
@@ -223,10 +225,10 @@ body {
 
 .badge {
     display: inline-block;
-    padding: 2px 10px;
+    padding: 2px 8px;
     border-radius: 12px;
     font-weight: 700;
-    font-size: 12px;
+    font-size: 11px;
     color: #fff;
 }
 
@@ -258,11 +260,6 @@ body {
     font-weight: 600;
 }
 
-.history-placeid {
-    color: #888;
-    font-size: 12px;
-}
-
 .btn-tiny {
     padding: 4px 10px;
     font-size: 11px;
@@ -279,10 +276,6 @@ body {
 .btn-tiny-del {
     color: #e74c3c;
     border-color: #e74c3c;
-}
-
-.btn-tiny-del:hover {
-    background: #fdedec;
 }
 
 .page-info {
@@ -312,6 +305,190 @@ body {
     font-size: 13px;
 }
 
+/* 상세정보 모달 */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-overlay.show {
+    display: flex;
+}
+
+.modal {
+    background: #fff;
+    border-radius: 10px;
+    width: 90%;
+    max-width: 600px;
+    max-height: 85vh;
+    overflow-y: auto;
+    padding: 0;
+}
+
+.modal-header {
+    position: sticky;
+    top: 0;
+    background: #1a1a2e;
+    color: #fff;
+    padding: 16px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-radius: 10px 10px 0 0;
+}
+
+.modal-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.modal-close {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.detail-section {
+    margin-bottom: 20px;
+}
+
+.detail-section h4 {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #eee;
+    color: #1a1a2e;
+}
+
+.detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.detail-item {
+    padding: 8px 10px;
+    background: #f8f8f8;
+    border-radius: 6px;
+}
+
+.detail-label {
+    font-size: 11px;
+    color: #888;
+    margin-bottom: 2px;
+}
+
+.detail-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: #333;
+}
+
+.detail-full {
+    grid-column: 1 / -1;
+}
+
+.detail-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.detail-tag {
+    display: inline-block;
+    padding: 3px 10px;
+    background: #eee;
+    border-radius: 12px;
+    font-size: 11px;
+    color: #555;
+}
+
+.detail-review {
+    padding: 10px 12px;
+    background: #f9f9f9;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #444;
+    border-left: 3px solid #3498db;
+}
+
+.detail-images {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+}
+
+.detail-images img {
+    width: 100px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 6px;
+    flex-shrink: 0;
+}
+
+.status-open {
+    color: #2ecc71;
+    font-weight: 600;
+}
+
+.status-closed {
+    color: #e74c3c;
+    font-weight: 600;
+}
+
+.name-link {
+    color: #1a1a2e;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.name-link:hover {
+    text-decoration: underline;
+    color: #3498db;
+}
+
+.micro-review {
+    font-size: 11px;
+    color: #888;
+    font-style: italic;
+}
+
+.biz-hours {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    display: inline-block;
+}
+
+.biz-hours-open {
+    background: #eafaf1;
+    color: #27ae60;
+}
+
+.biz-hours-closed {
+    background: #fdedec;
+    color: #c0392b;
+}
+
 @media (max-width: 600px) {
     .form-row {
         flex-direction: column;
@@ -321,6 +498,12 @@ body {
     }
     .result-rank {
         font-size: 36px;
+    }
+    .detail-grid {
+        grid-template-columns: 1fr;
+    }
+    .rank-table {
+        font-size: 11px;
     }
 }
 </style>
@@ -375,10 +558,13 @@ body {
                         <th>순위</th>
                         <th>업체명</th>
                         <th>카테고리</th>
-                        <th>블로그리뷰</th>
-                        <th>방문자리뷰</th>
-                        <th>저장수</th>
+                        <th>주소</th>
+                        <th>블로그</th>
+                        <th>방문자</th>
+                        <th>저장</th>
                         <th>별점</th>
+                        <th>영업</th>
+                        <th>가격대</th>
                     </tr>
                 </thead>
                 <tbody id="rankTableBody"></tbody>
@@ -397,12 +583,24 @@ body {
 
 </div>
 
+<!-- 상세정보 모달 -->
+<div class="modal-overlay" id="detailModal">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modalTitle">업체 상세정보</h3>
+            <button class="modal-close" id="modalClose">x</button>
+        </div>
+        <div class="modal-body" id="modalBody"></div>
+    </div>
+</div>
+
 <script>
 (function() {
     "use strict";
 
     var PROXY_URL = "https://naverrank.dampd21.workers.dev/";
     var HISTORY_KEY = "npt_rank_history";
+    var allItemsGlobal = [];
 
     function loadHistory() {
         try {
@@ -454,7 +652,7 @@ body {
                 div.innerHTML =
                     '<div>' +
                         '<span class="history-keyword">' + item.keyword + '</span>' +
-                        '<span class="history-placeid"> (ID: ' + item.placeId + ')</span>' +
+                        '<span style="color:#888;font-size:12px;"> (ID: ' + item.placeId + ')</span>' +
                         '<br><span style="font-size:11px;color:#aaa;">' + item.time + ' / ' + rankText + nameText + '</span>' +
                     '</div>' +
                     '<div style="display:flex;gap:6px;">' +
@@ -507,6 +705,27 @@ body {
         box.className = "result-box " + cls;
         box.innerHTML = html;
         box.style.display = "block";
+    }
+
+    function escapeHtml(str) {
+        if (!str) return "";
+        return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function stripHtml(str) {
+        if (!str) return "";
+        return str.replace(/<[^>]*>/g, "");
+    }
+
+    function formatBizHours(bh) {
+        if (!bh) return "";
+        var status = bh.status || "";
+        var desc = bh.description || "";
+        var isOpen = status.indexOf("영업 중") >= 0;
+        var cls = isOpen ? "biz-hours-open" : "biz-hours-closed";
+        var text = status;
+        if (desc) text += " / " + desc;
+        return '<span class="biz-hours ' + cls + '">' + escapeHtml(text) + '</span>';
     }
 
     function fetchPage(keyword, start, display) {
@@ -562,7 +781,7 @@ body {
         document.getElementById("btnSearch").disabled = true;
         showLoading("'" + keyword + "' 검색 중... (1~100위)");
 
-        var allItems = [];
+        allItemsGlobal = [];
         var totalCount = 0;
         var pageSize = 100;
         var currentPage = 0;
@@ -592,11 +811,11 @@ body {
                     }
 
                     totalCount = total;
-                    allItems = allItems.concat(items);
+                    allItemsGlobal = allItemsGlobal.concat(items);
 
                     var foundIdx = -1;
-                    for (var i = 0; i < allItems.length; i++) {
-                        if (String(allItems[i].id) === String(placeId)) {
+                    for (var i = 0; i < allItemsGlobal.length; i++) {
+                        if (String(allItemsGlobal[i].id) === String(placeId)) {
                             foundIdx = i;
                             break;
                         }
@@ -605,7 +824,7 @@ body {
                     if (foundIdx >= 0 || items.length < display || currentPage >= maxPages) {
                         hideLoading();
                         document.getElementById("btnSearch").disabled = false;
-                        showResults(keyword, placeId, allItems, totalCount, maxRank);
+                        showResults(keyword, placeId, allItemsGlobal, totalCount, maxRank);
                     } else {
                         setTimeout(fetchNext, 300);
                     }
@@ -638,17 +857,31 @@ body {
 
         if (foundIdx >= 0) {
             var rank = foundIdx + 1;
+            var bizHtml = formatBizHours(foundItem.newBusinessHours);
+            var optionsHtml = "";
+            if (foundItem.options) {
+                var opts = foundItem.options.split(",");
+                for (var oi = 0; oi < opts.length; oi++) {
+                    optionsHtml += '<span style="display:inline-block;padding:2px 8px;background:#eee;border-radius:10px;font-size:11px;margin:2px;">' + escapeHtml(opts[oi].trim()) + '</span>';
+                }
+            }
+
             showResult(
-                '<div class="result-name">' + (foundItem.name || "") + '</div>' +
-                '<div class="result-detail">' + (foundItem.category || "") + '</div>' +
+                '<div class="result-name">' + escapeHtml(foundItem.name) + '</div>' +
+                '<div class="result-detail">' + escapeHtml(foundItem.category) + ' / ' + escapeHtml(foundItem.commonAddress || foundItem.roadAddress) + '</div>' +
                 '<div class="result-rank">' + rank + '<span style="font-size:20px;">위</span></div>' +
                 '<div class="result-rank-sub">전체 ' + totalCount + '개 중</div>' +
+                (bizHtml ? '<div style="margin-top:8px;">' + bizHtml + '</div>' : '') +
                 '<div class="result-detail" style="margin-top:12px;">' +
                     '블로그리뷰 ' + (foundItem.blogCafeReviewCount || 0) +
                     ' / 방문자리뷰 ' + (foundItem.visitorReviewCount || 0) +
                     ' / 저장 ' + (foundItem.saveCount || 0) +
-                    ' / 별점 ' + (foundItem.visitorReviewScore || 0) +
-                '</div>',
+                    ' / 별점 ' + (foundItem.visitorReviewScore || "-") +
+                '</div>' +
+                (foundItem.priceCategory ? '<div class="result-detail">가격대: ' + escapeHtml(foundItem.priceCategory) + '</div>' : '') +
+                (foundItem.microReview ? '<div class="result-detail" style="font-style:italic;color:#888;">"' + escapeHtml(foundItem.microReview) + '"</div>' : '') +
+                (optionsHtml ? '<div style="margin-top:8px;">' + optionsHtml + '</div>' : '') +
+                '<div style="margin-top:12px;"><span class="name-link" style="font-size:12px;color:#3498db;cursor:pointer;" onclick="openDetail(' + foundIdx + ')">상세정보 보기</span></div>',
                 "result-found"
             );
             addHistory(keyword, placeId, rank, foundItem.name);
@@ -677,21 +910,185 @@ body {
                 if (isTarget) tr.className = "highlight";
 
                 var rankNum = j + 1;
+                var bh = item.newBusinessHours;
+                var bhText = "";
+                if (bh) {
+                    var isOpen = (bh.status || "").indexOf("영업 중") >= 0;
+                    bhText = '<span class="biz-hours ' + (isOpen ? "biz-hours-open" : "biz-hours-closed") + '">' + escapeHtml(bh.status || "") + '</span>';
+                }
+
                 tr.innerHTML =
                     '<td><span class="badge ' + badgeClass(rankNum) + '">' + rankNum + '</span></td>' +
-                    '<td>' + (item.name || "") + (isTarget ? " [대상]" : "") + '</td>' +
-                    '<td>' + (item.category || "") + '</td>' +
+                    '<td><span class="name-link" data-idx="' + j + '">' + escapeHtml(item.name) + '</span>' +
+                        (isTarget ? ' [대상]' : '') +
+                        (item.microReview ? '<br><span class="micro-review">' + escapeHtml(item.microReview) + '</span>' : '') +
+                    '</td>' +
+                    '<td>' + escapeHtml(item.category) + '</td>' +
+                    '<td style="font-size:11px;">' + escapeHtml(item.commonAddress || item.roadAddress || "") + '</td>' +
                     '<td>' + (item.blogCafeReviewCount || 0) + '</td>' +
                     '<td>' + (item.visitorReviewCount || 0) + '</td>' +
                     '<td>' + (item.saveCount || 0) + '</td>' +
-                    '<td>' + (item.visitorReviewScore || 0) + '</td>';
+                    '<td>' + (item.visitorReviewScore || "-") + '</td>' +
+                    '<td>' + bhText + '</td>' +
+                    '<td style="font-size:11px;">' + escapeHtml(item.priceCategory || "") + '</td>';
                 tbody.appendChild(tr);
             }
 
             document.getElementById("pageInfo").textContent =
                 allItems.length + "개 표시 / 전체 " + totalCount + "개";
+
+            // 이름 클릭 이벤트
+            var nameLinks = tbody.querySelectorAll(".name-link");
+            for (var nl = 0; nl < nameLinks.length; nl++) {
+                nameLinks[nl].addEventListener("click", function() {
+                    var idx = parseInt(this.getAttribute("data-idx"));
+                    openDetail(idx);
+                });
+            }
         }
     }
+
+    window.openDetail = function(idx) {
+        if (idx < 0 || idx >= allItemsGlobal.length) return;
+
+        var item = allItemsGlobal[idx];
+        var rank = idx + 1;
+
+        document.getElementById("modalTitle").textContent = (item.name || "업체 상세정보") + " (#" + rank + "위)";
+
+        var html = "";
+
+        // 기본정보
+        html += '<div class="detail-section">';
+        html += '<h4>기본 정보</h4>';
+        html += '<div class="detail-grid">';
+        html += '<div class="detail-item"><div class="detail-label">업체명</div><div class="detail-value">' + escapeHtml(item.name) + '</div></div>';
+        html += '<div class="detail-item"><div class="detail-label">카테고리</div><div class="detail-value">' + escapeHtml(item.category) + '</div></div>';
+        html += '<div class="detail-item"><div class="detail-label">플레이스 ID</div><div class="detail-value">' + escapeHtml(item.id) + '</div></div>';
+        html += '<div class="detail-item"><div class="detail-label">거리</div><div class="detail-value">' + escapeHtml(item.distance || "-") + '</div></div>';
+
+        if (item.fullAddress || item.roadAddress) {
+            html += '<div class="detail-item detail-full"><div class="detail-label">주소</div><div class="detail-value">' + escapeHtml(item.fullAddress || item.roadAddress) + '</div></div>';
+        }
+        if (item.phone || item.virtualPhone) {
+            html += '<div class="detail-item"><div class="detail-label">전화번호</div><div class="detail-value">' + escapeHtml(item.phone || item.virtualPhone) + '</div></div>';
+        }
+        if (item.priceCategory) {
+            html += '<div class="detail-item"><div class="detail-label">가격대</div><div class="detail-value">' + escapeHtml(item.priceCategory) + '</div></div>';
+        }
+
+        var bh = item.newBusinessHours;
+        if (bh) {
+            html += '<div class="detail-item detail-full"><div class="detail-label">영업시간</div><div class="detail-value">' + formatBizHours(bh) + '</div></div>';
+        }
+
+        if (item.microReview) {
+            html += '<div class="detail-item detail-full"><div class="detail-label">한줄평</div><div class="detail-value" style="font-style:italic;">"' + escapeHtml(item.microReview) + '"</div></div>';
+        }
+
+        html += '</div></div>';
+
+        // 리뷰/저장 통계
+        html += '<div class="detail-section">';
+        html += '<h4>리뷰 및 저장 통계</h4>';
+        html += '<div class="detail-grid">';
+        html += '<div class="detail-item"><div class="detail-label">블로그 리뷰</div><div class="detail-value">' + (item.blogCafeReviewCount || 0) + '</div></div>';
+        html += '<div class="detail-item"><div class="detail-label">방문자 리뷰</div><div class="detail-value">' + (item.visitorReviewCount || 0) + '</div></div>';
+        html += '<div class="detail-item"><div class="detail-label">예약 리뷰</div><div class="detail-value">' + (item.bookingReviewCount || 0) + '</div></div>';
+        html += '<div class="detail-item"><div class="detail-label">전체 리뷰</div><div class="detail-value">' + (item.totalReviewCount || 0) + '</div></div>';
+        html += '<div class="detail-item"><div class="detail-label">저장수</div><div class="detail-value">' + (item.saveCount || 0) + '</div></div>';
+        html += '<div class="detail-item"><div class="detail-label">별점</div><div class="detail-value">' + (item.visitorReviewScore || "-") + '</div></div>';
+        html += '<div class="detail-item"><div class="detail-label">이미지수</div><div class="detail-value">' + (item.imageCount || 0) + '</div></div>';
+        html += '</div></div>';
+
+        // 편의시설/옵션
+        if (item.options) {
+            html += '<div class="detail-section">';
+            html += '<h4>편의시설 / 옵션</h4>';
+            html += '<div class="detail-tags">';
+            var opts = item.options.split(",");
+            for (var oi = 0; oi < opts.length; oi++) {
+                html += '<span class="detail-tag">' + escapeHtml(opts[oi].trim()) + '</span>';
+            }
+            html += '</div></div>';
+        }
+
+        // 예약/주문
+        html += '<div class="detail-section">';
+        html += '<h4>예약 / 서비스</h4>';
+        html += '<div class="detail-grid">';
+        html += '<div class="detail-item"><div class="detail-label">예약</div><div class="detail-value">' + (item.hasBooking ? "가능" : "불가") + '</div></div>';
+        html += '<div class="detail-item"><div class="detail-label">네이버페이</div><div class="detail-value">' + (item.hasNPay ? "가능" : "불가") + '</div></div>';
+        if (item.naverBookingCategory) {
+            html += '<div class="detail-item"><div class="detail-label">예약유형</div><div class="detail-value">' + escapeHtml(item.naverBookingCategory) + '</div></div>';
+        }
+        if (item.deliveryArea) {
+            html += '<div class="detail-item"><div class="detail-label">배달지역</div><div class="detail-value">' + escapeHtml(item.deliveryArea) + '</div></div>';
+        }
+        html += '</div></div>';
+
+        // 방송
+        if (item.broadcastInfo && item.broadcastInfo.program) {
+            html += '<div class="detail-section">';
+            html += '<h4>방송 출연</h4>';
+            html += '<div class="detail-grid">';
+            html += '<div class="detail-item"><div class="detail-label">프로그램</div><div class="detail-value">' + escapeHtml(item.broadcastInfo.program) + '</div></div>';
+            if (item.broadcastInfo.date) {
+                html += '<div class="detail-item"><div class="detail-label">방송일</div><div class="detail-value">' + escapeHtml(item.broadcastInfo.date) + '</div></div>';
+            }
+            if (item.broadcastInfo.menu) {
+                html += '<div class="detail-item"><div class="detail-label">소개메뉴</div><div class="detail-value">' + escapeHtml(item.broadcastInfo.menu) + '</div></div>';
+            }
+            html += '</div></div>';
+        }
+
+        // 방문자 리뷰
+        if (item.visitorReviews && item.visitorReviews.length > 0) {
+            html += '<div class="detail-section">';
+            html += '<h4>방문자 리뷰 (' + item.visitorReviews.length + '개)</h4>';
+            for (var ri = 0; ri < item.visitorReviews.length; ri++) {
+                var rv = item.visitorReviews[ri];
+                html += '<div class="detail-review">' + stripHtml(rv.review || "") + '</div>';
+            }
+            html += '</div>';
+        }
+
+        // 방문자 이미지
+        if (item.visitorImages && item.visitorImages.length > 0) {
+            html += '<div class="detail-section">';
+            html += '<h4>방문자 사진 (' + item.visitorImages.length + '개)</h4>';
+            html += '<div class="detail-images">';
+            for (var vi = 0; vi < item.visitorImages.length; vi++) {
+                var img = item.visitorImages[vi];
+                html += '<img src="' + escapeHtml(img.imageUrl) + '" alt="' + escapeHtml(img.nickname || "") + '" title="' + escapeHtml(img.nickname || "") + '">';
+            }
+            html += '</div></div>';
+        }
+
+        // 링크
+        html += '<div class="detail-section">';
+        html += '<h4>바로가기</h4>';
+        html += '<div style="display:flex;gap:8px;flex-wrap:wrap;">';
+        html += '<a href="https://m.place.naver.com/restaurant/' + item.id + '/home" target="_blank" class="btn btn-primary" style="font-size:12px;padding:6px 14px;text-decoration:none;">네이버 플레이스</a>';
+        if (item.bookingUrl) {
+            html += '<a href="' + escapeHtml(item.bookingUrl) + '" target="_blank" class="btn btn-primary" style="font-size:12px;padding:6px 14px;text-decoration:none;background:#27ae60;">예약하기</a>';
+        }
+        html += '</div></div>';
+
+        document.getElementById("modalBody").innerHTML = html;
+        document.getElementById("detailModal").classList.add("show");
+    };
+
+    // 모달 닫기
+    document.getElementById("modalClose").addEventListener("click", function() {
+        document.getElementById("detailModal").classList.remove("show");
+    });
+
+    document.getElementById("detailModal").addEventListener("click", function(e) {
+        if (e.target === this) {
+            this.classList.remove("show");
+        }
+    });
 
     document.getElementById("btnSearch").addEventListener("click", doSearch);
 
