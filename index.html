@@ -252,7 +252,6 @@ body {
 
 .history-item:hover {
     background: #fafafa;
-    cursor: pointer;
 }
 
 .history-keyword {
@@ -262,12 +261,6 @@ body {
 .history-placeid {
     color: #888;
     font-size: 12px;
-}
-
-.history-actions {
-    display: flex;
-    gap: 8px;
-    align-items: center;
 }
 
 .btn-tiny {
@@ -348,11 +341,11 @@ body {
         <div class="form-row">
             <div class="form-group">
                 <label>검색 키워드</label>
-                <input type="text" id="inputKeyword" placeholder="예: 남영역맛집" value="남영역맛집">
+                <input type="text" id="inputKeyword" placeholder="예: 남영역맛집">
             </div>
             <div class="form-group">
                 <label>플레이스 ID</label>
-                <input type="text" id="inputPlaceId" placeholder="예: 1951454277" value="1951454277">
+                <input type="text" id="inputPlaceId" placeholder="예: 1951454277">
             </div>
         </div>
         <div class="max-select">
@@ -363,7 +356,7 @@ body {
                 <option value="300" selected>300위까지</option>
             </select>
         </div>
-        <button class="btn btn-primary" id="btnSearch" onclick="doSearch()">순위 조회</button>
+        <button class="btn btn-primary" id="btnSearch">순위 조회</button>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
@@ -408,11 +401,7 @@ body {
 (function() {
     "use strict";
 
-    var PROXY_LIST = [
-        "https://api.allorigins.win/raw?url=",
-        "https://api.codetabs.com/v1/proxy?quest="
-    ];
-
+    var PROXY_URL = "https://naverrank.dampd21.workers.dev/";
     var HISTORY_KEY = "npt_rank_history";
 
     function loadHistory() {
@@ -468,7 +457,7 @@ body {
                         '<span class="history-placeid"> (ID: ' + item.placeId + ')</span>' +
                         '<br><span style="font-size:11px;color:#aaa;">' + item.time + ' / ' + rankText + nameText + '</span>' +
                     '</div>' +
-                    '<div class="history-actions">' +
+                    '<div style="display:flex;gap:6px;">' +
                         '<button class="btn-tiny btn-rerun">재조회</button>' +
                         '<button class="btn-tiny btn-tiny-del btn-del">삭제</button>' +
                     '</div>';
@@ -520,32 +509,16 @@ body {
         box.style.display = "block";
     }
 
-    function fetchGraphQL(keyword, start, display) {
+    function fetchPage(keyword, start, display) {
         return new Promise(function(resolve, reject) {
-            var payload = JSON.stringify([{
-                "operationName": "getRestaurantList",
-                "variables": {
-                    "restaurantListInput": {
-                        "query": keyword,
-                        "x": "126.9783882",
-                        "y": "37.5666103",
-                        "start": start,
-                        "display": display,
-                        "isNmap": false,
-                        "deviceType": "pc"
-                    }
-                },
-                "query": "query getRestaurantList($restaurantListInput: RestaurantListInput) { restaurants: restaurantList(input: $restaurantListInput) { items { id name category roadAddress phone totalReviewCount blogCafeReviewCount visitorReviewCount visitorReviewScore saveCount } total } }"
-            }]);
+            var url = PROXY_URL + "?keyword=" + encodeURIComponent(keyword) +
+                      "&start=" + start +
+                      "&display=" + display;
 
-            var targetUrl = "https://api.place.naver.com/graphql";
-
-            // 직접 호출 시도
             var xhr = new XMLHttpRequest();
-            xhr.open("POST", targetUrl, true);
+            xhr.open("POST", url, true);
             xhr.setRequestHeader("Content-Type", "application/json");
-            xhr.setRequestHeader("Accept", "*/*");
-            xhr.timeout = 15000;
+            xhr.timeout = 20000;
 
             xhr.onload = function() {
                 if (xhr.status === 200) {
@@ -553,65 +526,26 @@ body {
                         var data = JSON.parse(xhr.responseText);
                         resolve(data);
                     } catch(e) {
-                        reject("JSON 파싱 실패");
+                        reject("응답 파싱 실패: " + e.message);
                     }
                 } else {
-                    reject("HTTP " + xhr.status);
+                    reject("HTTP " + xhr.status + ": " + xhr.statusText);
                 }
             };
 
             xhr.onerror = function() {
-                // CORS 차단시 프록시로 재시도
-                fetchViaProxy(targetUrl, payload, 0, resolve, reject);
+                reject("네트워크 오류가 발생했습니다.");
             };
 
             xhr.ontimeout = function() {
-                fetchViaProxy(targetUrl, payload, 0, resolve, reject);
+                reject("요청 시간이 초과되었습니다.");
             };
 
-            xhr.send(payload);
+            xhr.send("{}");
         });
     }
 
-    function fetchViaProxy(targetUrl, payload, proxyIdx, resolve, reject) {
-        if (proxyIdx >= PROXY_LIST.length) {
-            reject("모든 프록시 실패. 네이버 API가 CORS를 차단합니다.");
-            return;
-        }
-
-        var proxyBase = PROXY_LIST[proxyIdx];
-        var proxyUrl = proxyBase + encodeURIComponent(targetUrl);
-
-        var xhr = new XMLHttpRequest();
-        xhr.open("POST", proxyUrl, true);
-        xhr.setRequestHeader("Content-Type", "application/json");
-        xhr.timeout = 15000;
-
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                try {
-                    var data = JSON.parse(xhr.responseText);
-                    resolve(data);
-                } catch(e) {
-                    fetchViaProxy(targetUrl, payload, proxyIdx + 1, resolve, reject);
-                }
-            } else {
-                fetchViaProxy(targetUrl, payload, proxyIdx + 1, resolve, reject);
-            }
-        };
-
-        xhr.onerror = function() {
-            fetchViaProxy(targetUrl, payload, proxyIdx + 1, resolve, reject);
-        };
-
-        xhr.ontimeout = function() {
-            fetchViaProxy(targetUrl, payload, proxyIdx + 1, resolve, reject);
-        };
-
-        xhr.send(payload);
-    }
-
-    window.doSearch = function() {
+    function doSearch() {
         var keyword = document.getElementById("inputKeyword").value.trim();
         var placeId = document.getElementById("inputPlaceId").value.trim();
         var maxRank = parseInt(document.getElementById("selectMaxRank").value) || 300;
@@ -631,8 +565,8 @@ body {
         var allItems = [];
         var totalCount = 0;
         var pageSize = 100;
-        var pages = Math.ceil(maxRank / pageSize);
         var currentPage = 0;
+        var maxPages = Math.ceil(maxRank / pageSize);
 
         function fetchNext() {
             currentPage++;
@@ -644,7 +578,7 @@ body {
                     "'" + keyword + "' 검색 중... (" + start + "~" + (start + display - 1) + "위)";
             }
 
-            fetchGraphQL(keyword, start, display)
+            fetchPage(keyword, start, display)
                 .then(function(data) {
                     var items = [];
                     var total = 0;
@@ -660,7 +594,6 @@ body {
                     totalCount = total;
                     allItems = allItems.concat(items);
 
-                    // 해당 업체를 찾았는지 확인
                     var foundIdx = -1;
                     for (var i = 0; i < allItems.length; i++) {
                         if (String(allItems[i].id) === String(placeId)) {
@@ -669,14 +602,12 @@ body {
                         }
                     }
 
-                    // 찾았거나, 더 이상 결과가 없거나, 마지막 페이지면 종료
-                    if (foundIdx >= 0 || items.length < display || currentPage >= pages) {
+                    if (foundIdx >= 0 || items.length < display || currentPage >= maxPages) {
                         hideLoading();
                         document.getElementById("btnSearch").disabled = false;
                         showResults(keyword, placeId, allItems, totalCount, maxRank);
                     } else {
-                        // 다음 페이지
-                        setTimeout(fetchNext, 500);
+                        setTimeout(fetchNext, 300);
                     }
                 })
                 .catch(function(err) {
@@ -684,18 +615,14 @@ body {
                     document.getElementById("btnSearch").disabled = false;
                     showResult(
                         '<div style="font-size:15px;font-weight:600;color:#e67e22;">조회 실패</div>' +
-                        '<div class="result-detail">' + err + '</div>' +
-                        '<div class="result-detail" style="margin-top:8px;">' +
-                        '브라우저에서 직접 네이버 API를 호출할 수 없는 경우가 있습니다.<br>' +
-                        'GitHub Actions 자동 추적 기능을 이용해주세요.' +
-                        '</div>',
+                        '<div class="result-detail" style="margin-top:8px;">' + err + '</div>',
                         "result-error"
                     );
                 });
         }
 
         fetchNext();
-    };
+    }
 
     function showResults(keyword, placeId, allItems, totalCount, maxRank) {
         var foundIdx = -1;
@@ -737,7 +664,6 @@ body {
             addHistory(keyword, placeId, null, "");
         }
 
-        // 상세 테이블
         if (allItems.length > 0) {
             document.getElementById("tableCard").style.display = "block";
             document.getElementById("tableKeyword").textContent = keyword;
@@ -767,15 +693,16 @@ body {
         }
     }
 
-    // Enter 키 지원
+    document.getElementById("btnSearch").addEventListener("click", doSearch);
+
     document.getElementById("inputKeyword").addEventListener("keydown", function(e) {
         if (e.key === "Enter") doSearch();
     });
+
     document.getElementById("inputPlaceId").addEventListener("keydown", function(e) {
         if (e.key === "Enter") doSearch();
     });
 
-    // 초기 렌더링
     renderHistory();
 
 })();
