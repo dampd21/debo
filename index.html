@@ -1,745 +1,784 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>달인대보칼국수 매장 찾기</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>네이버 플레이스 순위 조회</title>
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
-  <style>
-    #daebo-store-page{
-      --daebo-accent:#783712;
-      font-family: system-ui, -apple-system, "Noto Sans KR", sans-serif;
-    }
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f5f5;
+    color: #333;
+}
 
-    /* Map Layout */
-    #daebo-store-page .store-map { width:100%; height:960px; position:relative; }
-    #daebo-store-page .store-map__wrap { width:100%; height:100%; position:relative; }
-    #daebo-store-page .store-map__pc { width:100%; height:100%; position:relative; }
+.header {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 20px 0;
+}
 
-    #daebo-store-page .store-map__pc .store-map__sch{
-      position:absolute; top:0; left:50%; transform:translateX(-50%);
-      max-width:1680px; width:100%; margin:0 auto; z-index:99;
-      pointer-events:none;
-    }
-    #daebo-store-page .store-map__pc .store-map__sch *{ pointer-events:auto; }
+.header-inner {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
 
-    /* Left Search Box */
-    #daebo-store-page .store-map__pc .sch__box{
-      position:absolute; top:210px; left:0; max-width:480px; width:100%;
-    }
+.header h1 {
+    font-size: 22px;
+    font-weight: 700;
+}
 
-    /* search_main.png: 더 아래로 내려서 박스에 걸치게 + 크게 */
-    #daebo-store-page .store-map__pc .sch__box::before{
-      content:"";
-      display:block;
-      position:absolute;
-      z-index:3;
+.header p {
+    font-size: 13px;
+    color: #aaa;
+    margin-top: 4px;
+}
 
-      width:360px;
-      height:170px;
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
 
-      /* "좀 더 내려" = 음수 값을 줄여서 아래로 이동 */
-      top:-110px;
+.card {
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 20px;
+}
 
-      left:50%;
-      transform:translateX(-50%);
+.card h2 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
+}
 
-      background:url("https://daebo1992.kr/wp-content/uploads/2026/02/search_main.png") no-repeat center/contain;
-      pointer-events:none;
-    }
+.form-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
 
-    /* 상단 브라운 박스: 위는 둥글게 / 아래는 각지게 */
-    #daebo-store-page .store-map__pc .sch__box__wrap{
-      background:var(--daebo-accent);
-      border-radius:30px 30px 0 0;
-      padding:40px 32px 22px;
-      position:relative;
-      z-index:2;
-    }
+.form-group {
+    flex: 1;
+    min-width: 180px;
+}
 
-    #daebo-store-page .store-map__pc .sch__box__tltie{ margin-bottom:14px; }
-    #daebo-store-page .store-map__pc .sch__box__tltie p{
-      margin:0; font-size:2.4rem; font-weight:800; line-height:1; color:#fff;
-    }
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #555;
+}
 
-    /* 안내 문구 작게 + 줄바꿈 깔끔 */
-    #daebo-store-page .store-map__pc .sch__box__tltie span{
-      display:block;
-      padding-top:8px;
-      font-size:1.25rem;
-      line-height:1.35;
-      font-weight:500;
-      color:#f2f2f2;
-      word-break:keep-all;
-    }
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+}
 
-    /* 검색 입력/버튼 정렬(이탈 방지) */
-    #daebo-store-page .sch__box__input{
-      box-sizing:border-box;
-      position:relative;
-      width:100%;
-      height:56px;
-      background:#fff;
-      border:1px solid var(--daebo-accent);
-      padding-right:56px;
-      overflow:hidden;
-    }
-    #daebo-store-page .sch__box__input input{
-      box-sizing:border-box;
-      width:100%;
-      height:100%;
-      font-size:1.5rem;
-      font-weight:600;
-      padding:0 16px;
-      border:0;
-      outline:0;
-    }
-    #daebo-store-page .sch__box__input .input_btn{
-      position:absolute;
-      top:0;
-      right:0;
-      width:56px;
-      height:56px;
-    }
-    #daebo-store-page .sch__box__input .input_btn .button{
-      display:block;
-      width:56px;
-      height:56px;
-      border:0;
-      background:var(--daebo-accent);
-      cursor:pointer;
-      position:relative;
-    }
-    /* 돋보기 CSS */
-    #daebo-store-page .sch__box__input .input_btn .button::before{
-      content:""; position:absolute; width:18px; height:18px; border:2px solid #fff; border-radius:50%;
-      left:18px; top:18px;
-    }
-    #daebo-store-page .sch__box__input .input_btn .button::after{
-      content:""; position:absolute; width:10px; height:2px; background:#fff;
-      left:34px; top:34px; transform:rotate(45deg);
-    }
+.form-group input:focus {
+    border-color: #1a1a2e;
+}
 
-    /* List Box: 사각으로(상단 박스와 자연스럽게 연결) */
-    #daebo-store-page .store-box{
-      background:#fff;
-      border:1px solid var(--daebo-accent);
-      border-top:0;
-      border-radius:0;
-      padding:20px 18px;
-      margin-top:0;
-    }
-    #daebo-store-page .store-list{
-      height:400px;
-      overflow-y:auto;
-      list-style:none;
-      margin:0;
-      padding:0;
-    }
-    #daebo-store-page .store-list li{
-      padding:16px 0;
-      border-bottom:1px solid #c4c4c4;
-      cursor:pointer;
-    }
-    #daebo-store-page .store-list li:last-child{ border:0; }
-    #daebo-store-page .store-list li > div{ padding:0 14px; }
-    #daebo-store-page .store_name{
-      font-size:1.45rem;
-      font-weight:800;
-      color:#000;
-      text-overflow:ellipsis;
-      overflow:hidden;
-      white-space:nowrap;
-    }
-    #daebo-store-page .store_address{
-      font-size:1.25rem;
-      line-height:1.35;
-      color:#000;
-      margin:7px 0 2px;
-    }
-    #daebo-store-page .store_tel{
-      font-size:1.25rem;
-      font-weight:800;
-      color:var(--daebo-accent);
-    }
-    #daebo-store-page .store-list li.active{
-      background:#faf6f3;
-      border-left:3px solid var(--daebo-accent);
-    }
+.btn {
+    padding: 10px 28px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
 
-    /* Pagination */
-    #daebo-store-page .pagination{
-      display:flex;
-      justify-content:center;
-      margin-top:14px;
-      gap:6px;
-      flex-wrap:wrap;
-    }
-    #daebo-store-page .pagination a{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      width:26px;
-      height:26px;
-      font-size:1.3rem;
-      color:#5c5c5c;
-      text-decoration:none;
-      user-select:none;
-    }
-    #daebo-store-page .pagination a.current{ font-weight:900; color:var(--daebo-accent); }
-    #daebo-store-page .pagination a.disabled{ opacity:.35; pointer-events:none; }
-    #daebo-store-page .pagination a.pagination_prev,
-    #daebo-store-page .pagination a.pagination_next{ width:26px; font-weight:900; }
-    #daebo-store-page .pagination a.pagination_prev::before{ content:"‹"; font-size:18px; line-height:1; }
-    #daebo-store-page .pagination a.pagination_next::before{ content:"›"; font-size:18px; line-height:1; }
+.btn-primary {
+    background: #1a1a2e;
+    color: #fff;
+}
 
-    /* Detail Panel */
-    #daebo-store-page .sch__info{
-      position:absolute;
-      top:210px;
-      right:0;
-      max-width:400px;
-      width:100%;
-      background:#fff;
-      padding:10px;
-      display:none;
-      box-shadow:0 10px 30px rgba(0,0,0,.15);
-    }
-    #daebo-store-page .sch__info__wrap{ border:1px solid var(--daebo-accent); padding:16px; }
-    #daebo-store-page .sch__info__title{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      padding-bottom:10px;
-      border-bottom:1px solid var(--daebo-accent);
-      gap:10px;
-    }
-    #daebo-store-page .sch__info__title p{
-      margin:0;
-      font-size:1.6rem;
-      font-weight:900;
-      color:#000;
-      flex:1;
-      min-width:0;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-    }
-    #daebo-store-page .sch__info__close{ width:30px; height:30px; }
-    #daebo-store-page .sch__info__close .button{
-      width:100%; height:100%; border:0; background:transparent; cursor:pointer; position:relative;
-    }
-    #daebo-store-page .sch__info__close .button::before,
-    #daebo-store-page .sch__info__close .button::after{
-      content:""; position:absolute; left:50%; top:50%; width:18px; height:2px; background:#111;
-      transform-origin:center;
-    }
-    #daebo-store-page .sch__info__close .button::before{ transform:translate(-50%,-50%) rotate(45deg); }
-    #daebo-store-page .sch__info__close .button::after{ transform:translate(-50%,-50%) rotate(-45deg); }
+.btn-primary:hover {
+    background: #16213e;
+}
 
-    #daebo-store-page .sch__info__con{ padding:12px 0 8px; }
-    #daebo-store-page .sch__info__con dd{
-      display:flex;
-      gap:10px;
-      padding-bottom:9px;
-      margin:0;
-    }
-    #daebo-store-page .sch__info__con dd span{ font-size:1.25rem; color:#000; }
-    #daebo-store-page .sch__info__con dd span.con_tit{ width:64px; font-weight:900; }
-    #daebo-store-page .sch__info__con dd span:not(.con_tit){ flex:1; }
+.btn-primary:disabled {
+    background: #999;
+    cursor: not-allowed;
+}
 
-    #daebo-store-page .daebo-detail-photo img{
-      display:block;
-      width:100%;
-      border-radius:10px;
-      margin-top:10px;
-    }
+.result-box {
+    display: none;
+    margin-top: 20px;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+}
 
-    /* 바로가기 버튼 가운데 정렬 */
-    #daebo-store-page .daebo-actions{
-      margin-top:10px;
-      display:flex;
-      justify-content:center;
-      align-items:center;
-    }
-    #daebo-store-page .daebo-baro{ display:inline-flex; align-items:center; text-decoration:none; }
-    #daebo-store-page .daebo-baro img{ height:34px; display:block; }
+.result-found {
+    background: #eafaf1;
+    border: 2px solid #2ecc71;
+}
 
-    /* Map Canvas */
-    #daebo-store-page .store-map__api{ width:100%; height:100%; background:#000; }
+.result-notfound {
+    background: #fdedec;
+    border: 2px solid #e74c3c;
+}
 
-    /* Bottom Table */
-    #daebo-store-page .store-map__table{ max-width:1680px; margin:34px auto 0; padding:0 15px; }
-    #daebo-store-page .table-heading{ position:relative; margin-bottom:12px; }
-    #daebo-store-page .sec-tit{ margin:0; font-size:1.9rem; font-weight:900; }
-    #daebo-store-page .sec-subtit{ margin:6px 0 0; color:#666; font-size:1.2rem; }
-    #daebo-store-page .store-table__sch{ position:absolute; right:0; bottom:0; width:min(420px, 100%); }
+.result-error {
+    background: #fef9e7;
+    border: 2px solid #f39c12;
+}
 
-    #daebo-store-page table.table{
-      table-layout:fixed; border-collapse:collapse; width:100%;
-      border-top:2px solid #121212;
-    }
-    #daebo-store-page .table th, #daebo-store-page .table td{
-      font-size:1.25rem;
-      padding:12px 10px;
-      border-bottom:1px solid #c6c6c6;
-      vertical-align:top;
-    }
-    #daebo-store-page .table th{ background:#f4f6fb; text-align:center; font-weight:900; }
-    #daebo-store-page .table td:nth-child(1){ text-align:center; font-weight:900; cursor:pointer; }
-    #daebo-store-page .table td:nth-child(2){ text-align:left; cursor:pointer; }
-    #daebo-store-page .table td:nth-child(3){ text-align:center; color:#8f8f8f; cursor:pointer; }
-    #daebo-store-page tr.active{ background:#faf6f3; }
+.result-rank {
+    font-size: 48px;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin: 8px 0;
+}
 
-    @media (max-width:1200px){
-      #daebo-store-page .store-map{ height:820px; }
-      #daebo-store-page .store-map__pc .sch__box{ top:130px; left:15px; max-width:420px; }
-      #daebo-store-page .sch__info{ top:130px; right:15px; max-width:360px; }
-      #daebo-store-page .store-map__pc .sch__box::before{
-        width:330px; height:155px; top:-100px;
-      }
+.result-rank-sub {
+    font-size: 14px;
+    color: #888;
+}
+
+.result-name {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.result-detail {
+    font-size: 13px;
+    color: #666;
+    margin-top: 4px;
+}
+
+.loading {
+    display: none;
+    text-align: center;
+    padding: 30px;
+}
+
+.spinner {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    border: 3px solid #ddd;
+    border-top-color: #1a1a2e;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-text {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #888;
+}
+
+.rank-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 16px;
+}
+
+.rank-table th {
+    background: #f8f8f8;
+    padding: 10px 12px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #ddd;
+}
+
+.rank-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.rank-table tbody tr:hover {
+    background: #fafafa;
+}
+
+.rank-table .highlight {
+    background: #fff9c4;
+    font-weight: 600;
+}
+
+.badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 12px;
+    color: #fff;
+}
+
+.badge-1 { background: #e74c3c; }
+.badge-3 { background: #2ecc71; }
+.badge-5 { background: #3498db; }
+.badge-10 { background: #f39c12; }
+.badge-20 { background: #e67e22; }
+.badge-other { background: #95a5a6; }
+
+.history-list {
+    margin-top: 16px;
+}
+
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
+}
+
+.history-item:hover {
+    background: #fafafa;
+    cursor: pointer;
+}
+
+.history-keyword {
+    font-weight: 600;
+}
+
+.history-placeid {
+    color: #888;
+    font-size: 12px;
+}
+
+.history-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.btn-tiny {
+    padding: 4px 10px;
+    font-size: 11px;
+    border: 1px solid #ddd;
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-tiny:hover {
+    background: #f0f0f0;
+}
+
+.btn-tiny-del {
+    color: #e74c3c;
+    border-color: #e74c3c;
+}
+
+.btn-tiny-del:hover {
+    background: #fdedec;
+}
+
+.page-info {
+    text-align: center;
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 8px;
+}
+
+.max-select {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 14px;
+}
+
+.max-select label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+}
+
+.max-select select {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 13px;
+}
+
+@media (max-width: 600px) {
+    .form-row {
+        flex-direction: column;
     }
-    @media (max-width:900px){
-      #daebo-store-page .store-map{ height:760px; }
-      #daebo-store-page .store-table__sch{ position:static; margin-top:12px; }
-      #daebo-store-page .sch__info{
-        position:absolute; left:15px; right:15px; max-width:none; top:auto; bottom:15px;
-      }
-      #daebo-store-page .store-map__pc .sch__box{
-        position:absolute; max-width:none; width:auto; right:15px;
-      }
+    .form-group {
+        min-width: 100%;
     }
-  </style>
+    .result-rank {
+        font-size: 36px;
+    }
+}
+</style>
 </head>
+<body>
 
-<body style="margin:0;">
-  <div id="daebo-store-page">
-    <div class="store-map">
-      <div class="store-map__wrap">
-        <div class="store-map__pc">
+<div class="header">
+    <div class="header-inner">
+        <h1>네이버 플레이스 순위 조회</h1>
+        <p>키워드와 플레이스 ID를 입력하면 실시간으로 순위를 확인합니다</p>
+    </div>
+</div>
 
-          <div class="store-map__sch">
-            <div class="sch__box">
-              <div class="sch__box__wrap">
-                <div class="sch__box__tltie">
-                  <p>매장 찾기</p>
-                  <span>달인대보칼국수 매장 위치안내 입니다.</span>
-                </div>
+<div class="container">
 
-                <form id="searchForm" onsubmit="return false;">
-                  <div class="sch__box__input">
-                    <input type="text" id="keyword" placeholder="매장명 또는 주소 검색">
-                    <div class="input_btn">
-                      <button type="button" id="btnSearch" class="button" aria-label="검색"></button>
-                    </div>
-                  </div>
-                </form>
-              </div>
-
-              <div class="store-box">
-                <ul class="store-list" id="daebo-left-list"></ul>
-                <div class="pagination" id="daebo-left-paging"></div>
-              </div>
+    <div class="card">
+        <h2>순위 조회</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label>검색 키워드</label>
+                <input type="text" id="inputKeyword" placeholder="예: 남영역맛집" value="남영역맛집">
             </div>
-
-            <div class="sch__info" id="daebo-info">
-              <div class="sch__info__wrap">
-                <div class="sch__info__title">
-                  <p id="daebo-info-title"></p>
-                  <div class="sch__info__close">
-                    <button type="button" class="button" id="daebo-info-close" aria-label="닫기"></button>
-                  </div>
-                </div>
-
-                <div class="sch__info__con">
-                  <dl>
-                    <dd>
-                      <span class="con_tit">· 주소</span>
-                      <span id="daebo-info-addr"></span>
-                    </dd>
-                    <dd>
-                      <span class="con_tit">· 전화</span>
-                      <span id="daebo-info-tel"></span>
-                    </dd>
-                  </dl>
-
-                  <div class="daebo-detail-photo">
-                    <img id="daebo-info-photo" src="" alt="">
-                  </div>
-
-                  <div class="daebo-actions">
-                    <a id="daebo-baro" class="daebo-baro" target="_blank" rel="noopener" style="display:none;">
-                      <img id="daebo-baro-img" src="" alt="바로가기">
-                    </a>
-                  </div>
-                </div>
-              </div>
+            <div class="form-group">
+                <label>플레이스 ID</label>
+                <input type="text" id="inputPlaceId" placeholder="예: 1951454277" value="1951454277">
             </div>
-          </div>
-
-          <div class="store-map__api" id="daebo-map"></div>
         </div>
-      </div>
+        <div class="max-select">
+            <label>검색 범위</label>
+            <select id="selectMaxRank">
+                <option value="100">100위까지</option>
+                <option value="200">200위까지</option>
+                <option value="300" selected>300위까지</option>
+            </select>
+        </div>
+        <button class="btn btn-primary" id="btnSearch" onclick="doSearch()">순위 조회</button>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div class="loading-text" id="loadingText">검색 중...</div>
+        </div>
+
+        <div class="result-box" id="resultBox"></div>
     </div>
 
-    <div class="store-map__table">
-      <div class="table-heading">
-        <p class="sec-tit"><span>달인대보칼국수 매장 리스트</span></p>
-        <p class="sec-subtit">전국 매장 리스트 입니다.</p>
-
-        <div class="store-table__sch">
-          <form id="searchForm2" onsubmit="return false;">
-            <div class="sch__box__input">
-              <input type="text" id="keyword2" placeholder="매장명 또는 주소 검색">
-              <div class="input_btn">
-                <button type="button" id="btnSearch2" class="button" aria-label="검색"></button>
-              </div>
-            </div>
-          </form>
+    <div class="card" id="tableCard" style="display:none;">
+        <h2>검색 결과 상세 (<span id="tableKeyword"></span>)</h2>
+        <div style="overflow-x:auto;">
+            <table class="rank-table" id="rankTable">
+                <thead>
+                    <tr>
+                        <th>순위</th>
+                        <th>업체명</th>
+                        <th>카테고리</th>
+                        <th>블로그리뷰</th>
+                        <th>방문자리뷰</th>
+                        <th>저장수</th>
+                        <th>별점</th>
+                    </tr>
+                </thead>
+                <tbody id="rankTableBody"></tbody>
+            </table>
         </div>
-      </div>
-
-      <div class="info-tables">
-        <table class="table">
-          <thead>
-            <tr>
-              <th style="width:22%;">매장명</th>
-              <th style="width:58%;">주소</th>
-              <th style="width:20%;">전화번호</th>
-            </tr>
-          </thead>
-          <tbody id="daebo-table-body"></tbody>
-        </table>
-        <div class="pagination" id="daebo-table-paging"></div>
-      </div>
+        <div class="page-info" id="pageInfo"></div>
     </div>
-  </div>
 
-  <script>
-  (() => {
-    const CONFIG = {
-      // 여기 'a1234'를 지우고 본인 키로 붙여넣기 하세요.
-      googleKey: "a1234",
-      perPage: 10,
-      assets: {
-        pin: "https://daebo1992.kr/wp-content/uploads/2026/02/daebo_pin.png",
-        photo: "https://daebo1992.kr/wp-content/uploads/2026/02/daedo-map.png",
-        baroBtn: "https://daebo1992.kr/wp-content/uploads/2026/02/baro_map.png"
-      }
-    };
+    <div class="card">
+        <h2>최근 조회 기록</h2>
+        <div class="history-list" id="historyList"></div>
+        <div id="historyEmpty" style="text-align:center;padding:20px;color:#aaa;font-size:13px;">
+            조회 기록이 없습니다
+        </div>
+    </div>
 
-    const stores = [
-      {"id":"place-1446545627","name":"달인대보칼국수 본점","address":"서울특별시 강서구 마곡중앙5로 6","tel":"02-3663-9571","lat":37.5594,"lng":126.8294,"naverUrl":"https://m.place.naver.com/place/1446545627/home"},
-      {"id":"place-1507475887","name":"달인대보칼국수 양평점","address":"서울 영등포구 선유로 130","tel":"0507-1370-1961","lat":37.534,"lng":126.8945,"naverUrl":"https://m.place.naver.com/place/1507475887/home"},
-      {"id":"place-2013225928","name":"달인대보칼국수 강남논현점","address":"서울특별시 강남구 언주로 615","tel":"070-4010-1028","lat":37.5172,"lng":127.0342,"naverUrl":"https://m.place.naver.com/place/2013225928/home"},
-      {"id":"place-1055373429","name":"달인대보칼국수 등촌역점","address":"서울 강서구 등촌로 205","tel":"0507-1348-7567","lat":37.5503,"lng":126.8556,"naverUrl":"https://m.place.naver.com/place/1055373429/home"},
-      {"id":"place-2073117578","name":"달인대보칼국수 화곡역점","address":"서울 강서구 강서로56길 17","tel":"0507-1477-8874","lat":37.5416,"lng":126.8375,"naverUrl":"https://m.place.naver.com/place/2073117578/home"},
-      {"id":"place-1401274289","name":"달인대보칼국수 NC백화점 강서점","address":"서울 강서구 강서로56길 17","tel":"02-2667-9884","lat":37.5416,"lng":126.8375,"naverUrl":"https://m.place.naver.com/place/1401274289/home"},
-      {"id":"place-1023286555","name":"달인대보칼국수 고척스카이돔점","address":"서울 구로구 경인로47길 26","tel":"0507-1497-9122","lat":37.4982,"lng":126.867,"naverUrl":"https://m.place.naver.com/place/1023286555/home"},
-      {"id":"place-2059699094","name":"달인대보칼국수 신월IC점","address":"서울 양천구 남부순환로 399","tel":"070-4814-0902","lat":37.5246,"lng":126.8356,"naverUrl":"https://m.place.naver.com/place/2059699094/home"},
-      {"id":"place-1472557358","name":"달인대보칼국수 장항점","address":"경기 고양시 일산동구 정발산로 24","tel":"0507-1374-7495","lat":37.6596,"lng":126.7693,"naverUrl":"https://m.place.naver.com/place/1472557358/home"},
-      {"id":"place-1519949386","name":"달인대보칼국수 백석점","address":"경기 고양시 일산동구 호수로 358-39","tel":"031-902-8265","lat":37.6463,"lng":126.7795,"naverUrl":"https://m.place.naver.com/place/1519949386/home"},
-      {"id":"place-1715376131","name":"달인대보칼국수 향동점","address":"경기 고양시 덕양구 향동로 217","tel":"0507-1307-3029","lat":37.6176,"lng":126.8332,"naverUrl":"https://m.place.naver.com/place/1715376131/home"},
-      {"id":"place-1851467826","name":"달인대보칼국수 평택점","address":"경기 평택시 고덕여염10길 69","tel":"0507-1373-9859","lat":37.0833,"lng":127.0651,"naverUrl":"https://m.place.naver.com/place/1851467826/home"},
-      {"id":"place-2034808379","name":"달인대보칼국수 평택죽백점","address":"경기도 평택시 이화로 214","tel":"0507-1350-1429","lat":37.0041,"lng":127.0855,"naverUrl":"https://m.place.naver.com/place/2034808379/home"},
-      {"id":"place-2009495446","name":"달인대보칼국수 송탄서정점","address":"경기도 평택시 서정로 262","tel":"0507-1400-9859","lat":37.0741,"lng":127.0574,"naverUrl":"https://m.place.naver.com/place/2009495446/home"},
-      {"id":"place-1698501134","name":"달인대보칼국수 광교점","address":"경기 수원시 영통구 대학4로 9","tel":"0507-1463-1454","lat":37.2866,"lng":127.0485,"naverUrl":"https://m.place.naver.com/place/1698501134/home"},
-      {"id":"place-1177479887","name":"달인대보칼국수 뉴코아아울렛 부천점","address":"경기 부천시 원미구 송내대로 239","tel":"0507-1421-8343","lat":37.4889,"lng":126.7546,"naverUrl":"https://m.place.naver.com/place/1177479887/home"},
-      {"id":"place-1280359800","name":"달인대보칼국수 부천시청점","address":"경기 부천시 원미구 중동 1301","tel":"0507-1328-3097","lat":37.5034,"lng":126.766,"naverUrl":"https://m.place.naver.com/place/1280359800/home"},
-      {"id":"place-1526718076","name":"달인대보칼국수 NC백화점 고잔점","address":"경기 안산시 단원구 광덕대로 194","tel":"0507-1362-4640","lat":37.3175,"lng":126.8332,"naverUrl":"https://m.place.naver.com/place/1526718076/home"},
-      {"id":"place-1017387009","name":"달인대보칼국수 뉴코아아울렛 평촌점","address":"경기 안양시 동안구 동안로 119","tel":"0507-1351-5133","lat":37.3894,"lng":126.9516,"naverUrl":"https://m.place.naver.com/place/1017387009/home"},
-      {"id":"place-1569892152","name":"달인대보칼국수 산본점","address":"경기 군포시 번영로 504","tel":"0507-1349-2384","lat":37.359,"lng":126.9345,"naverUrl":"https://m.place.naver.com/place/1569892152/home"},
-      {"id":"place-1052264408","name":"달인대보칼국수 마석점","address":"경기 남양주시 화도읍 비룡로 221","tel":"0507-1313-5707","lat":37.6489,"lng":127.3106,"naverUrl":"https://m.place.naver.com/place/1052264408/home"},
-      {"id":"place-2072711802","name":"달인대보칼국수 검단사거리역점","address":"인천광역시 서구 완정로165번길 7","tel":"0507-1446-1410","lat":37.5963,"lng":126.6751,"naverUrl":"https://m.place.naver.com/place/2072711802/home"},
-      {"id":"place-2073662651","name":"달인대보칼국수 현풍점","address":"대구 달성군 현풍읍 테크노대로 40","tel":"0507-1377-3236","lat":35.7031,"lng":128.4255,"naverUrl":"https://m.place.naver.com/place/2073662651/home"},
-      {"id":"place-1430584302","name":"달인대보칼국수 동아백화점 쇼핑점","address":"대구 중구 달구벌대로 2085","tel":"0507-1403-3803","lat":35.8678,"lng":128.5945,"naverUrl":"https://m.place.naver.com/place/1430584302/home"},
-      {"id":"place-2073128329","name":"달인대보칼국수 죽전점","address":"대구광역시 달서구 달구벌대로 1581","tel":"0507-1323-0177","lat":35.8297,"lng":128.5412,"naverUrl":"https://m.place.naver.com/place/2073128329/home"},
-      {"id":"place-2039776671","name":"달인 대보칼국수 월배점","address":"대구광역시 달서구 조암남로32길 20-8","tel":"0507-1456-0182","lat":35.8132,"lng":128.5246,"naverUrl":"https://m.place.naver.com/place/2039776671/home"},
-      {"id":"place-1828692572","name":"달인대보칼국수 영천점","address":"경북 영천시 동부로 39","tel":"010-9760-3231","lat":35.9731,"lng":128.9387,"naverUrl":"https://m.place.naver.com/place/1828692572/home"},
-      {"id":"place-2020622943","name":"달인대보칼국수 사상점","address":"부산광역시 사상구 사상로250번길 11","tel":"0507-1356-8529","lat":35.1524,"lng":128.9823,"naverUrl":"https://m.place.naver.com/place/2020622943/home"},
-      {"id":"place-2040809189","name":"달인대보칼국수 창원중동점","address":"경상남도 창원시 의창구 의창대로266번길 10","tel":"0507-1321-6538","lat":35.254,"lng":128.6407,"naverUrl":"https://m.place.naver.com/place/2040809189/home"},
-      {"id":"place-2083963061","name":"달인대보칼국수 양산석산점","address":"경상남도 양산시 동면 석산3길 30","tel":"0507-1394-3071","lat":35.3352,"lng":129.0568,"naverUrl":"https://m.place.naver.com/place/2083963061/home"}
+</div>
+
+<script>
+(function() {
+    "use strict";
+
+    var PROXY_LIST = [
+        "https://api.allorigins.win/raw?url=",
+        "https://api.codetabs.com/v1/proxy?quest="
     ];
 
-    const el = {
-      map: document.getElementById("daebo-map"),
-      keyword: document.getElementById("keyword"),
-      btnSearch: document.getElementById("btnSearch"),
-      leftList: document.getElementById("daebo-left-list"),
-      leftPaging: document.getElementById("daebo-left-paging"),
+    var HISTORY_KEY = "npt_rank_history";
 
-      info: document.getElementById("daebo-info"),
-      infoTitle: document.getElementById("daebo-info-title"),
-      infoAddr: document.getElementById("daebo-info-addr"),
-      infoTel: document.getElementById("daebo-info-tel"),
-      infoPhoto: document.getElementById("daebo-info-photo"),
-      infoClose: document.getElementById("daebo-info-close"),
-      baro: document.getElementById("daebo-baro"),
-      baroImg: document.getElementById("daebo-baro-img"),
+    function loadHistory() {
+        try {
+            var raw = localStorage.getItem(HISTORY_KEY);
+            if (raw) return JSON.parse(raw);
+        } catch(e) {}
+        return [];
+    }
 
-      keyword2: document.getElementById("keyword2"),
-      btnSearch2: document.getElementById("btnSearch2"),
-      tableBody: document.getElementById("daebo-table-body"),
-      tablePaging: document.getElementById("daebo-table-paging"),
+    function saveHistory(list) {
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(list));
+    }
+
+    function addHistory(keyword, placeId, rank, name) {
+        var list = loadHistory();
+        list.unshift({
+            keyword: keyword,
+            placeId: placeId,
+            rank: rank,
+            name: name || "",
+            time: new Date().toLocaleString("ko-KR")
+        });
+        if (list.length > 50) list = list.slice(0, 50);
+        saveHistory(list);
+        renderHistory();
+    }
+
+    function renderHistory() {
+        var list = loadHistory();
+        var container = document.getElementById("historyList");
+        var empty = document.getElementById("historyEmpty");
+        container.innerHTML = "";
+
+        if (list.length === 0) {
+            empty.style.display = "block";
+            return;
+        }
+        empty.style.display = "none";
+
+        for (var i = 0; i < list.length; i++) {
+            (function(idx) {
+                var item = list[idx];
+                var div = document.createElement("div");
+                div.className = "history-item";
+
+                var rankText = item.rank ? item.rank + "위" : "순위밖";
+                var nameText = item.name ? " - " + item.name : "";
+
+                div.innerHTML =
+                    '<div>' +
+                        '<span class="history-keyword">' + item.keyword + '</span>' +
+                        '<span class="history-placeid"> (ID: ' + item.placeId + ')</span>' +
+                        '<br><span style="font-size:11px;color:#aaa;">' + item.time + ' / ' + rankText + nameText + '</span>' +
+                    '</div>' +
+                    '<div class="history-actions">' +
+                        '<button class="btn-tiny btn-rerun">재조회</button>' +
+                        '<button class="btn-tiny btn-tiny-del btn-del">삭제</button>' +
+                    '</div>';
+
+                div.querySelector(".btn-rerun").addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    document.getElementById("inputKeyword").value = item.keyword;
+                    document.getElementById("inputPlaceId").value = item.placeId;
+                    doSearch();
+                });
+
+                div.querySelector(".btn-del").addEventListener("click", function(e) {
+                    e.stopPropagation();
+                    var l = loadHistory();
+                    l.splice(idx, 1);
+                    saveHistory(l);
+                    renderHistory();
+                });
+
+                container.appendChild(div);
+            })(i);
+        }
+    }
+
+    function badgeClass(rank) {
+        if (rank === 1) return "badge-1";
+        if (rank <= 3) return "badge-3";
+        if (rank <= 5) return "badge-5";
+        if (rank <= 10) return "badge-10";
+        if (rank <= 20) return "badge-20";
+        return "badge-other";
+    }
+
+    function showLoading(msg) {
+        document.getElementById("loading").style.display = "block";
+        document.getElementById("loadingText").textContent = msg || "검색 중...";
+        document.getElementById("resultBox").style.display = "none";
+        document.getElementById("tableCard").style.display = "none";
+    }
+
+    function hideLoading() {
+        document.getElementById("loading").style.display = "none";
+    }
+
+    function showResult(html, cls) {
+        var box = document.getElementById("resultBox");
+        box.className = "result-box " + cls;
+        box.innerHTML = html;
+        box.style.display = "block";
+    }
+
+    function fetchGraphQL(keyword, start, display) {
+        return new Promise(function(resolve, reject) {
+            var payload = JSON.stringify([{
+                "operationName": "getRestaurantList",
+                "variables": {
+                    "restaurantListInput": {
+                        "query": keyword,
+                        "x": "126.9783882",
+                        "y": "37.5666103",
+                        "start": start,
+                        "display": display,
+                        "isNmap": false,
+                        "deviceType": "pc"
+                    }
+                },
+                "query": "query getRestaurantList($restaurantListInput: RestaurantListInput) { restaurants: restaurantList(input: $restaurantListInput) { items { id name category roadAddress phone totalReviewCount blogCafeReviewCount visitorReviewCount visitorReviewScore saveCount } total } }"
+            }]);
+
+            var targetUrl = "https://api.place.naver.com/graphql";
+
+            // 직접 호출 시도
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", targetUrl, true);
+            xhr.setRequestHeader("Content-Type", "application/json");
+            xhr.setRequestHeader("Accept", "*/*");
+            xhr.timeout = 15000;
+
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    try {
+                        var data = JSON.parse(xhr.responseText);
+                        resolve(data);
+                    } catch(e) {
+                        reject("JSON 파싱 실패");
+                    }
+                } else {
+                    reject("HTTP " + xhr.status);
+                }
+            };
+
+            xhr.onerror = function() {
+                // CORS 차단시 프록시로 재시도
+                fetchViaProxy(targetUrl, payload, 0, resolve, reject);
+            };
+
+            xhr.ontimeout = function() {
+                fetchViaProxy(targetUrl, payload, 0, resolve, reject);
+            };
+
+            xhr.send(payload);
+        });
+    }
+
+    function fetchViaProxy(targetUrl, payload, proxyIdx, resolve, reject) {
+        if (proxyIdx >= PROXY_LIST.length) {
+            reject("모든 프록시 실패. 네이버 API가 CORS를 차단합니다.");
+            return;
+        }
+
+        var proxyBase = PROXY_LIST[proxyIdx];
+        var proxyUrl = proxyBase + encodeURIComponent(targetUrl);
+
+        var xhr = new XMLHttpRequest();
+        xhr.open("POST", proxyUrl, true);
+        xhr.setRequestHeader("Content-Type", "application/json");
+        xhr.timeout = 15000;
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                try {
+                    var data = JSON.parse(xhr.responseText);
+                    resolve(data);
+                } catch(e) {
+                    fetchViaProxy(targetUrl, payload, proxyIdx + 1, resolve, reject);
+                }
+            } else {
+                fetchViaProxy(targetUrl, payload, proxyIdx + 1, resolve, reject);
+            }
+        };
+
+        xhr.onerror = function() {
+            fetchViaProxy(targetUrl, payload, proxyIdx + 1, resolve, reject);
+        };
+
+        xhr.ontimeout = function() {
+            fetchViaProxy(targetUrl, payload, proxyIdx + 1, resolve, reject);
+        };
+
+        xhr.send(payload);
+    }
+
+    window.doSearch = function() {
+        var keyword = document.getElementById("inputKeyword").value.trim();
+        var placeId = document.getElementById("inputPlaceId").value.trim();
+        var maxRank = parseInt(document.getElementById("selectMaxRank").value) || 300;
+
+        if (!keyword) {
+            alert("키워드를 입력하세요.");
+            return;
+        }
+        if (!placeId) {
+            alert("플레이스 ID를 입력하세요.");
+            return;
+        }
+
+        document.getElementById("btnSearch").disabled = true;
+        showLoading("'" + keyword + "' 검색 중... (1~100위)");
+
+        var allItems = [];
+        var totalCount = 0;
+        var pageSize = 100;
+        var pages = Math.ceil(maxRank / pageSize);
+        var currentPage = 0;
+
+        function fetchNext() {
+            currentPage++;
+            var start = (currentPage - 1) * pageSize + 1;
+            var display = Math.min(pageSize, maxRank - start + 1);
+
+            if (currentPage > 1) {
+                document.getElementById("loadingText").textContent =
+                    "'" + keyword + "' 검색 중... (" + start + "~" + (start + display - 1) + "위)";
+            }
+
+            fetchGraphQL(keyword, start, display)
+                .then(function(data) {
+                    var items = [];
+                    var total = 0;
+
+                    if (Array.isArray(data) && data.length > 0) {
+                        var restaurants = data[0].data && data[0].data.restaurants;
+                        if (restaurants) {
+                            items = restaurants.items || [];
+                            total = restaurants.total || 0;
+                        }
+                    }
+
+                    totalCount = total;
+                    allItems = allItems.concat(items);
+
+                    // 해당 업체를 찾았는지 확인
+                    var foundIdx = -1;
+                    for (var i = 0; i < allItems.length; i++) {
+                        if (String(allItems[i].id) === String(placeId)) {
+                            foundIdx = i;
+                            break;
+                        }
+                    }
+
+                    // 찾았거나, 더 이상 결과가 없거나, 마지막 페이지면 종료
+                    if (foundIdx >= 0 || items.length < display || currentPage >= pages) {
+                        hideLoading();
+                        document.getElementById("btnSearch").disabled = false;
+                        showResults(keyword, placeId, allItems, totalCount, maxRank);
+                    } else {
+                        // 다음 페이지
+                        setTimeout(fetchNext, 500);
+                    }
+                })
+                .catch(function(err) {
+                    hideLoading();
+                    document.getElementById("btnSearch").disabled = false;
+                    showResult(
+                        '<div style="font-size:15px;font-weight:600;color:#e67e22;">조회 실패</div>' +
+                        '<div class="result-detail">' + err + '</div>' +
+                        '<div class="result-detail" style="margin-top:8px;">' +
+                        '브라우저에서 직접 네이버 API를 호출할 수 없는 경우가 있습니다.<br>' +
+                        'GitHub Actions 자동 추적 기능을 이용해주세요.' +
+                        '</div>',
+                        "result-error"
+                    );
+                });
+        }
+
+        fetchNext();
     };
 
-    const PER_PAGE = CONFIG.perPage || 10;
-    const normalizeTel = (t) => String(t||"").replace(/-/g,"");
-    const esc = (s) => String(s ?? "").replace(/[&<>"']/g, m => (
-      {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]
-    ));
+    function showResults(keyword, placeId, allItems, totalCount, maxRank) {
+        var foundIdx = -1;
+        var foundItem = null;
 
-    function paginate(list, page){
-      const total = list.length;
-      const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
-      const p = Math.min(Math.max(1, page), totalPages);
-      const start = (p - 1) * PER_PAGE;
-      return { page: p, totalPages, items: list.slice(start, start + PER_PAGE) };
-    }
-
-    function renderPaging(container, page, totalPages, onClick){
-      const groupStart = Math.floor((page - 1) / 10) * 10 + 1;
-      const groupEnd = Math.min(groupStart + 9, totalPages);
-
-      let html = '';
-      const prevPage = groupStart - 1;
-      const nextPage = groupEnd + 1;
-
-      html += `<a href="#" class="pagination_prev ${prevPage < 1 ? "disabled":""}" data-p="${prevPage}"></a>`;
-      for(let i = groupStart; i <= groupEnd; i++){
-        html += `<a href="#" class="${i === page ? "current":""}" data-p="${i}">${i}</a>`;
-      }
-      html += `<a href="#" class="pagination_next ${nextPage > totalPages ? "disabled":""}" data-p="${nextPage}"></a>`;
-
-      container.innerHTML = html;
-      container.querySelectorAll("a:not(.disabled)").forEach(a => {
-        a.addEventListener("click", (e) => {
-          e.preventDefault();
-          const p = Number(a.dataset.p);
-          if (!p || p < 1 || p > totalPages) return;
-          onClick(p);
-        });
-      });
-    }
-
-    const S = {
-      map: null,
-      markers: new Map(),
-      filtered: [...stores],
-      leftPage: 1,
-      tablePage: 1,
-      activeId: null,
-      googleReady: false
-    };
-
-    function loadGoogle(){
-      return new Promise((resolve, reject) => {
-        if (window.google && google.maps) return resolve();
-        window.__daeboInitGoogle = () => resolve();
-
-        const s = document.createElement("script");
-        s.async = true; s.defer = true;
-        s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(CONFIG.googleKey)}&callback=__daeboInitGoogle`;
-        s.onerror = reject;
-        document.head.appendChild(s);
-      });
-    }
-
-    function initMap(){
-      S.map = new google.maps.Map(el.map, {
-        center: { lat: 36.5, lng: 127.5 },
-        zoom: 7,
-        mapTypeControl: false,
-        streetViewControl: false
-      });
-      S.googleReady = true;
-    }
-
-    function clearMarkers(){
-      for(const m of S.markers.values()) m.setMap(null);
-      S.markers.clear();
-    }
-
-    function createMarkers(list){
-      if (!S.googleReady) return;
-      clearMarkers();
-
-      // 핀 이미지 비율 깨지지 않게(1:1) + 크게
-      const PIN_SIZE = 96; // 크기 조절 포인트
-      const icon = {
-        url: CONFIG.assets.pin,
-        scaledSize: new google.maps.Size(PIN_SIZE, PIN_SIZE),
-        anchor: new google.maps.Point(PIN_SIZE/2, PIN_SIZE)
-      };
-
-      list.forEach(store => {
-        if (!store.lat || !store.lng) return;
-        const marker = new google.maps.Marker({
-          map: S.map,
-          position: { lat: Number(store.lat), lng: Number(store.lng) },
-          title: store.name || "",
-          icon
-        });
-        marker.addListener("click", () => openStore(store.id));
-        S.markers.set(store.id, marker);
-      });
-    }
-
-    function applyFilter(keyword){
-      const k = String(keyword || "").trim().toLowerCase();
-      if(!k){
-        S.filtered = [...stores];
-      } else {
-        const kk = k.replace(/-/g,"");
-        S.filtered = stores.filter(s => (
-          String(s.name||"").toLowerCase().includes(k) ||
-          String(s.address||"").toLowerCase().includes(k) ||
-          normalizeTel(s.tel).includes(kk)
-        ));
-      }
-      S.leftPage = 1;
-      S.tablePage = 1;
-      renderLeft();
-      renderTable();
-      createMarkers(S.filtered);
-    }
-
-    function renderLeft(){
-      const { page, totalPages, items } = paginate(S.filtered, S.leftPage);
-      S.leftPage = page;
-
-      el.leftList.innerHTML = items.map(s => `
-        <li data-id="${esc(s.id)}" class="${s.id === S.activeId ? "active":""}">
-          <div class="item">
-            <p class="store_name">${esc(s.name)}</p>
-            <p class="store_address">${esc(s.address)}</p>
-            <p class="store_tel">${esc(s.tel)}</p>
-          </div>
-        </li>
-      `).join("");
-
-      el.leftList.querySelectorAll("li").forEach(li => {
-        li.addEventListener("click", () => openStore(li.dataset.id));
-      });
-
-      renderPaging(el.leftPaging, page, totalPages, (p) => {
-        S.leftPage = p;
-        renderLeft();
-      });
-    }
-
-    function renderTable(){
-      const { page, totalPages, items } = paginate(S.filtered, S.tablePage);
-      S.tablePage = page;
-
-      el.tableBody.innerHTML = items.map(s => `
-        <tr data-id="${esc(s.id)}" data-url="${esc(s.naverUrl || "")}" class="${s.id === S.activeId ? "active":""}">
-          <td>${esc(s.name)}</td>
-          <td>${esc(s.address)}</td>
-          <td>${esc(s.tel)}</td>
-        </tr>
-      `).join("");
-
-      el.tableBody.querySelectorAll("tr").forEach(tr => {
-        tr.addEventListener("click", () => {
-          const url = tr.dataset.url;
-          if (url) window.open(url, "_blank", "noopener");
-          else openStore(tr.dataset.id);
-        });
-      });
-
-      renderPaging(el.tablePaging, page, totalPages, (p) => {
-        S.tablePage = p;
-        renderTable();
-      });
-    }
-
-    function openStore(id){
-      const store = stores.find(s => s.id === id);
-      if(!store) return;
-
-      S.activeId = id;
-
-      if (S.googleReady && store.lat && store.lng){
-        S.map.setCenter({ lat:Number(store.lat), lng:Number(store.lng) });
-        S.map.setZoom(16);
-      }
-
-      el.infoTitle.textContent = store.name || "";
-      el.infoAddr.textContent = store.address || "";
-      el.infoTel.textContent = store.tel || "";
-
-      el.infoPhoto.src = CONFIG.assets.photo;
-      el.baroImg.src = CONFIG.assets.baroBtn;
-
-      if(store.naverUrl){
-        el.baro.href = store.naverUrl;
-        el.baro.style.display = "inline-flex";
-      } else {
-        el.baro.removeAttribute("href");
-        el.baro.style.display = "none";
-      }
-
-      el.info.style.display = "block";
-
-      renderLeft();
-      renderTable();
-    }
-
-    function closeInfo(){ el.info.style.display = "none"; }
-
-    function bindUI(){
-      el.btnSearch.addEventListener("click", () => {
-        el.keyword2.value = el.keyword.value;
-        applyFilter(el.keyword.value);
-      });
-      el.keyword.addEventListener("keypress", (e) => {
-        if(e.key === "Enter"){
-          e.preventDefault();
-          el.keyword2.value = el.keyword.value;
-          applyFilter(el.keyword.value);
+        for (var i = 0; i < allItems.length; i++) {
+            if (String(allItems[i].id) === String(placeId)) {
+                foundIdx = i;
+                foundItem = allItems[i];
+                break;
+            }
         }
-      });
 
-      el.btnSearch2.addEventListener("click", () => {
-        el.keyword.value = el.keyword2.value;
-        applyFilter(el.keyword2.value);
-      });
-      el.keyword2.addEventListener("keypress", (e) => {
-        if(e.key === "Enter"){
-          e.preventDefault();
-          el.keyword.value = el.keyword2.value;
-          applyFilter(el.keyword2.value);
+        if (foundIdx >= 0) {
+            var rank = foundIdx + 1;
+            showResult(
+                '<div class="result-name">' + (foundItem.name || "") + '</div>' +
+                '<div class="result-detail">' + (foundItem.category || "") + '</div>' +
+                '<div class="result-rank">' + rank + '<span style="font-size:20px;">위</span></div>' +
+                '<div class="result-rank-sub">전체 ' + totalCount + '개 중</div>' +
+                '<div class="result-detail" style="margin-top:12px;">' +
+                    '블로그리뷰 ' + (foundItem.blogCafeReviewCount || 0) +
+                    ' / 방문자리뷰 ' + (foundItem.visitorReviewCount || 0) +
+                    ' / 저장 ' + (foundItem.saveCount || 0) +
+                    ' / 별점 ' + (foundItem.visitorReviewScore || 0) +
+                '</div>',
+                "result-found"
+            );
+            addHistory(keyword, placeId, rank, foundItem.name);
+        } else {
+            showResult(
+                '<div style="font-size:16px;font-weight:600;color:#e74c3c;">' +
+                    maxRank + '위 안에 없습니다' +
+                '</div>' +
+                '<div class="result-detail">플레이스 ID: ' + placeId + '</div>' +
+                '<div class="result-detail">전체 검색 결과: ' + totalCount + '개</div>',
+                "result-notfound"
+            );
+            addHistory(keyword, placeId, null, "");
         }
-      });
 
-      el.infoClose.addEventListener("click", closeInfo);
-      document.addEventListener("keydown", (e) => {
-        if(e.key === "Escape") closeInfo();
-      });
+        // 상세 테이블
+        if (allItems.length > 0) {
+            document.getElementById("tableCard").style.display = "block";
+            document.getElementById("tableKeyword").textContent = keyword;
+            var tbody = document.getElementById("rankTableBody");
+            tbody.innerHTML = "";
+
+            for (var j = 0; j < allItems.length; j++) {
+                var item = allItems[j];
+                var isTarget = String(item.id) === String(placeId);
+                var tr = document.createElement("tr");
+                if (isTarget) tr.className = "highlight";
+
+                var rankNum = j + 1;
+                tr.innerHTML =
+                    '<td><span class="badge ' + badgeClass(rankNum) + '">' + rankNum + '</span></td>' +
+                    '<td>' + (item.name || "") + (isTarget ? " [대상]" : "") + '</td>' +
+                    '<td>' + (item.category || "") + '</td>' +
+                    '<td>' + (item.blogCafeReviewCount || 0) + '</td>' +
+                    '<td>' + (item.visitorReviewCount || 0) + '</td>' +
+                    '<td>' + (item.saveCount || 0) + '</td>' +
+                    '<td>' + (item.visitorReviewScore || 0) + '</td>';
+                tbody.appendChild(tr);
+            }
+
+            document.getElementById("pageInfo").textContent =
+                allItems.length + "개 표시 / 전체 " + totalCount + "개";
+        }
     }
 
-    async function boot(){
-      bindUI();
-      applyFilter("");
+    // Enter 키 지원
+    document.getElementById("inputKeyword").addEventListener("keydown", function(e) {
+        if (e.key === "Enter") doSearch();
+    });
+    document.getElementById("inputPlaceId").addEventListener("keydown", function(e) {
+        if (e.key === "Enter") doSearch();
+    });
 
-      // a1234 그대로면 로딩 안 하게
-      if(!CONFIG.googleKey || CONFIG.googleKey === "AIzaSyCUmhhzFdUiNmYVjbg-yGCbDKMzBYi16tI"){
-        console.warn("구글키 자리(a1234)를 본인 키로 교체하세요.");
-        return;
-      }
+    // 초기 렌더링
+    renderHistory();
 
-      try{
-        await loadGoogle();
-        initMap();
-        createMarkers(S.filtered);
-      }catch(err){
-        console.error(err);
-      }
-    }
-
-    boot();
-  })();
-  </script>
+})();
+</script>
 </body>
 </html>
