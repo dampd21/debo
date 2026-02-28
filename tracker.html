@@ -10,13 +10,57 @@
       font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
       background:#f5f5f5;color:#333;
     }
+
+    /* === header (index 톤과 통일) === */
     .header{background:#1a1a2e;color:#fff;padding:20px 0}
     .header-inner{max-width:900px;margin:0 auto;padding:0 20px}
+    .header-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
     .header h1{font-size:22px;font-weight:700}
     .header p{font-size:13px;color:#aaa;margin-top:4px}
 
-    .container{max-width:900px;margin:0 auto;padding:20px}
+    /* hamburger */
+    .menu-btn {
+      width:38px;height:38px;
+      border:1px solid rgba(255,255,255,0.25);
+      background:transparent;
+      border-radius:8px;
+      cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .menu-btn span{display:block;width:18px;height:2px;background:#fff;position:relative}
+    .menu-btn span:before,.menu-btn span:after{
+      content:"";position:absolute;left:0;width:18px;height:2px;background:#fff;
+    }
+    .menu-btn span:before{top:-6px}
+    .menu-btn span:after{top:6px}
 
+    .drawer-overlay{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,0.45);
+      display:none; z-index:9999;
+    }
+    .drawer-overlay.show{display:block}
+    .drawer{
+      position:absolute; top:0; right:0;
+      width:280px; height:100%;
+      background:#fff;
+      box-shadow:-10px 0 30px rgba(0,0,0,0.18);
+      padding:16px;
+    }
+    .drawer-head{
+      display:flex;justify-content:space-between;align-items:center;
+      padding-bottom:10px;border-bottom:1px solid #eee;margin-bottom:10px;
+    }
+    .drawer-title{font-weight:800;color:#1a1a2e}
+    .drawer-close{border:none;background:none;font-size:22px;cursor:pointer;color:#666}
+    .drawer a{
+      display:block;padding:12px 10px;border-radius:10px;
+      color:#333;text-decoration:none;font-weight:700;
+    }
+    .drawer a:hover{background:#f5f5f5}
+    .drawer .mutedlink{font-size:12px;color:#888;font-weight:600;padding:0 10px 8px}
+
+    .container{max-width:900px;margin:0 auto;padding:20px}
     .card{
       background:#fff;border:1px solid #ddd;border-radius:8px;
       padding:24px;margin-bottom:20px;
@@ -46,28 +90,43 @@
 
     .muted{color:#888;font-size:12px}
     .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+    .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#f0f0f0;color:#555;font-size:11px;margin-left:6px}
 
-    /* === 내 트랙 카드 === */
-    .track-item{padding:12px 0;border-bottom:1px solid #eee}
+    /* === 내 트랙 === */
+    .track-item{padding:14px 0;border-bottom:1px solid #eee}
     .track-item:last-child{border-bottom:none}
     .track-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
     .track-title{font-weight:800;color:#1a1a2e}
     .track-sub{margin-top:4px;font-size:12px;color:#888}
     .track-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
-    /* === 스샷형 미니 타임라인 === */
-    .mini-wrap{margin-top:10px;overflow-x:auto;padding-bottom:6px}
+    /* === 미니 타임라인 (테두리 강화) === */
+    .mini-wrap{margin-top:10px;overflow-x:auto;padding-bottom:8px}
     .mini-grid{display:flex;gap:10px;min-width:max-content}
     .mini-cell{
-      width:66px;border:1px solid #eee;border-radius:10px;
-      padding:8px 6px;background:#fafafa;text-align:center;cursor:pointer;
+      width:70px;
+      border:1px solid #cfcfcf;           /* 더 진하게 */
+      border-radius:12px;
+      padding:10px 8px;
+      background:#fff;                     /* 흰 배경 */
+      cursor:pointer;
+      box-shadow:0 1px 2px rgba(0,0,0,0.04);
+      transition:transform .05s, box-shadow .15s, border-color .15s;
     }
-    .mini-cell:hover{background:#f2f2f2}
-    .mini-date{font-size:11px;color:#666;font-weight:700}
-    .mini-rank{margin-top:6px;font-size:18px;font-weight:900;color:#4b56ff}
+    .mini-cell:hover{
+      border-color:#9aa0a6;
+      box-shadow:0 4px 10px rgba(0,0,0,0.08);
+    }
+    .mini-cell.active{
+      border-color:#1a1a2e;
+      box-shadow:0 0 0 3px rgba(26,26,46,0.12);
+    }
+    .mini-date{font-size:11px;color:#666;font-weight:800}
+    .mini-rank{margin-top:8px;font-size:20px;font-weight:900;color:#4b56ff;line-height:1}
     .mini-out{color:#999}
-    .mini-metric{margin-top:6px;font-size:10px;color:#888;line-height:14px}
+    .mini-metric{margin-top:8px;font-size:10px;color:#888;line-height:14px}
     .mini-metric b{color:#555}
+
     .delta{font-size:11px;font-weight:900;margin-left:4px}
     .up{color:#e74c3c}
     .down{color:#3498db}
@@ -84,27 +143,36 @@
     @media(max-width:600px){
       .form-row{flex-direction:column}
       .form-group{min-width:100%}
-      .mini-cell{width:62px}
+      .mini-cell{width:66px}
     }
   </style>
 </head>
 <body>
   <div class="header">
     <div class="header-inner">
-      <h1>플레이스 추적</h1>
+      <div class="header-top">
+        <h1>플레이스 추적</h1>
+        <button class="menu-btn" id="btnMenu" aria-label="메뉴"><span></span></button>
+      </div>
       <p>트랙 추가 시 즉시 1회 수집, 이후 매일 KST 12:00 자동 저장</p>
     </div>
   </div>
 
-  <div class="container">
-    <div class="card">
-      <h2>설정</h2>
-      <div class="muted">workspaceId: <span class="mono" id="ws"></span></div>
-      <div class="muted">API: <span class="mono" id="apiLabel"></span></div>
-      <div style="margin-top:12px;">
-        <a class="btn btn-ghost" href="./index.html" style="text-decoration:none;display:inline-block;">실시간 조회로</a>
+  <!-- drawer -->
+  <div class="drawer-overlay" id="drawer">
+    <div class="drawer" role="dialog" aria-modal="true">
+      <div class="drawer-head">
+        <div class="drawer-title">메뉴</div>
+        <button class="drawer-close" id="btnDrawerClose" aria-label="닫기">×</button>
       </div>
+      <div class="mutedlink">페이지 이동</div>
+      <a href="./index.html" id="linkRealtime">실시간 조회</a>
+      <a href="./tracker.html">플레이스 추적</a>
     </div>
+  </div>
+
+  <div class="container">
+    <!-- 설정 카드 제거 (요청사항) -->
 
     <div class="card">
       <h2>트랙 추가</h2>
@@ -121,11 +189,11 @@
 
       <div class="form-row">
         <div class="form-group">
-          <label>도시(광역)</label>
+          <label>시/도</label>
           <select id="city"></select>
         </div>
         <div class="form-group">
-          <label>구/군 (서울 선택 시)</label>
+          <label>구/군 (서울/인천 등)</label>
           <select id="district"></select>
         </div>
         <div class="form-group">
@@ -176,11 +244,10 @@
   </div>
 
 <script>
-  // 추적용 Worker (슬래시 X)
-  const API_BASE = "https://ranktracker.dampd21.workers.dev";
-  document.getElementById("apiLabel").textContent = API_BASE;
+  // ====== API ======
+  const API_BASE = "https://ranktracker.dampd21.workers.dev"; // 슬래시 없이
 
-  // workspaceId
+  // workspaceId(표시 안 함)
   const WS_KEY = "ranktracker_workspace_id";
   function getWS(){
     let v = localStorage.getItem(WS_KEY);
@@ -191,7 +258,6 @@
     return v;
   }
   const workspaceId = getWS();
-  document.getElementById("ws").textContent = workspaceId;
 
   // index에서 넘어온 값 자동 채움
   (function(){
@@ -201,6 +267,12 @@
     if (kw) document.getElementById("keyword").value = kw;
     if (pid) document.getElementById("placeId").value = pid;
   })();
+
+  // 햄버거 메뉴
+  const drawer = document.getElementById("drawer");
+  document.getElementById("btnMenu").onclick = () => drawer.classList.add("show");
+  document.getElementById("btnDrawerClose").onclick = () => drawer.classList.remove("show");
+  drawer.onclick = (e) => { if (e.target === drawer) drawer.classList.remove("show"); };
 
   function esc(s){ return s==null ? "" : String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
   function comma(n){ return (n==null) ? "-" : String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
@@ -212,7 +284,6 @@
     return `<span class="delta down">▼${Math.abs(n)}</span>`;
   }
   function fmtDateLabel(dateStr){
-    // "2026-02-28" -> "02.28 토"
     const d = new Date(dateStr + "T00:00:00+09:00");
     const mm = String(d.getMonth()+1).padStart(2,"0");
     const dd = String(d.getDate()).padStart(2,"0");
@@ -230,18 +301,51 @@
     return j;
   }
 
-  // 지역(서울 구만 예시)
+  // ====== 지역 좌표(전국 확장) ======
+  // city: 시/도 대표 좌표(시청/도청급)
+  // districts: 일부 지역(서울/인천)은 구/군 대표 좌표 제공
   const REGIONS = {
-    "서울": {
+    "서울특별시": {
       city: { x:"126.9783882", y:"37.5666103" },
       districts: {
+        "종로구": { x:"126.9770", y:"37.5729" },
+        "중구": { x:"126.9977", y:"37.5636" },
         "용산구": { x:"126.9903", y:"37.5324" },
-        "강남구": { x:"127.0473", y:"37.5172" },
         "마포구": { x:"126.9016", y:"37.5663" },
-        "영등포구": { x:"126.8963", y:"37.5264" }
+        "영등포구": { x:"126.8963", y:"37.5264" },
+        "강남구": { x:"127.0473", y:"37.5172" },
+        "서초구": { x:"127.0327", y:"37.4836" },
+        "송파구": { x:"127.1059", y:"37.5145" }
+        // 필요하면 25개 구 모두 확장 가능(기존 데이터 붙이면 됨)
       }
     },
-    "부산": { city: { x:"129.0756", y:"35.1796" } }
+    "인천광역시": {
+      city: { x:"126.7052", y:"37.4563" },
+      districts: {
+        "부평구": { x:"126.7219", y:"37.5071" },
+        "남동구": { x:"126.7310", y:"37.4470" },
+        "서구": { x:"126.6760", y:"37.5454" },
+        "연수구": { x:"126.6783", y:"37.4102" },
+        "미추홀구": { x:"126.6507", y:"37.4637" },
+        "계양구": { x:"126.7377", y:"37.5372" },
+        "중구": { x:"126.6217", y:"37.4738" }
+      }
+    },
+    "경기도": { city: { x:"127.0095", y:"37.2751" } },     // 수원(도청)
+    "강원특별자치도": { city: { x:"127.7298", y:"37.8813" } }, // 춘천
+    "충청북도": { city: { x:"127.4890", y:"36.6424" } },    // 청주
+    "충청남도": { city: { x:"126.6628", y:"36.6588" } },    // 홍성(도청)
+    "세종특별자치시": { city: { x:"127.2890", y:"36.4801" } },
+    "대전광역시": { city: { x:"127.3845", y:"36.3504" } },
+    "전북특별자치도": { city: { x:"127.1480", y:"35.8242" } }, // 전주
+    "전라남도": { city: { x:"126.4629", y:"34.8118" } },    // 무안(도청)
+    "광주광역시": { city: { x:"126.8526", y:"35.1595" } },
+    "경상북도": { city: { x:"128.5056", y:"36.5760" } },    // 안동(도청)
+    "경상남도": { city: { x:"128.6811", y:"35.2270" } },    // 창원(도청)
+    "대구광역시": { city: { x:"128.6014", y:"35.8714" } },
+    "부산광역시": { city: { x:"129.0756", y:"35.1796" } },
+    "울산광역시": { city: { x:"129.3114", y:"35.5395" } },
+    "제주특별자치도": { city: { x:"126.5312", y:"33.4996" } }
   };
 
   const $city = document.getElementById("city");
@@ -254,7 +358,7 @@
       opt.value=name; opt.textContent=name;
       $city.appendChild(opt);
     });
-    $city.value="서울";
+    $city.value="서울특별시";
   }
   function fillDistricts(){
     const ds = REGIONS[$city.value]?.districts || null;
@@ -273,6 +377,7 @@
   fillCities(); fillDistricts();
   $city.addEventListener("change", fillDistricts);
 
+  // ====== Snapshot 렌더링 ======
   async function loadSnapshot(trackId, date, targetPlaceId){
     const data = await api(`/api/snapshot?workspaceId=${encodeURIComponent(workspaceId)}&trackId=${trackId}&date=${encodeURIComponent(date)}`, { method:"GET", headers:{} });
 
@@ -329,8 +434,8 @@
     }
   }
 
+  // ====== 트랙 렌더링 (미니 타임라인 포함) ======
   async function renderTrackMiniTimeline(track, mountEl){
-    // 최근 14일만 미니 타임라인으로
     const data = await api(`/api/timeline?workspaceId=${encodeURIComponent(workspaceId)}&trackId=${track.id}&limit=14`, { method:"GET", headers:{} });
     const tl = data.timeline || [];
 
@@ -339,9 +444,18 @@
     const grid = document.createElement("div");
     grid.className = "mini-grid";
 
+    const setActive = (date) => {
+      const cells = grid.querySelectorAll(".mini-cell");
+      for (let c of cells) c.classList.remove("active");
+      const active = grid.querySelector('.mini-cell[data-date="' + date + '"]');
+      if (active) active.classList.add("active");
+    };
+
     tl.forEach(row=>{
       const cell = document.createElement("div");
       cell.className = "mini-cell";
+      cell.setAttribute("data-date", row.date);
+
       cell.innerHTML = `
         <div class="mini-date">${esc(fmtDateLabel(row.date))}</div>
         <div class="mini-rank ${row.targetRank==null ? 'mini-out' : ''}">
@@ -354,15 +468,20 @@
         </div>
       `;
 
-      cell.onclick = () => loadSnapshot(track.id, row.date, track.target_place_id);
+      cell.onclick = async () => {
+        setActive(row.date);
+        await loadSnapshot(track.id, row.date, track.target_place_id);
+      };
+
       grid.appendChild(cell);
     });
 
     miniWrap.appendChild(grid);
     mountEl.appendChild(miniWrap);
 
-    // 최신 날짜 스냅샷 자동 로드(한 번)
+    // 최신 날짜 자동 로드 + active
     if (tl.length) {
+      setActive(tl[0].date);
       await loadSnapshot(track.id, tl[0].date, track.target_place_id);
     }
   }
@@ -377,24 +496,23 @@
     const tracks = data.tracks || [];
     empty.style.display = tracks.length ? "none" : "block";
 
-    // 트랙별 미니 타임라인 표시(트랙 수가 많으면 느릴 수 있음 -> 추후 bulk API로 개선 가능)
     for (const t of tracks) {
       const item = document.createElement("div");
       item.className = "track-item";
 
       const region = t.region_city + (t.region_district ? (" / " + t.region_district) : "");
+      // 좌표는 표시하지 않음(요청사항)
       item.innerHTML = `
         <div class="track-head">
           <div>
             <div class="track-title">[${esc(region)}] ${esc(t.keyword)} <span class="mono">${esc(t.target_place_id)}</span></div>
-            <div class="track-sub">좌표 x:${esc(t.x)} y:${esc(t.y)} / ${esc(t.device_type||"pc")}</div>
+            <div class="track-sub">기기: ${esc(t.device_type||"pc")} · 최근 14일(날짜 클릭 → 해당일 Top50)</div>
           </div>
           <div class="track-actions">
             <button class="btn btn-ghost" data-act="collect">수동수집</button>
             <button class="btn btn-danger" data-act="del">삭제</button>
           </div>
         </div>
-        <div class="muted" style="margin-top:8px;">최근 14일 (날짜 클릭 → 해당일 Top50)</div>
         <div class="miniMount"></div>
       `;
 
@@ -420,7 +538,6 @@
 
       box.appendChild(item);
 
-      // mini timeline 렌더링
       const mount = item.querySelector(".miniMount");
       try {
         await renderTrackMiniTimeline(t, mount);
@@ -444,13 +561,14 @@
     if(!pid) return alert("플레이스 ID를 입력하세요.");
 
     let xy = null;
-    if(city==="서울" && district && REGIONS["서울"].districts[district]) xy = REGIONS["서울"].districts[district];
+    const ds = REGIONS[city]?.districts || null;
+    if(ds && district && ds[district]) xy = ds[district];
     else xy = REGIONS[city]?.city;
+
     if(!xy) return alert("지역 좌표를 찾을 수 없습니다.");
 
     statusEl.textContent = "등록 중...";
     try {
-      // 1) 등록
       const r = await api("/api/track", {
         method:"POST",
         body: JSON.stringify({
@@ -465,7 +583,6 @@
         })
       });
 
-      // 2) 즉시 1회 수집
       statusEl.textContent = "등록 완료. 즉시 수집 중...";
       await api(`/api/collect?workspaceId=${encodeURIComponent(workspaceId)}&trackId=${r.id}`, { method:"POST", body:"{}" });
 
