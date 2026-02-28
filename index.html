@@ -40,6 +40,95 @@ body {
     margin-top: 4px;
 }
 
+/* === 햄버거 메뉴 === */
+.header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.menu-btn {
+    width: 38px;
+    height: 38px;
+    border: 1px solid rgba(255,255,255,0.25);
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.menu-btn span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: #fff;
+    position: relative;
+}
+.menu-btn span:before,
+.menu-btn span:after {
+    content: "";
+    position: absolute;
+    left: 0;
+    width: 18px;
+    height: 2px;
+    background: #fff;
+}
+.menu-btn span:before { top: -6px; }
+.menu-btn span:after { top: 6px; }
+
+.drawer-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    z-index: 9999;
+}
+.drawer-overlay.show{ display:block; }
+.drawer{
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 280px;
+    height: 100%;
+    background: #fff;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.18);
+    padding: 16px;
+}
+.drawer-head{
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    padding-bottom:10px;
+    border-bottom:1px solid #eee;
+    margin-bottom:10px;
+}
+.drawer-title{ font-weight:800; color:#1a1a2e; }
+.drawer-close{
+    border:none;
+    background:none;
+    font-size:22px;
+    cursor:pointer;
+    color:#666;
+}
+.drawer a{
+    display:block;
+    padding:12px 10px;
+    border-radius:10px;
+    color:#333;
+    text-decoration:none;
+    font-weight:700;
+}
+.drawer a:hover{ background:#f5f5f5; }
+.drawer .mutedlink{
+    font-size:12px;
+    color:#888;
+    font-weight:600;
+    padding:0 10px 8px;
+}
+
+/* === layout === */
 .container {
     max-width: 900px;
     margin: 0 auto;
@@ -117,15 +206,6 @@ body {
 .btn-primary:disabled {
     background: #999;
     cursor: not-allowed;
-}
-
-/* 추가: 추적 버튼 색 */
-.btn-tracker {
-    background: #34495e;
-    color: #fff;
-}
-.btn-tracker:hover {
-    background: #2c3e50;
 }
 
 .result-box {
@@ -313,14 +393,6 @@ body {
 .badge-20 { background: #e67e22; }
 .badge-other { background: #95a5a6; }
 
-.table-tag {
-    display: inline-block;
-    padding: 1px 6px;
-    border-radius: 8px;
-    font-size: 10px;
-    margin: 1px 2px;
-}
-
 .table-name {
     font-weight: 600;
     color: #1a1a2e;
@@ -358,11 +430,6 @@ body {
 .icon-yes {
     background: #eafaf1;
     color: #27ae60;
-}
-
-.icon-no {
-    background: #f8f8f8;
-    color: #ccc;
 }
 
 .page-info {
@@ -573,7 +640,10 @@ body {
 
 <div class="header">
     <div class="header-inner">
-        <h1>네이버 플레이스 순위 조회</h1>
+        <div class="header-top">
+            <h1>네이버 플레이스 순위 조회</h1>
+            <button class="menu-btn" id="btnMenu" aria-label="메뉴"><span></span></button>
+        </div>
         <p>키워드와 플레이스 ID를 입력하면 실시간으로 순위를 확인합니다</p>
     </div>
 </div>
@@ -600,12 +670,7 @@ body {
                 <option value="300" selected>300위까지</option>
             </select>
         </div>
-
-        <!-- 버튼 영역: 기존 + 추적 -->
-        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-            <button class="btn btn-primary" id="btnSearch">순위 조회</button>
-            <button class="btn btn-tracker" id="btnGoTracker">추적(저장) 페이지</button>
-        </div>
+        <button class="btn btn-primary" id="btnSearch">순위 조회</button>
 
         <div class="loading" id="loading">
             <div class="spinner"></div>
@@ -648,6 +713,19 @@ body {
 
 </div>
 
+<!-- Drawer Menu -->
+<div class="drawer-overlay" id="drawer">
+    <div class="drawer" role="dialog" aria-modal="true">
+        <div class="drawer-head">
+            <div class="drawer-title">메뉴</div>
+            <button class="drawer-close" id="btnDrawerClose" aria-label="닫기">×</button>
+        </div>
+        <div class="mutedlink">페이지 이동</div>
+        <a href="./index.html">실시간 조회</a>
+        <a href="#" id="linkTracker">플레이스 추적</a>
+    </div>
+</div>
+
 <!-- 상세 모달 -->
 <div class="modal-overlay" id="detailModal">
     <div class="modal">
@@ -663,10 +741,10 @@ body {
 (function() {
     "use strict";
 
-    // 실시간용 Worker(프록시)
+    // 실시간용 프록시 Worker
     var PROXY = "https://naverrank.dampd21.workers.dev/";
 
-    // 추적 페이지 파일명(같은 폴더에 tracker.html 업로드 필요)
+    // tracker 페이지 파일명(같은 폴더에 tracker.html 있어야 함)
     var TRACKER_PAGE = "tracker.html";
 
     var HKEY = "npt_rank_history";
@@ -1023,17 +1101,24 @@ body {
     document.getElementById("inputKeyword").onkeydown = function(e) { if (e.key === "Enter") doSearch(); };
     document.getElementById("inputPlaceId").onkeydown = function(e) { if (e.key === "Enter") doSearch(); };
 
-    // 추가: tracker.html로 이동 (kw/placeId 전달)
-    document.getElementById("btnGoTracker").onclick = function() {
+    // === Drawer ===
+    var drawer = document.getElementById("drawer");
+    var btnMenu = document.getElementById("btnMenu");
+    var btnDrawerClose = document.getElementById("btnDrawerClose");
+    var linkTracker = document.getElementById("linkTracker");
+
+    function openDrawer(){
+        // tracker로 넘어갈 때 현재 입력값도 같이 전달
         var kw = document.getElementById("inputKeyword").value.trim();
         var pid = document.getElementById("inputPlaceId").value.trim();
+        linkTracker.href = "./" + TRACKER_PAGE + "?keyword=" + encodeURIComponent(kw) + "&placeId=" + encodeURIComponent(pid);
+        drawer.classList.add("show");
+    }
+    function closeDrawer(){ drawer.classList.remove("show"); }
 
-        // tracker.html에서 자동으로 input 채우도록 querystring으로 전달
-        var u = TRACKER_PAGE + "?keyword=" + encodeURIComponent(kw) + "&placeId=" + encodeURIComponent(pid);
-
-        // 새 탭으로 열기(원하면 window.location.href로 변경)
-        window.open(u, "_blank");
-    };
+    btnMenu.onclick = openDrawer;
+    btnDrawerClose.onclick = closeDrawer;
+    drawer.onclick = function(e){ if(e.target === drawer) closeDrawer(); };
 
     renderH();
 })();
