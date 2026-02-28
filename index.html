@@ -1,1011 +1,436 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>네이버 플레이스 순위 조회</title>
-<style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #f5f5f5;
-    color: #333;
-}
-
-.header {
-    background: #1a1a2e;
-    color: #fff;
-    padding: 20px 0;
-}
-
-.header-inner {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
-
-.header h1 {
-    font-size: 22px;
-    font-weight: 700;
-}
-
-.header p {
-    font-size: 13px;
-    color: #aaa;
-    margin-top: 4px;
-}
-
-.container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 20px;
-}
-
-.card {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 24px;
-    margin-bottom: 20px;
-}
-
-.card h2 {
-    font-size: 16px;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #eee;
-}
-
-.form-row {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-}
-
-.form-group {
-    flex: 1;
-    min-width: 180px;
-}
-
-.form-group label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: #555;
-}
-
-.form-group input,
-.form-group select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 14px;
-    outline: none;
-}
-
-.form-group input:focus {
-    border-color: #1a1a2e;
-}
-
-.btn {
-    padding: 10px 28px;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-
-.btn-primary {
-    background: #1a1a2e;
-    color: #fff;
-}
-
-.btn-primary:hover {
-    background: #16213e;
-}
-
-.btn-primary:disabled {
-    background: #999;
-    cursor: not-allowed;
-}
-
-.result-box {
-    display: none;
-    margin-top: 20px;
-    padding: 24px;
-    border-radius: 8px;
-    text-align: center;
-}
-
-.result-found {
-    background: #eafaf1;
-    border: 2px solid #2ecc71;
-}
-
-.result-notfound {
-    background: #fdedec;
-    border: 2px solid #e74c3c;
-}
-
-.result-error {
-    background: #fef9e7;
-    border: 2px solid #f39c12;
-}
-
-.result-rank {
-    font-size: 52px;
-    font-weight: 800;
-    color: #1a1a2e;
-    margin: 8px 0;
-}
-
-.result-rank-sub {
-    font-size: 14px;
-    color: #888;
-}
-
-.result-name {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 4px;
-}
-
-.result-detail {
-    font-size: 13px;
-    color: #666;
-    margin-top: 6px;
-}
-
-.result-stats {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-top: 14px;
-}
-
-.result-stat {
-    text-align: center;
-}
-
-.result-stat-value {
-    font-size: 18px;
-    font-weight: 700;
-    color: #1a1a2e;
-}
-
-.result-stat-label {
-    font-size: 11px;
-    color: #999;
-}
-
-.result-tags {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-    gap: 6px;
-    margin-top: 12px;
-}
-
-.tag {
-    display: inline-block;
-    padding: 3px 10px;
-    border-radius: 12px;
-    font-size: 11px;
-}
-
-.tag-blue {
-    background: #ebf5fb;
-    color: #2980b9;
-}
-
-.tag-green {
-    background: #eafaf1;
-    color: #27ae60;
-}
-
-.tag-orange {
-    background: #fef9e7;
-    color: #e67e22;
-}
-
-.tag-gray {
-    background: #f0f0f0;
-    color: #666;
-}
-
-.tag-red {
-    background: #fdedec;
-    color: #c0392b;
-}
-
-.loading {
-    display: none;
-    text-align: center;
-    padding: 30px;
-}
-
-.spinner {
-    display: inline-block;
-    width: 32px;
-    height: 32px;
-    border: 3px solid #ddd;
-    border-top-color: #1a1a2e;
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-.loading-text {
-    margin-top: 10px;
-    font-size: 13px;
-    color: #888;
-}
-
-/* 테이블 */
-.rank-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-    margin-top: 16px;
-}
-
-.rank-table th {
-    background: #f8f8f8;
-    padding: 8px 6px;
-    text-align: left;
-    font-weight: 600;
-    border-bottom: 2px solid #ddd;
-    white-space: nowrap;
-    position: sticky;
-    top: 0;
-}
-
-.rank-table td {
-    padding: 8px 6px;
-    border-bottom: 1px solid #eee;
-    vertical-align: middle;
-}
-
-.rank-table tbody tr:hover {
-    background: #f5f5f5;
-}
-
-.rank-table .highlight {
-    background: #fff9c4;
-}
-
-.badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 11px;
-    color: #fff;
-}
-
-.badge-1 { background: #e74c3c; }
-.badge-3 { background: #2ecc71; }
-.badge-5 { background: #3498db; }
-.badge-10 { background: #f39c12; }
-.badge-20 { background: #e67e22; }
-.badge-other { background: #95a5a6; }
-
-.table-tag {
-    display: inline-block;
-    padding: 1px 6px;
-    border-radius: 8px;
-    font-size: 10px;
-    margin: 1px 2px;
-}
-
-.table-name {
-    font-weight: 600;
-    color: #1a1a2e;
-    cursor: pointer;
-}
-
-.table-name:hover {
-    text-decoration: underline;
-    color: #3498db;
-}
-
-.table-micro {
-    font-size: 10px;
-    color: #999;
-    font-style: italic;
-    display: block;
-    margin-top: 2px;
-}
-
-.table-icons {
-    display: flex;
-    gap: 3px;
-    flex-wrap: wrap;
-}
-
-.table-icon {
-    display: inline-block;
-    padding: 1px 5px;
-    border-radius: 6px;
-    font-size: 9px;
-    font-weight: 600;
-    white-space: nowrap;
-}
-
-.icon-yes {
-    background: #eafaf1;
-    color: #27ae60;
-}
-
-.icon-no {
-    background: #f8f8f8;
-    color: #ccc;
-}
-
-.page-info {
-    text-align: center;
-    font-size: 12px;
-    color: #aaa;
-    margin-top: 8px;
-}
-
-.max-select {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 14px;
-}
-
-.max-select label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #555;
-}
-
-.max-select select {
-    padding: 6px 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 13px;
-}
-
-/* 상세 모달 */
-.modal-overlay {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.5);
-    z-index: 1000;
-    align-items: center;
-    justify-content: center;
-}
-
-.modal-overlay.show {
-    display: flex;
-}
-
-.modal {
-    background: #fff;
-    border-radius: 10px;
-    width: 90%;
-    max-width: 520px;
-    max-height: 80vh;
-    overflow-y: auto;
-}
-
-.modal-header {
-    position: sticky;
-    top: 0;
-    background: #1a1a2e;
-    color: #fff;
-    padding: 14px 20px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-radius: 10px 10px 0 0;
-    z-index: 1;
-}
-
-.modal-header h3 {
-    font-size: 15px;
-    font-weight: 600;
-}
-
-.modal-close {
-    background: none;
-    border: none;
-    color: #fff;
-    font-size: 20px;
-    cursor: pointer;
-}
-
-.modal-body {
-    padding: 20px;
-}
-
-.detail-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    margin-bottom: 16px;
-}
-
-.detail-item {
-    padding: 10px;
-    background: #f8f8f8;
-    border-radius: 6px;
-}
-
-.detail-label {
-    font-size: 11px;
-    color: #999;
-    margin-bottom: 2px;
-}
-
-.detail-value {
-    font-size: 14px;
-    font-weight: 600;
-    color: #333;
-}
-
-.detail-full {
-    grid-column: 1 / -1;
-}
-
-.detail-section-title {
-    font-size: 13px;
-    font-weight: 600;
-    color: #1a1a2e;
-    margin: 16px 0 8px 0;
-    padding-bottom: 6px;
-    border-bottom: 1px solid #eee;
-}
-
-.detail-tags {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 5px;
-    margin-bottom: 12px;
-}
-
-.detail-tag {
-    display: inline-block;
-    padding: 3px 10px;
-    background: #f0f0f0;
-    border-radius: 12px;
-    font-size: 11px;
-    color: #555;
-}
-
-/* 히스토리 */
-.history-list {
-    margin-top: 16px;
-}
-
-.history-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 13px;
-}
-
-.history-item:hover {
-    background: #fafafa;
-}
-
-.history-keyword {
-    font-weight: 600;
-}
-
-.btn-tiny {
-    padding: 4px 10px;
-    font-size: 11px;
-    border: 1px solid #ddd;
-    background: #fff;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.btn-tiny:hover {
-    background: #f0f0f0;
-}
-
-.btn-tiny-del {
-    color: #e74c3c;
-    border-color: #e74c3c;
-}
-
-@media (max-width: 600px) {
-    .form-row {
-        flex-direction: column;
-    }
-    .form-group {
-        min-width: 100%;
-    }
-    .result-rank {
-        font-size: 40px;
-    }
-    .detail-grid {
-        grid-template-columns: 1fr;
-    }
-    .rank-table {
-        font-size: 11px;
-    }
-    .rank-table th,
-    .rank-table td {
-        padding: 6px 4px;
-    }
-    .result-stats {
-        gap: 10px;
-    }
-}
-</style>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>네이버 플레이스 Top50 트래커</title>
+  <style>
+    body { font-family: system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:#f5f5f5; margin:0; color:#222; }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 18px; }
+    .card { background:#fff; border:1px solid #ddd; border-radius:10px; padding:16px; margin-bottom:14px; }
+    h1 { font-size:18px; margin: 0 0 10px; }
+    h2 { font-size:14px; margin: 0 0 10px; }
+    label { font-size:12px; font-weight:700; display:block; margin-bottom:6px; color:#555; }
+    input, select { width:100%; padding:10px 12px; border:1px solid #ccc; border-radius:8px; font-size:14px; }
+    .row { display:flex; gap:10px; flex-wrap:wrap; }
+    .col { flex:1; min-width:220px; }
+    button { padding:10px 14px; border:0; border-radius:8px; cursor:pointer; font-weight:800; }
+    .btn { background:#1a1a2e; color:#fff; }
+    .btn2 { background:#fff; border:1px solid #ccc; color:#333; }
+    .btnDanger { background:#fff; border:1px solid #e74c3c; color:#e74c3c; }
+    .small { font-size:12px; color:#777; }
+    .tracks .item { display:flex; justify-content:space-between; align-items:flex-start; gap:10px; padding:10px 0; border-bottom:1px solid #eee; }
+    .tracks .item:last-child { border-bottom:0; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; background:#f0f0f0; color:#555; margin-left:6px; }
+    .timeline { display:flex; flex-direction:column; gap:6px; }
+    .trow { display:flex; justify-content:space-between; padding:10px 12px; border:1px solid #eee; border-radius:10px; background:#fafafa; cursor:pointer; }
+    .trow:hover { background:#f3f3f3; }
+    .rank { font-weight:900; }
+    .delta { font-size:12px; font-weight:900; margin-left:6px; }
+    .up { color:#e74c3c; }
+    .down { color:#1f77b4; }
+    .flat { color:#999; }
+    table { width:100%; border-collapse:collapse; font-size:12px; }
+    th, td { border-bottom:1px solid #eee; padding:8px 6px; vertical-align:top; }
+    th { position:sticky; top:0; background:#f8f8f8; text-align:left; }
+    .hl { background:#fff9c4; }
+    .num { text-align:right; }
+    .muted { color:#888; }
+  </style>
 </head>
 <body>
+<div class="wrap">
+  <div class="card">
+    <h1>네이버 플레이스 Top50 트래커</h1>
+    <div class="small">매일 KST 12:00에 키워드 Top50을 저장하고, 전일 대비 ▲▼를 표시합니다. (Top50 밖 = “50위권 밖”)</div>
+  </div>
 
-<div class="header">
-    <div class="header-inner">
-        <h1>네이버 플레이스 순위 조회</h1>
-        <p>키워드와 플레이스 ID를 입력하면 실시간으로 순위를 확인합니다</p>
-    </div>
-</div>
-
-<div class="container">
-
-    <div class="card">
-        <h2>순위 조회</h2>
-        <div class="form-row">
-            <div class="form-group">
-                <label>검색 키워드</label>
-                <input type="text" id="inputKeyword" placeholder="예: 남영역맛집">
-            </div>
-            <div class="form-group">
-                <label>플레이스 ID</label>
-                <input type="text" id="inputPlaceId" placeholder="예: 1951454277">
-            </div>
-        </div>
-        <div class="max-select">
-            <label>검색 범위</label>
-            <select id="selectMaxRank">
-                <option value="100">100위까지</option>
-                <option value="200">200위까지</option>
-                <option value="300" selected>300위까지</option>
-            </select>
-        </div>
-        <button class="btn btn-primary" id="btnSearch">순위 조회</button>
-
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <div class="loading-text" id="loadingText">검색 중...</div>
-        </div>
-
-        <div class="result-box" id="resultBox"></div>
+  <div class="card">
+    <h2>추적 등록</h2>
+    <div class="row">
+      <div class="col">
+        <label>키워드</label>
+        <input id="keyword" placeholder="예: 남영역맛집">
+      </div>
+      <div class="col">
+        <label>대상 플레이스 ID</label>
+        <input id="placeId" placeholder="예: 1951454277">
+      </div>
     </div>
 
-    <div class="card" id="tableCard" style="display:none;">
-        <h2>검색 결과 (<span id="tableKeyword"></span>)</h2>
-        <div style="overflow-x:auto;max-height:600px;overflow-y:auto;">
-            <table class="rank-table" id="rankTable">
-                <thead>
-                    <tr>
-                        <th>순위</th>
-                        <th>업체명</th>
-                        <th>카테고리</th>
-                        <th>블로그</th>
-                        <th>방문자</th>
-                        <th>별점</th>
-                        <th>저장</th>
-                        <th>이미지</th>
-                        <th>서비스</th>
-                    </tr>
-                </thead>
-                <tbody id="rankTableBody"></tbody>
-            </table>
-        </div>
-        <div class="page-info" id="pageInfo"></div>
+    <div class="row" style="margin-top:10px;">
+      <div class="col">
+        <label>도시(광역)</label>
+        <select id="city"></select>
+      </div>
+      <div class="col">
+        <label>구/군 (서울 선택 시)</label>
+        <select id="district"></select>
+      </div>
+      <div class="col">
+        <label>기기 타입</label>
+        <select id="deviceType">
+          <option value="pc" selected>pc</option>
+          <option value="mobile">mobile</option>
+        </select>
+      </div>
     </div>
 
-    <div class="card">
-        <h2>최근 조회 기록</h2>
-        <div class="history-list" id="historyList"></div>
-        <div id="historyEmpty" style="text-align:center;padding:20px;color:#aaa;font-size:13px;">
-            조회 기록이 없습니다
-        </div>
+    <div style="margin-top:12px; display:flex; gap:8px; align-items:center;">
+      <button class="btn" id="btnAdd">등록</button>
+      <button class="btn2" id="btnReload">목록 새로고침</button>
+      <span class="small">workspaceId: <span class="mono" id="ws"></span></span>
     </div>
+  </div>
 
-</div>
+  <div class="card">
+    <h2>내 추적 목록</h2>
+    <div id="tracks" class="tracks"></div>
+    <div id="tracksEmpty" class="small muted" style="display:none; padding:10px 0;">등록된 추적이 없습니다.</div>
+  </div>
 
-<!-- 상세 모달 -->
-<div class="modal-overlay" id="detailModal">
-    <div class="modal">
-        <div class="modal-header">
-            <h3 id="modalTitle">상세정보</h3>
-            <button class="modal-close" id="modalClose">x</button>
-        </div>
-        <div class="modal-body" id="modalBody"></div>
+  <div class="card" id="timelineCard" style="display:none;">
+    <h2 id="timelineTitle">타임라인</h2>
+    <div class="small muted" id="timelineSub" style="margin-bottom:10px;"></div>
+    <div id="timeline" class="timeline"></div>
+  </div>
+
+  <div class="card" id="snapCard" style="display:none;">
+    <h2 id="snapTitle">스냅샷</h2>
+    <div class="small muted" id="snapSub" style="margin-bottom:10px;"></div>
+    <div style="overflow:auto; max-height:650px;">
+      <table>
+        <thead>
+          <tr>
+            <th>순위</th>
+            <th>업체</th>
+            <th>카테고리</th>
+            <th class="num">블로그</th>
+            <th class="num">방문자</th>
+            <th class="num">저장</th>
+            <th class="num">이미지</th>
+            <th class="num">별점</th>
+          </tr>
+        </thead>
+        <tbody id="snapBody"></tbody>
+      </table>
     </div>
+  </div>
 </div>
 
 <script>
-(function() {
-    "use strict";
+  // === 설정: Worker 도메인 ===
+  const API_BASE = "https://YOUR_WORKER_DOMAIN"; // <- 반드시 수정
 
-    var PROXY = "https://naverrank.dampd21.workers.dev/";
-    var HKEY = "npt_rank_history";
-    var allItems = [];
-
-    /* ---- 유틸 ---- */
-    function esc(s) { return s ? String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") : ""; }
-    function val(v, d) { return (v !== null && v !== undefined && v !== "") ? v : (d !== undefined ? d : "-"); }
-
-    /* ---- 히스토리 ---- */
-    function loadH() { try { return JSON.parse(localStorage.getItem(HKEY)) || []; } catch(e) { return []; } }
-    function saveH(l) { localStorage.setItem(HKEY, JSON.stringify(l)); }
-
-    function addH(kw, pid, rank, name) {
-        var l = loadH();
-        l.unshift({ keyword:kw, placeId:pid, rank:rank, name:name||"", time:new Date().toLocaleString("ko-KR") });
-        if (l.length > 50) l = l.slice(0,50);
-        saveH(l);
-        renderH();
+  // workspaceId (로그인 대체)
+  const WS_KEY = "npt_workspace_id";
+  function getWS() {
+    let v = localStorage.getItem(WS_KEY);
+    if (!v) {
+      v = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "-" + Math.random());
+      localStorage.setItem(WS_KEY, v);
     }
+    return v;
+  }
+  const workspaceId = getWS();
+  document.getElementById("ws").textContent = workspaceId;
 
-    function renderH() {
-        var l = loadH();
-        var c = document.getElementById("historyList");
-        var e = document.getElementById("historyEmpty");
-        c.innerHTML = "";
-        if (l.length === 0) { e.style.display = "block"; return; }
-        e.style.display = "none";
+  // 지역 데이터(최소 세트 + 서울 구청)
+  // x=경도(lon), y=위도(lat)
+  const REGIONS = {
+    "서울": {
+      city: { x:"126.9783882", y:"37.5666103" }, // 서울시청 근처
+      districts: {
+        "종로구": { x:"126.9770", y:"37.5729" },
+        "중구": { x:"126.9977", y:"37.5636" },
+        "용산구": { x:"126.9903", y:"37.5324" },
+        "성동구": { x:"127.0366", y:"37.5635" },
+        "광진구": { x:"127.0827", y:"37.5385" },
+        "동대문구": { x:"127.0396", y:"37.5744" },
+        "중랑구": { x:"127.0927", y:"37.6063" },
+        "성북구": { x:"127.0167", y:"37.5894" },
+        "강북구": { x:"127.0256", y:"37.6397" },
+        "도봉구": { x:"127.0471", y:"37.6688" },
+        "노원구": { x:"127.0568", y:"37.6542" },
+        "은평구": { x:"126.9292", y:"37.6028" },
+        "서대문구": { x:"126.9368", y:"37.5792" },
+        "마포구": { x:"126.9016", y:"37.5663" },
+        "양천구": { x:"126.8665", y:"37.5170" },
+        "강서구": { x:"126.8496", y:"37.5512" },
+        "구로구": { x:"126.8874", y:"37.4955" },
+        "금천구": { x:"126.8956", y:"37.4569" },
+        "영등포구": { x:"126.8963", y:"37.5264" },
+        "동작구": { x:"126.9395", y:"37.5124" },
+        "관악구": { x:"126.9515", y:"37.4782" },
+        "서초구": { x:"127.0327", y:"37.4836" },
+        "강남구": { x:"127.0473", y:"37.5172" },
+        "송파구": { x:"127.1059", y:"37.5145" },
+        "강동구": { x:"127.1259", y:"37.5301" }
+      }
+    },
+    "부산": { city: { x:"129.0756", y:"35.1796" } },
+    "대구": { city: { x:"128.6014", y:"35.8714" } },
+    "인천": { city: { x:"126.7052", y:"37.4563" } },
+    "광주": { city: { x:"126.8526", y:"35.1595" } },
+    "대전": { city: { x:"127.3845", y:"36.3504" } },
+    "울산": { city: { x:"129.3114", y:"35.5395" } },
+    "세종": { city: { x:"127.2890", y:"36.4801" } },
+    "제주": { city: { x:"126.5312", y:"33.4996" } }
+  };
 
-        for (var i = 0; i < l.length; i++) {
-            (function(idx) {
-                var it = l[idx];
-                var d = document.createElement("div");
-                d.className = "history-item";
-                var rt = it.rank ? it.rank + "위" : "순위밖";
-                var nt = it.name ? " - " + it.name : "";
-                d.innerHTML =
-                    '<div><span class="history-keyword">' + esc(it.keyword) + '</span>' +
-                    '<span style="color:#888;font-size:12px;"> (ID: ' + esc(it.placeId) + ')</span>' +
-                    '<br><span style="font-size:11px;color:#aaa;">' + it.time + ' / ' + rt + nt + '</span></div>' +
-                    '<div style="display:flex;gap:6px;">' +
-                    '<button class="btn-tiny re">재조회</button>' +
-                    '<button class="btn-tiny btn-tiny-del del">삭제</button></div>';
-                d.querySelector(".re").onclick = function(ev) {
-                    ev.stopPropagation();
-                    document.getElementById("inputKeyword").value = it.keyword;
-                    document.getElementById("inputPlaceId").value = it.placeId;
-                    doSearch();
-                };
-                d.querySelector(".del").onclick = function(ev) {
-                    ev.stopPropagation();
-                    var ll = loadH(); ll.splice(idx,1); saveH(ll); renderH();
-                };
-                c.appendChild(d);
-            })(i);
-        }
+  const $city = document.getElementById("city");
+  const $district = document.getElementById("district");
+
+  function fillCities() {
+    $city.innerHTML = "";
+    Object.keys(REGIONS).forEach((name) => {
+      const opt = document.createElement("option");
+      opt.value = name; opt.textContent = name;
+      $city.appendChild(opt);
+    });
+    $city.value = "서울";
+  }
+
+  function fillDistricts() {
+    const cityName = $city.value;
+    const d = REGIONS[cityName]?.districts || null;
+    $district.innerHTML = "";
+    const opt0 = document.createElement("option");
+    opt0.value = ""; opt0.textContent = (d ? "선택(권장)" : "해당없음");
+    $district.appendChild(opt0);
+
+    if (d) {
+      Object.keys(d).forEach((k) => {
+        const opt = document.createElement("option");
+        opt.value = k; opt.textContent = k;
+        $district.appendChild(opt);
+      });
     }
+  }
 
-    /* ---- 배지 ---- */
-    function bc(r) {
-        if (r===1) return "badge-1";
-        if (r<=3) return "badge-3";
-        if (r<=5) return "badge-5";
-        if (r<=10) return "badge-10";
-        if (r<=20) return "badge-20";
-        return "badge-other";
-    }
+  fillCities();
+  fillDistricts();
+  $city.addEventListener("change", fillDistricts);
 
-    /* ---- 로딩/결과 ---- */
-    function showLoad(m) {
-        document.getElementById("loading").style.display = "block";
-        document.getElementById("loadingText").textContent = m || "검색 중...";
-        document.getElementById("resultBox").style.display = "none";
-        document.getElementById("tableCard").style.display = "none";
-    }
-    function hideLoad() { document.getElementById("loading").style.display = "none"; }
-    function showRes(h, c) {
-        var b = document.getElementById("resultBox");
-        b.className = "result-box " + c;
-        b.innerHTML = h;
-        b.style.display = "block";
-    }
+  async function api(path, opts={}) {
+    const r = await fetch(API_BASE + path, {
+      ...opts,
+      headers: { "Content-Type": "application/json", ...(opts.headers || {}) }
+    });
+    const j = await r.json().catch(() => null);
+    if (!r.ok) throw new Error(j?.error || ("HTTP " + r.status));
+    return j;
+  }
 
-    /* ---- 서비스 태그 생성 ---- */
-    function svcTags(it) {
-        var tags = [];
-        if (it.hasBooking) tags.push('<span class="table-icon icon-yes">예약</span>');
-        if (it.hasNPay) tags.push('<span class="table-icon icon-yes">N페이</span>');
-        var no = it.naverOrder || {};
-        if (no.isDelivery) tags.push('<span class="table-icon icon-yes">배달</span>');
-        if (no.isTableOrder) tags.push('<span class="table-icon icon-yes">테이블주문</span>');
-        var pi = it.posInfo || {};
-        if (pi.isPOS) tags.push('<span class="table-icon icon-yes">POS</span>');
-        if (it.coupon) tags.push('<span class="table-icon icon-yes">쿠폰</span>');
-        if (it.newOpening) tags.push('<span class="table-icon icon-yes">신규오픈</span>');
-        if (it.hasWheelchairEntrance) tags.push('<span class="table-icon icon-yes">휠체어</span>');
-        var bi = it.broadcastInfo || {};
-        if (bi.program) tags.push('<span class="table-icon icon-yes">' + esc(bi.program) + '</span>');
-        return tags.join("");
-    }
+  function fmtRank(rank) {
+    return (rank == null) ? "50위권 밖" : (rank + "위");
+  }
+  function fmtDelta(n) {
+    if (n == null) return "";
+    if (n === 0) return `<span class="delta flat">-</span>`;
+    if (n > 0) return `<span class="delta up">▲${Math.abs(n)}</span>`;
+    return `<span class="delta down">▼${Math.abs(n)}</span>`;
+  }
+  function fmtDeltaNum(n) {
+    if (n == null) return `<span class="muted">-</span>`;
+    if (n === 0) return `<span class="delta flat">0</span>`;
+    if (n > 0) return `<span class="delta up">▲${n}</span>`;
+    return `<span class="delta down">▼${Math.abs(n)}</span>`;
+  }
 
-    /* ---- 결과 태그 (상단 요약) ---- */
-    function resTags(it) {
-        var t = [];
-        if (it.hasBooking) t.push('<span class="tag tag-green">예약가능</span>');
-        if (it.hasNPay) t.push('<span class="tag tag-green">N페이</span>');
-        var no = it.naverOrder || {};
-        if (no.isDelivery) t.push('<span class="tag tag-blue">배달</span>');
-        if (no.isTableOrder) t.push('<span class="tag tag-blue">테이블주문</span>');
-        if (it.coupon) t.push('<span class="tag tag-orange">쿠폰</span>');
-        if (it.newOpening) t.push('<span class="tag tag-red">신규오픈</span>');
-        var bi = it.broadcastInfo || {};
-        if (bi.program) t.push('<span class="tag tag-orange">' + esc(bi.program) + '</span>');
-        var pi = it.posInfo || {};
-        if (pi.isPOS) t.push('<span class="tag tag-gray">POS</span>');
-        if (it.hasWheelchairEntrance) t.push('<span class="tag tag-gray">휠체어</span>');
-        return t.join("");
-    }
+  let currentTrack = null;
 
-    /* ---- API 호출 ---- */
-    function fetchPage(kw, start, display) {
-        return new Promise(function(resolve, reject) {
-            var url = PROXY + "?keyword=" + encodeURIComponent(kw) + "&start=" + start + "&display=" + display;
-            var x = new XMLHttpRequest();
-            x.open("POST", url, true);
-            x.setRequestHeader("Content-Type", "application/json");
-            x.timeout = 20000;
-            x.onload = function() {
-                if (x.status === 200) {
-                    try { resolve(JSON.parse(x.responseText)); }
-                    catch(e) { reject("응답 파싱 실패"); }
-                } else { reject("HTTP " + x.status); }
-            };
-            x.onerror = function() { reject("네트워크 오류"); };
-            x.ontimeout = function() { reject("시간 초과"); };
-            x.send("{}");
+  async function loadTracks() {
+    const box = document.getElementById("tracks");
+    const empty = document.getElementById("tracksEmpty");
+    box.innerHTML = "";
+    document.getElementById("timelineCard").style.display = "none";
+    document.getElementById("snapCard").style.display = "none";
+
+    const data = await api(`/api/tracks?workspaceId=${encodeURIComponent(workspaceId)}`, { method:"GET", headers:{} });
+    const tracks = data.tracks || [];
+
+    empty.style.display = tracks.length ? "none" : "block";
+
+    tracks.forEach((t) => {
+      const div = document.createElement("div");
+      div.className = "item";
+      const region = t.region_city + (t.region_district ? (" / " + t.region_district) : "");
+      div.innerHTML = `
+        <div>
+          <div><b>${t.keyword}</b> <span class="pill">${region}</span></div>
+          <div class="small">대상 placeId: <span class="mono">${t.target_place_id}</span></div>
+          <div class="small muted">좌표 x:${t.x}, y:${t.y}</div>
+        </div>
+        <div style="display:flex; gap:6px; flex-wrap:wrap; justify-content:flex-end;">
+          <button class="btn2" data-act="timeline">타임라인</button>
+          <button class="btn2" data-act="collect">수동수집</button>
+          <button class="btnDanger" data-act="del">삭제</button>
+        </div>
+      `;
+      div.querySelectorAll("button").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const act = btn.getAttribute("data-act");
+          if (act === "timeline") {
+            currentTrack = t;
+            await loadTimeline(t.id);
+          } else if (act === "collect") {
+            btn.disabled = true;
+            try {
+              await api(`/api/collect?workspaceId=${encodeURIComponent(workspaceId)}&trackId=${t.id}`, { method:"POST", body:"{}" });
+              await loadTimeline(t.id);
+            } catch (e) {
+              alert("수집 실패: " + e.message);
+            } finally {
+              btn.disabled = false;
+            }
+          } else if (act === "del") {
+            if (!confirm("삭제할까요?")) return;
+            await api(`/api/track?workspaceId=${encodeURIComponent(workspaceId)}&id=${t.id}`, { method:"DELETE", headers:{} });
+            await loadTracks();
+          }
         });
+      });
+
+      box.appendChild(div);
+    });
+  }
+
+  async function loadTimeline(trackId) {
+    const data = await api(`/api/timeline?workspaceId=${encodeURIComponent(workspaceId)}&trackId=${trackId}`, { method:"GET", headers:{} });
+
+    const card = document.getElementById("timelineCard");
+    const title = document.getElementById("timelineTitle");
+    const sub = document.getElementById("timelineSub");
+    const box = document.getElementById("timeline");
+
+    card.style.display = "block";
+    box.innerHTML = "";
+
+    title.textContent = `타임라인: ${data.track.keyword}`;
+    const reg = data.track.regionCity + (data.track.regionDistrict ? (" / " + data.track.regionDistrict) : "");
+    sub.textContent = `${reg} · 대상: ${data.track.targetPlaceId}`;
+
+    (data.timeline || []).forEach((row) => {
+      const div = document.createElement("div");
+      div.className = "trow";
+      div.innerHTML = `
+        <div>
+          <div><b>${row.date}</b></div>
+          <div class="small muted">전체 ${row.total ?? "-"}개</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="rank">${fmtRank(row.targetRank)} ${fmtDelta(row.rankDelta)}</div>
+          <div class="small muted">${row.status === "NEW" ? "NEW" : (row.status === "OUT" ? "OUT" : "")}</div>
+        </div>
+      `;
+      div.addEventListener("click", () => loadSnapshot(trackId, row.date));
+      box.appendChild(div);
+    });
+
+    // 최신 날짜 자동 로드(있으면)
+    if ((data.timeline || []).length) {
+      await loadSnapshot(trackId, data.timeline[0].date);
+    }
+  }
+
+  async function loadSnapshot(trackId, date) {
+    const data = await api(`/api/snapshot?workspaceId=${encodeURIComponent(workspaceId)}&trackId=${trackId}&date=${encodeURIComponent(date)}`, { method:"GET", headers:{} });
+
+    const card = document.getElementById("snapCard");
+    const title = document.getElementById("snapTitle");
+    const sub = document.getElementById("snapSub");
+    const body = document.getElementById("snapBody");
+
+    if (!data.snapshot) {
+      card.style.display = "block";
+      title.textContent = `스냅샷: ${date}`;
+      sub.textContent = "해당 날짜 데이터가 없습니다.";
+      body.innerHTML = "";
+      return;
     }
 
-    /* ---- 검색 실행 ---- */
-    function doSearch() {
-        var kw = document.getElementById("inputKeyword").value.trim();
-        var pid = document.getElementById("inputPlaceId").value.trim();
-        var maxR = parseInt(document.getElementById("selectMaxRank").value) || 300;
-        if (!kw) { alert("키워드를 입력하세요."); return; }
-        if (!pid) { alert("플레이스 ID를 입력하세요."); return; }
+    card.style.display = "block";
+    title.textContent = `스냅샷: ${data.snapshot.base_date}`;
+    sub.textContent = `전일 기준: ${data.prevDate || "-"} · 대상 순위: ${fmtRank(data.snapshot.target_rank)}`;
 
-        document.getElementById("btnSearch").disabled = true;
-        showLoad("'" + kw + "' 검색 중... (1~100위)");
-        allItems = [];
-        var total = 0, page = 0, ps = 100, mp = Math.ceil(maxR / ps);
+    body.innerHTML = "";
 
-        function next() {
-            page++;
-            var s = (page-1)*ps+1, d = Math.min(ps, maxR-s+1);
-            if (page > 1) document.getElementById("loadingText").textContent = "'" + kw + "' 검색 중... (" + s + "~" + (s+d-1) + "위)";
+    const target = data.track.targetPlaceId;
+    let targetIn = false;
 
-            fetchPage(kw, s, d).then(function(data) {
-                var items = [], t = 0;
-                if (Array.isArray(data) && data.length > 0) {
-                    var r = data[0].data && data[0].data.restaurants;
-                    if (r) { items = r.items || []; t = r.total || 0; }
-                }
-                total = t;
-                allItems = allItems.concat(items);
+    data.items.forEach((it) => {
+      const tr = document.createElement("tr");
+      const isT = String(it.place_id) === String(target);
+      if (isT) { tr.className = "hl"; targetIn = true; }
 
-                var fi = -1;
-                for (var i = 0; i < allItems.length; i++) {
-                    if (String(allItems[i].id) === String(pid)) { fi = i; break; }
-                }
+      tr.innerHTML = `
+        <td class="num"><b>${it.rank}</b> ${fmtDelta(it.delta.rankDelta)}</td>
+        <td>
+          <div><b>${it.name || "-"}</b>${isT ? ' <span class="pill" style="background:#ffe5e5;color:#c0392b;">대상</span>' : ''}</div>
+          ${it.microReview ? `<div class="small muted">"${it.microReview}"</div>` : ``}
+          <div class="small muted mono">${it.place_id}</div>
+        </td>
+        <td>${it.category || "-"}</td>
+        <td class="num">${it.blog_count ?? 0} <span class="small">${fmtDeltaNum(it.delta.blogDelta)}</span></td>
+        <td class="num">${it.visitor_count ?? 0} <span class="small">${fmtDeltaNum(it.delta.visitorDelta)}</span></td>
+        <td class="num">${it.save_count ?? 0} <span class="small">${fmtDeltaNum(it.delta.saveDelta)}</span></td>
+        <td class="num">${it.image_count ?? 0} <span class="small">${fmtDeltaNum(it.delta.imgDelta)}</span></td>
+        <td class="num">${(it.score ?? "-")} <span class="small">${(it.delta.scoreDelta==null)?'':(it.delta.scoreDelta>0?'<span class="delta up">▲'+it.delta.scoreDelta.toFixed(2)+'</span>':(it.delta.scoreDelta<0?'<span class="delta down">▼'+Math.abs(it.delta.scoreDelta).toFixed(2)+'</span>':'<span class="delta flat">-</span>'))}</span></td>
+      `;
+      body.appendChild(tr);
+    });
 
-                if (fi >= 0 || items.length < d || page >= mp) {
-                    hideLoad();
-                    document.getElementById("btnSearch").disabled = false;
-                    render(kw, pid, total, maxR);
-                } else {
-                    setTimeout(next, 300);
-                }
-            }).catch(function(err) {
-                hideLoad();
-                document.getElementById("btnSearch").disabled = false;
-                showRes('<div style="font-size:15px;font-weight:600;color:#e67e22;">조회 실패</div><div class="result-detail">' + esc(err) + '</div>', "result-error");
-            });
-        }
-        next();
+    if (!targetIn) {
+      const note = document.createElement("tr");
+      note.innerHTML = `<td colspan="8" class="muted" style="padding:10px;background:#fafafa;">
+        대상 업체(placeId ${target})는 이 날짜에 Top50에 없습니다. (정책상 50위권 밖 데이터는 수집/표시하지 않음)
+      </td>`;
+      body.appendChild(note);
     }
-    window.doSearch = doSearch;
+  }
 
-    /* ---- 결과 렌더링 ---- */
-    function render(kw, pid, total, maxR) {
-        var fi = -1, found = null;
-        for (var i = 0; i < allItems.length; i++) {
-            if (String(allItems[i].id) === String(pid)) { fi = i; found = allItems[i]; break; }
-        }
+  document.getElementById("btnAdd").addEventListener("click", async () => {
+    const keyword = document.getElementById("keyword").value.trim();
+    const targetPlaceId = document.getElementById("placeId").value.trim();
+    const regionCity = $city.value;
+    const regionDistrict = $district.value || null;
+    const deviceType = document.getElementById("deviceType").value;
 
-        if (fi >= 0) {
-            var rank = fi + 1;
-            var tags = resTags(found);
-            showRes(
-                '<div class="result-name">' + esc(found.name) + '</div>' +
-                '<div class="result-detail">' + esc(found.category) + ' / ' + esc(found.businessCategory) + '</div>' +
-                '<div class="result-rank">' + rank + '<span style="font-size:20px;">위</span></div>' +
-                '<div class="result-rank-sub">전체 ' + total + '개 중</div>' +
-                '<div class="result-stats">' +
-                    '<div class="result-stat"><div class="result-stat-value">' + val(found.blogCafeReviewCount, 0) + '</div><div class="result-stat-label">블로그리뷰</div></div>' +
-                    '<div class="result-stat"><div class="result-stat-value">' + val(found.visitorReviewCount, 0) + '</div><div class="result-stat-label">방문자리뷰</div></div>' +
-                    '<div class="result-stat"><div class="result-stat-value">' + val(found.visitorReviewScore, "-") + '</div><div class="result-stat-label">별점</div></div>' +
-                    '<div class="result-stat"><div class="result-stat-value">' + val(found.saveCount, 0) + '</div><div class="result-stat-label">저장</div></div>' +
-                    '<div class="result-stat"><div class="result-stat-value">' + val(found.imageCount, 0) + '</div><div class="result-stat-label">이미지</div></div>' +
-                '</div>' +
-                (found.microReview ? '<div class="result-detail" style="font-style:italic;color:#888;margin-top:10px;">"' + esc(found.microReview) + '"</div>' : '') +
-                (tags ? '<div class="result-tags">' + tags + '</div>' : '') +
-                '<div style="margin-top:14px;"><a href="https://m.place.naver.com/restaurant/' + found.id + '/home" target="_blank" style="font-size:12px;color:#3498db;">네이버 플레이스에서 보기</a></div>',
-                "result-found"
-            );
-            addH(kw, pid, rank, found.name);
-        } else {
-            showRes(
-                '<div style="font-size:16px;font-weight:600;color:#e74c3c;">' + maxR + '위 안에 없습니다</div>' +
-                '<div class="result-detail">플레이스 ID: ' + esc(pid) + '</div>' +
-                '<div class="result-detail">전체 검색 결과: ' + total + '개</div>',
-                "result-notfound"
-            );
-            addH(kw, pid, null, "");
-        }
+    if (!keyword) return alert("키워드를 입력하세요.");
+    if (!targetPlaceId) return alert("대상 플레이스 ID를 입력하세요.");
 
-        /* 테이블 */
-        if (allItems.length > 0) {
-            document.getElementById("tableCard").style.display = "block";
-            document.getElementById("tableKeyword").textContent = kw;
-            var tb = document.getElementById("rankTableBody");
-            tb.innerHTML = "";
-
-            for (var j = 0; j < allItems.length; j++) {
-                var it = allItems[j];
-                var isT = String(it.id) === String(pid);
-                var tr = document.createElement("tr");
-                if (isT) tr.className = "highlight";
-                var rn = j + 1;
-
-                tr.innerHTML =
-                    '<td><span class="badge ' + bc(rn) + '">' + rn + '</span></td>' +
-                    '<td><span class="table-name" data-idx="' + j + '">' + esc(it.name) + '</span>' +
-                        (isT ? ' <span style="color:#e74c3c;font-size:10px;font-weight:700;">[대상]</span>' : '') +
-                        (it.microReview ? '<span class="table-micro">' + esc(it.microReview) + '</span>' : '') +
-                    '</td>' +
-                    '<td>' + esc(it.category) + '</td>' +
-                    '<td>' + val(it.blogCafeReviewCount, 0) + '</td>' +
-                    '<td>' + val(it.visitorReviewCount, 0) + '</td>' +
-                    '<td>' + val(it.visitorReviewScore, "-") + '</td>' +
-                    '<td>' + val(it.saveCount, 0) + '</td>' +
-                    '<td>' + val(it.imageCount, 0) + '</td>' +
-                    '<td><div class="table-icons">' + svcTags(it) + '</div></td>';
-                tb.appendChild(tr);
-            }
-
-            document.getElementById("pageInfo").textContent = allItems.length + "개 표시 / 전체 " + total + "개";
-
-            var links = tb.querySelectorAll(".table-name");
-            for (var n = 0; n < links.length; n++) {
-                links[n].addEventListener("click", function() {
-                    openDetail(parseInt(this.getAttribute("data-idx")));
-                });
-            }
-        }
+    let xy = null;
+    if (regionCity === "서울" && regionDistrict && REGIONS["서울"].districts[regionDistrict]) {
+      xy = REGIONS["서울"].districts[regionDistrict];
+    } else {
+      xy = REGIONS[regionCity]?.city;
     }
+    if (!xy) return alert("지역 좌표를 찾을 수 없습니다.");
 
-    /* ---- 상세 모달 ---- */
-    function openDetail(idx) {
-        if (idx < 0 || idx >= allItems.length) return;
-        var it = allItems[idx];
-        var rn = idx + 1;
+    await api("/api/track", {
+      method:"POST",
+      body: JSON.stringify({
+        workspaceId,
+        keyword,
+        targetPlaceId,
+        regionCity,
+        regionDistrict,
+        x: xy.x,
+        y: xy.y,
+        deviceType
+      })
+    });
 
-        document.getElementById("modalTitle").textContent = esc(it.name) + " (#" + rn + "위)";
+    document.getElementById("keyword").value = "";
+    document.getElementById("placeId").value = "";
+    await loadTracks();
+  });
 
-        var h = '';
+  document.getElementById("btnReload").addEventListener("click", loadTracks);
 
-        /* 기본 */
-        h += '<div class="detail-grid">';
-        h += '<div class="detail-item"><div class="detail-label">업체명</div><div class="detail-value">' + esc(it.name) + '</div></div>';
-        h += '<div class="detail-item"><div class="detail-label">카테고리</div><div class="detail-value">' + esc(it.category) + '</div></div>';
-        h += '<div class="detail-item"><div class="detail-label">플레이스 ID</div><div class="detail-value">' + esc(it.id) + '</div></div>';
-        h += '<div class="detail-item"><div class="detail-label">DB 타입</div><div class="detail-value">' + esc(it.dbType) + '</div></div>';
-        h += '<div class="detail-item"><div class="detail-label">대분류</div><div class="detail-value">' + esc(it.businessCategory) + '</div></div>';
-        h += '<div class="detail-item"><div class="detail-label">이미지 수</div><div class="detail-value">' + val(it.imageCount, 0) + '</div></div>';
-        h += '</div>';
-
-        if (it.microReview) {
-            h += '<div class="detail-item detail-full" style="margin-bottom:12px;"><div class="detail-label">한줄 요약</div><div class="detail-value" style="font-style:italic;">"' + esc(it.microReview) + '"</div></div>';
-        }
-
-        /* 리뷰/저장 */
-        h += '<div class="detail-section-title">리뷰 / 저장 통계</div>';
-        h += '<div class="detail-grid">';
-        h += '<div class="detail-item"><div class="detail-label">블로그 리뷰</div><div class="detail-value">' + val(it.blogCafeReviewCount, 0) + '</div></div>';
-        h += '<div class="detail-item"><div class="detail-label">방문자 리뷰</div><div class="detail-value">' + val(it.visitorReviewCount, 0) + '</div></div>';
-        h += '<div class="detail-item"><div class="detail-label">별점</div><div class="detail-value">' + val(it.visitorReviewScore, "-") + '</div></div>';
-        h += '<div class="detail-item"><div class="detail-label">저장수</div><div class="detail-value">' + val(it.saveCount, 0) + '</div></div>';
-        h += '</div>';
-
-        /* 서비스 */
-        h += '<div class="detail-section-title">서비스 / 기능</div>';
-        h += '<div class="detail-grid">';
-        h += '<div class="detail-item"><div class="detail-label">예약</div><div class="detail-value">' + (it.hasBooking ? "가능" : "불가") + '</div></div>';
-        h += '<div class="detail-item"><div class="detail-label">네이버페이</div><div class="detail-value">' + (it.hasNPay ? "가능" : "불가") + '</div></div>';
-        var no = it.naverOrder || {};
-        h += '<div class="detail-item"><div class="detail-label">배달</div><div class="detail-value">' + (no.isDelivery ? "가능" : "불가") + '</div></div>';
-        h += '<div class="detail-item"><div class="detail-label">테이블주문</div><div class="detail-value">' + (no.isTableOrder ? "가능" : "불가") + '</div></div>';
-        var pi = it.posInfo || {};
-        h += '<div class="detail-item"><div class="detail-label">POS 연동</div><div class="detail-value">' + (pi.isPOS ? "연동" : "미연동") + '</div></div>';
-        h += '<div class="detail-item"><div class="detail-label">휠체어</div><div class="detail-value">' + (it.hasWheelchairEntrance ? "가능" : "-") + '</div></div>';
-        h += '<div class="detail-item"><div class="detail-label">쿠폰</div><div class="detail-value">' + (it.coupon ? "있음" : "없음") + '</div></div>';
-        h += '<div class="detail-item"><div class="detail-label">신규오픈</div><div class="detail-value">' + (it.newOpening ? "신규" : "-") + '</div></div>';
-        h += '</div>';
-
-        /* 방송 */
-        var bi = it.broadcastInfo || {};
-        if (bi.program) {
-            h += '<div class="detail-section-title">방송 출연</div>';
-            h += '<div class="detail-item detail-full" style="margin-bottom:12px;"><div class="detail-label">프로그램</div><div class="detail-value">' + esc(bi.program) + '</div></div>';
-        }
-
-        /* 편의시설 */
-        if (it.options) {
-            h += '<div class="detail-section-title">편의시설 / 옵션</div>';
-            h += '<div class="detail-tags">';
-            var opts = it.options.split(",");
-            for (var oi = 0; oi < opts.length; oi++) {
-                h += '<span class="detail-tag">' + esc(opts[oi].trim()) + '</span>';
-            }
-            h += '</div>';
-        }
-
-        /* 링크 */
-        h += '<div style="margin-top:16px;text-align:center;">';
-        h += '<a href="https://m.place.naver.com/restaurant/' + it.id + '/home" target="_blank" class="btn btn-primary" style="font-size:12px;padding:8px 20px;text-decoration:none;display:inline-block;">네이버 플레이스에서 보기</a>';
-        h += '</div>';
-
-        document.getElementById("modalBody").innerHTML = h;
-        document.getElementById("detailModal").classList.add("show");
-    }
-    window.openDetail = openDetail;
-
-    /* 모달 닫기 */
-    document.getElementById("modalClose").onclick = function() {
-        document.getElementById("detailModal").classList.remove("show");
-    };
-    document.getElementById("detailModal").onclick = function(e) {
-        if (e.target === this) this.classList.remove("show");
-    };
-
-    /* 이벤트 */
-    document.getElementById("btnSearch").onclick = doSearch;
-    document.getElementById("inputKeyword").onkeydown = function(e) { if (e.key === "Enter") doSearch(); };
-    document.getElementById("inputPlaceId").onkeydown = function(e) { if (e.key === "Enter") doSearch(); };
-
-    renderH();
-})();
+  loadTracks().catch(e => alert(e.message));
 </script>
 </body>
 </html>
