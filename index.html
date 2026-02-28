@@ -69,15 +69,15 @@ body {
 }
 .menu-btn span:before { top: -6px; }
 .menu-btn span:after { top: 6px; }
-.drawer-overlay{
+.drawer-overlay {
     position: fixed;
     inset: 0;
     background: rgba(0,0,0,0.45);
     display: none;
     z-index: 9999;
 }
-.drawer-overlay.show{ display:block; }
-.drawer{
+.drawer-overlay.show { display: block; }
+.drawer {
     position: absolute;
     top: 0;
     right: 0;
@@ -87,36 +87,36 @@ body {
     box-shadow: -10px 0 30px rgba(0,0,0,0.18);
     padding: 16px;
 }
-.drawer-head{
-    display:flex;
+.drawer-head {
+    display: flex;
     justify-content: space-between;
-    align-items:center;
-    padding-bottom:10px;
-    border-bottom:1px solid #eee;
-    margin-bottom:10px;
+    align-items: center;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 10px;
 }
-.drawer-title{ font-weight:800; color:#1a1a2e; }
-.drawer-close{
-    border:none;
-    background:none;
-    font-size:22px;
-    cursor:pointer;
-    color:#666;
+.drawer-title { font-weight: 800; color: #1a1a2e; }
+.drawer-close {
+    border: none;
+    background: none;
+    font-size: 22px;
+    cursor: pointer;
+    color: #666;
 }
-.drawer a{
-    display:block;
-    padding:12px 10px;
-    border-radius:10px;
-    color:#333;
-    text-decoration:none;
-    font-weight:700;
+.drawer a {
+    display: block;
+    padding: 12px 10px;
+    border-radius: 10px;
+    color: #333;
+    text-decoration: none;
+    font-weight: 700;
 }
-.drawer a:hover{ background:#f5f5f5; }
-.drawer .mutedlink{
-    font-size:12px;
-    color:#888;
-    font-weight:600;
-    padding:0 10px 8px;
+.drawer a:hover { background: #f5f5f5; }
+.drawer .mutedlink {
+    font-size: 12px;
+    color: #888;
+    font-weight: 600;
+    padding: 0 10px 8px;
 }
 .container {
     max-width: 900px;
@@ -478,7 +478,6 @@ body {
   </div>
 </div>
 
-<!-- Drawer Menu -->
 <div class="drawer-overlay" id="drawer">
   <div class="drawer" role="dialog" aria-modal="true">
     <div class="drawer-head">
@@ -495,32 +494,39 @@ body {
 (function() {
   "use strict";
 
-  // ★★★ Worker A 도메인을 여기서 변경 ★★★
+  // ============ Worker A 도메인 ============
   var PROXY = "https://naverrank.dampd21.workers.dev/";
+  // =========================================
 
   var TRACKER_PAGE = "tracker.html";
   var HKEY = "npt_rank_history";
   var allItems = [];
 
-  // 업종별 응답 파싱 함수
-  function extractItems(kind, data) {
+  // 업종별 응답에서 items, total 추출
+  function extractItems(kind, rawData) {
     try {
+      var d = rawData[0].data;
       if (kind === "restaurant") {
-        var r = data[0].data && data[0].data.restaurants;
-        if (r) return { items: r.items || [], total: r.total || 0 };
-      } else if (kind === "accommodation") {
-        var a = data[0].data && data[0].data.accommodationSearch && data[0].data.accommodationSearch.business;
-        if (a) return { items: a.items || [], total: a.total || 0 };
-      } else {
-        // hairshop, nailshop, hospital
-        var b = data[0].data && data[0].data.businesses;
-        if (b) return { items: b.items || [], total: b.total || 0 };
+        return { items: d.restaurants.items || [], total: d.restaurants.total || 0 };
       }
-    } catch(e) {}
+      if (kind === "hairshop") {
+        return { items: d.hairshops.items || [], total: d.hairshops.total || 0 };
+      }
+      if (kind === "nailshop") {
+        return { items: d.nailshops.items || [], total: d.nailshops.total || 0 };
+      }
+      if (kind === "hospital") {
+        return { items: d.hospitals.items || [], total: d.hospitals.total || 0 };
+      }
+      if (kind === "accommodation") {
+        return { items: d.accommodations.items || [], total: d.accommodations.total || 0 };
+      }
+    } catch(e) {
+      console.error("extractItems error:", e, rawData);
+    }
     return { items: [], total: 0 };
   }
 
-  // 업종에 따라 필드 이름이 다름 => 정규화
   function normalizeItem(kind, it) {
     return {
       id: it.id,
@@ -532,18 +538,7 @@ body {
       visitorReviewScore: it.visitorReviewScore || it.placeReviewScore || null,
       saveCount: it.saveCount || 0,
       imageCount: it.imageCount || 0,
-      microReview: it.microReview || "",
-      // restaurant 전용 필드 (있으면 사용, 없으면 무시)
-      hasBooking: it.hasBooking || false,
-      hasNPay: it.hasNPay || false,
-      naverOrder: it.naverOrder || {},
-      posInfo: it.posInfo || {},
-      coupon: it.coupon || null,
-      newOpening: it.newOpening || false,
-      broadcastInfo: it.broadcastInfo || {},
-      hasWheelchairEntrance: it.hasWheelchairEntrance || false,
-      options: it.options || "",
-      dbType: it.dbType || ""
+      microReview: it.microReview || ""
     };
   }
 
@@ -555,7 +550,6 @@ body {
     return m[k] || k;
   }
 
-  // 히스토리
   function loadH() { try { return JSON.parse(localStorage.getItem(HKEY)) || []; } catch(e) { return []; } }
   function saveH(l) { localStorage.setItem(HKEY, JSON.stringify(l)); }
   function addH(kind, kw, pid, rank, name) {
@@ -603,7 +597,6 @@ body {
     }
   }
 
-  // 배지
   function bc(r) {
     if (r===1) return "badge-1";
     if (r<=3) return "badge-3";
@@ -613,7 +606,6 @@ body {
     return "badge-other";
   }
 
-  // 로딩/결과
   function showLoad(m) {
     document.getElementById("loading").style.display = "block";
     document.getElementById("loadingText").textContent = m || "검색 중...";
@@ -628,7 +620,6 @@ body {
     b.style.display = "block";
   }
 
-  // API 호출
   function fetchPage(kind, kw, start, display) {
     return new Promise(function(resolve, reject) {
       var url = PROXY + "?kind=" + encodeURIComponent(kind) + "&keyword=" + encodeURIComponent(kw) + "&start=" + start + "&display=" + display;
@@ -639,8 +630,10 @@ body {
       x.onload = function() {
         if (x.status === 200) {
           try { resolve(JSON.parse(x.responseText)); }
-          catch(e) { reject("응답 파싱 실패"); }
-        } else { reject("HTTP " + x.status); }
+          catch(e) { reject("응답 파싱 실패: " + x.responseText.substring(0, 200)); }
+        } else {
+          reject("HTTP " + x.status + ": " + x.responseText.substring(0, 200));
+        }
       };
       x.onerror = function() { reject("네트워크 오류"); };
       x.ontimeout = function() { reject("시간 초과"); };
@@ -648,7 +641,6 @@ body {
     });
   }
 
-  // 검색 실행
   function doSearch() {
     var kind = document.getElementById("selectKind").value;
     var kw = document.getElementById("inputKeyword").value.trim();
@@ -668,12 +660,11 @@ body {
       var s = (page-1)*ps+1, d = Math.min(ps, maxR-s+1);
       if (page > 1) document.getElementById("loadingText").textContent = "'" + kw + "' 검색 중... (" + s + "~" + (s+d-1) + "위)";
 
-      fetchPage(kind, kw, s, d).then(function(data) {
-        var extracted = extractItems(kind, data);
+      fetchPage(kind, kw, s, d).then(function(rawData) {
+        var extracted = extractItems(kind, rawData);
         var items = extracted.items;
         total = extracted.total || total;
 
-        // 정규화
         var normalized = items.map(function(it) { return normalizeItem(kind, it); });
         allItems = allItems.concat(normalized);
 
@@ -699,7 +690,6 @@ body {
   }
   window.doSearch = doSearch;
 
-  // 결과 렌더링
   function render(kind, kw, pid, total, maxR) {
     var fi = -1, found = null;
     for (var i = 0; i < allItems.length; i++) {
@@ -734,7 +724,6 @@ body {
       addH(kind, kw, pid, null, "");
     }
 
-    // 테이블
     if (allItems.length > 0) {
       document.getElementById("tableCard").style.display = "block";
       document.getElementById("tableKeyword").textContent = kw;
@@ -764,31 +753,22 @@ body {
     }
   }
 
-  // 이벤트
   document.getElementById("btnSearch").onclick = doSearch;
   document.getElementById("inputKeyword").onkeydown = function(e) { if (e.key === "Enter") doSearch(); };
   document.getElementById("inputPlaceId").onkeydown = function(e) { if (e.key === "Enter") doSearch(); };
 
-  // Drawer
   var drawer = document.getElementById("drawer");
-  var btnMenu = document.getElementById("btnMenu");
-  var btnDrawerClose = document.getElementById("btnDrawerClose");
-  var linkTracker = document.getElementById("linkTracker");
-
-  function openDrawer(){
+  document.getElementById("btnMenu").onclick = function() {
     var kind = document.getElementById("selectKind").value;
     var kw = document.getElementById("inputKeyword").value.trim();
     var pid = document.getElementById("inputPlaceId").value.trim();
-    linkTracker.href = "./" + TRACKER_PAGE + "?kind=" + encodeURIComponent(kind) + "&keyword=" + encodeURIComponent(kw) + "&placeId=" + encodeURIComponent(pid);
+    document.getElementById("linkTracker").href = "./" + TRACKER_PAGE + "?kind=" + encodeURIComponent(kind) + "&keyword=" + encodeURIComponent(kw) + "&placeId=" + encodeURIComponent(pid);
     drawer.classList.add("show");
-  }
-  function closeDrawer(){ drawer.classList.remove("show"); }
-  btnMenu.onclick = openDrawer;
-  btnDrawerClose.onclick = closeDrawer;
-  drawer.onclick = function(e){ if(e.target === drawer) closeDrawer(); };
+  };
+  document.getElementById("btnDrawerClose").onclick = function() { drawer.classList.remove("show"); };
+  drawer.onclick = function(e) { if (e.target === drawer) drawer.classList.remove("show"); };
 
-  // URL 파라미터 자동 채우기
-  (function(){
+  (function() {
     var qs = new URLSearchParams(location.search);
     if (qs.get("kind")) document.getElementById("selectKind").value = qs.get("kind");
     if (qs.get("keyword")) document.getElementById("inputKeyword").value = qs.get("keyword");
