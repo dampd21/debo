@@ -3,381 +3,799 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>네이버 플레이스 실시간 순위 조회</title>
+<title>네이버 플레이스 순위 조회</title>
 <style>
-/* ── 전체 테마 ── */
-:root {
-  --primary: #03c75a;
-  --primary-dark: #02a04a;
-  --bg: #f5f7fa;
-  --card: #ffffff;
-  --text: #333;
-  --text-light: #888;
-  --border: #e0e0e0;
-  --danger: #e74c3c;
-  --success: #27ae60;
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
 }
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family: 'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif; background:var(--bg); color:var(--text); }
-
-/* ── 햄버거 ── */
-.hamburger-menu { position: relative; }
-.hamburger-btn {
-  background: none; border: none; font-size: 28px; cursor: pointer;
-  color: #fff; padding: 4px 8px; line-height: 1;
+body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f5f5f5;
+    color: #333;
 }
-.hamburger-dropdown {
-  display: none; position: absolute; top: 44px; right: 0;
-  background: #fff; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,.15);
-  min-width: 200px; z-index: 999; overflow: hidden;
+.header {
+    background: #1a1a2e;
+    color: #fff;
+    padding: 20px 0;
 }
-.hamburger-dropdown.active { display: block; }
-.hamburger-dropdown a {
-  display: block; padding: 14px 20px; text-decoration: none;
-  color: var(--text); font-size: 15px; border-bottom: 1px solid #f0f0f0;
-  transition: background .2s;
+.header-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
 }
-.hamburger-dropdown a:last-child { border-bottom: none; }
-.hamburger-dropdown a:hover { background: #f0faf4; }
-.hamburger-dropdown a.current { color: var(--primary); font-weight: 700; }
-
-/* ── 헤더 ── */
-header {
-  background: var(--primary); color: #fff; padding: 16px 20px;
-  display: flex; align-items: center; justify-content: space-between;
-  position: sticky; top: 0; z-index: 100;
+.header h1 {
+    font-size: 22px;
+    font-weight: 700;
 }
-header h1 { font-size: 18px; font-weight: 700; }
-
-/* ── 컨테이너 ── */
-.container { max-width: 720px; margin: 0 auto; padding: 20px; }
-
-/* ── 카드 ── */
+.header p {
+    font-size: 13px;
+    color: #aaa;
+    margin-top: 4px;
+}
+.header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+.menu-btn {
+    width: 38px;
+    height: 38px;
+    border: 1px solid rgba(255,255,255,0.25);
+    background: transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.menu-btn span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: #fff;
+    position: relative;
+}
+.menu-btn span:before,
+.menu-btn span:after {
+    content: "";
+    position: absolute;
+    left: 0;
+    width: 18px;
+    height: 2px;
+    background: #fff;
+}
+.menu-btn span:before { top: -6px; }
+.menu-btn span:after { top: 6px; }
+.drawer-overlay{
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: none;
+    z-index: 9999;
+}
+.drawer-overlay.show{ display:block; }
+.drawer{
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 280px;
+    height: 100%;
+    background: #fff;
+    box-shadow: -10px 0 30px rgba(0,0,0,0.18);
+    padding: 16px;
+}
+.drawer-head{
+    display:flex;
+    justify-content: space-between;
+    align-items:center;
+    padding-bottom:10px;
+    border-bottom:1px solid #eee;
+    margin-bottom:10px;
+}
+.drawer-title{ font-weight:800; color:#1a1a2e; }
+.drawer-close{
+    border:none;
+    background:none;
+    font-size:22px;
+    cursor:pointer;
+    color:#666;
+}
+.drawer a{
+    display:block;
+    padding:12px 10px;
+    border-radius:10px;
+    color:#333;
+    text-decoration:none;
+    font-weight:700;
+}
+.drawer a:hover{ background:#f5f5f5; }
+.drawer .mutedlink{
+    font-size:12px;
+    color:#888;
+    font-weight:600;
+    padding:0 10px 8px;
+}
+.container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+}
 .card {
-  background: var(--card); border-radius: 12px; padding: 24px;
-  box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 20px;
+    background: #fff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 24px;
+    margin-bottom: 20px;
 }
-
-/* ── 폼 ── */
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; }
-.form-group select,
-.form-group input {
-  width: 100%; padding: 12px 14px; border: 1px solid var(--border);
-  border-radius: 8px; font-size: 15px; outline: none; transition: border .2s;
+.card h2 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #eee;
 }
-.form-group select:focus,
-.form-group input:focus { border-color: var(--primary); }
-
-.form-row { display: flex; gap: 12px; }
-.form-row .form-group { flex: 1; }
-
+.form-row {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+.form-group {
+    flex: 1;
+    min-width: 180px;
+}
+.form-group label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #555;
+}
+.form-group input,
+.form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 14px;
+    outline: none;
+}
+.form-group input:focus {
+    border-color: #1a1a2e;
+}
 .btn {
-  display: inline-block; padding: 14px 24px; background: var(--primary);
-  color: #fff; border: none; border-radius: 8px; font-size: 15px;
-  font-weight: 600; cursor: pointer; width: 100%; text-align: center;
-  transition: background .2s;
+    padding: 10px 28px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
 }
-.btn:hover { background: var(--primary-dark); }
-.btn:disabled { background: #ccc; cursor: not-allowed; }
-
-/* ── 결과 ── */
-.result-summary {
-  padding: 16px; background: #f0faf4; border-radius: 8px; margin-bottom: 16px;
-  text-align: center; font-size: 18px; font-weight: 700;
+.btn-primary {
+    background: #1a1a2e;
+    color: #fff;
 }
-.result-summary.not-found { background: #fdf0ef; color: var(--danger); }
-.rank-highlight { color: var(--primary); font-size: 28px; }
-
-/* ── 테이블 ── */
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th { background: #f8f9fa; padding: 10px 8px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--border); white-space: nowrap; }
-td { padding: 10px 8px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
-tr:hover { background: #fafafa; }
-tr.highlight { background: #e8f8ee !important; font-weight: 700; }
-
-/* ── 히스토리 ── */
-.history-section { margin-top: 12px; }
+.btn-primary:hover {
+    background: #16213e;
+}
+.btn-primary:disabled {
+    background: #999;
+    cursor: not-allowed;
+}
+.result-box {
+    display: none;
+    margin-top: 20px;
+    padding: 24px;
+    border-radius: 8px;
+    text-align: center;
+}
+.result-found {
+    background: #eafaf1;
+    border: 2px solid #2ecc71;
+}
+.result-notfound {
+    background: #fdedec;
+    border: 2px solid #e74c3c;
+}
+.result-error {
+    background: #fef9e7;
+    border: 2px solid #f39c12;
+}
+.result-rank {
+    font-size: 52px;
+    font-weight: 800;
+    color: #1a1a2e;
+    margin: 8px 0;
+}
+.result-rank-sub {
+    font-size: 14px;
+    color: #888;
+}
+.result-name {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+.result-detail {
+    font-size: 13px;
+    color: #666;
+    margin-top: 6px;
+}
+.result-stats {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 14px;
+}
+.result-stat {
+    text-align: center;
+}
+.result-stat-value {
+    font-size: 18px;
+    font-weight: 700;
+    color: #1a1a2e;
+}
+.result-stat-label {
+    font-size: 11px;
+    color: #999;
+}
+.loading {
+    display: none;
+    text-align: center;
+    padding: 30px;
+}
+.spinner {
+    display: inline-block;
+    width: 32px;
+    height: 32px;
+    border: 3px solid #ddd;
+    border-top-color: #1a1a2e;
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+.loading-text {
+    margin-top: 10px;
+    font-size: 13px;
+    color: #888;
+}
+.rank-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    margin-top: 16px;
+}
+.rank-table th {
+    background: #f8f8f8;
+    padding: 8px 6px;
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 2px solid #ddd;
+    white-space: nowrap;
+    position: sticky;
+    top: 0;
+}
+.rank-table td {
+    padding: 8px 6px;
+    border-bottom: 1px solid #eee;
+    vertical-align: middle;
+}
+.rank-table tbody tr:hover {
+    background: #f5f5f5;
+}
+.rank-table .highlight {
+    background: #fff9c4;
+}
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 700;
+    font-size: 11px;
+    color: #fff;
+}
+.badge-1 { background: #e74c3c; }
+.badge-3 { background: #2ecc71; }
+.badge-5 { background: #3498db; }
+.badge-10 { background: #f39c12; }
+.badge-20 { background: #e67e22; }
+.badge-other { background: #95a5a6; }
+.table-name {
+    font-weight: 600;
+    color: #1a1a2e;
+}
+.table-micro {
+    font-size: 10px;
+    color: #999;
+    font-style: italic;
+    display: block;
+    margin-top: 2px;
+}
+.max-select {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 14px;
+}
+.max-select label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+}
+.max-select select {
+    padding: 6px 10px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    font-size: 13px;
+}
+.page-info {
+    text-align: center;
+    font-size: 12px;
+    color: #aaa;
+    margin-top: 8px;
+}
+.history-list {
+    margin-top: 16px;
+}
 .history-item {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px;
-  margin-bottom: 8px; cursor: pointer; transition: background .2s; font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 13px;
 }
-.history-item:hover { background: #f0faf4; }
-.history-item .hi-keyword { font-weight: 600; }
-.history-item .hi-rank { color: var(--primary); font-weight: 700; }
-.history-item .hi-time { color: var(--text-light); font-size: 11px; }
-.clear-history-btn { font-size:12px; color:var(--danger); cursor:pointer; border:none; background:none; float:right; }
-
-/* ── 로딩 ── */
-.loading { text-align: center; padding: 40px; color: var(--text-light); }
-.loading::after { content: ''; display: inline-block; width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; margin-left: 8px; vertical-align: middle; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-/* ── 반응형 ── */
+.history-item:hover {
+    background: #fafafa;
+}
+.history-keyword {
+    font-weight: 600;
+}
+.btn-tiny {
+    padding: 4px 10px;
+    font-size: 11px;
+    border: 1px solid #ddd;
+    background: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.btn-tiny:hover {
+    background: #f0f0f0;
+}
+.btn-tiny-del {
+    color: #e74c3c;
+    border-color: #e74c3c;
+}
 @media (max-width: 600px) {
-  .form-row { flex-direction: column; gap: 0; }
-  header h1 { font-size: 16px; }
+    .form-row {
+        flex-direction: column;
+    }
+    .form-group {
+        min-width: 100%;
+    }
+    .result-rank {
+        font-size: 40px;
+    }
+    .rank-table {
+        font-size: 11px;
+    }
+    .rank-table th,
+    .rank-table td {
+        padding: 6px 4px;
+    }
 }
 </style>
 </head>
 <body>
 
-<!-- ★ Worker A 도메인을 여기서 변경 ★ -->
-<script>
-  const PROXY_API_BASE = 'https://naverrank.dampd21.workers.dev';
-  const TRACKER_API_BASE = 'https://ranktracker.dampd21.workers.dev';
-</script>
-
-<header>
-  <h1>🔍 네이버 플레이스 실시간 순위</h1>
-  <div class="hamburger-menu">
-    <button class="hamburger-btn" onclick="toggleMenu()">☰</button>
-    <div class="hamburger-dropdown" id="navMenu">
-      <a href="index.html" class="current">📊 실시간 순위 조회</a>
-      <a href="tracker.html">📈 플레이스 추적</a>
+<div class="header">
+  <div class="header-inner">
+    <div class="header-top">
+      <h1>네이버 플레이스 순위 조회</h1>
+      <button class="menu-btn" id="btnMenu" aria-label="메뉴"><span></span></button>
     </div>
+    <p>업종과 키워드, 플레이스 ID를 입력하면 실시간으로 순위를 확인합니다</p>
   </div>
-</header>
+</div>
 
 <div class="container">
-  <!-- 검색 폼 -->
   <div class="card">
-    <div class="form-group">
-      <label>업종</label>
-      <select id="kind">
-        <option value="restaurant">🍽️ 식당/카페</option>
-        <option value="hairshop">💇 미용실(헤어샵)</option>
-        <option value="nailshop">💅 네일</option>
-        <option value="hospital">🏥 병원</option>
-        <option value="accommodation">🏨 펜션/숙박</option>
+    <h2>순위 조회</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>업종</label>
+        <select id="selectKind">
+          <option value="restaurant">식당/카페</option>
+          <option value="hairshop">미용실(헤어샵)</option>
+          <option value="nailshop">네일</option>
+          <option value="hospital">병원</option>
+          <option value="accommodation">펜션/숙박</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>검색 키워드</label>
+        <input type="text" id="inputKeyword" placeholder="예: 강남역맛집">
+      </div>
+      <div class="form-group">
+        <label>플레이스 ID</label>
+        <input type="text" id="inputPlaceId" placeholder="예: 1951454277">
+      </div>
+    </div>
+    <div class="max-select">
+      <label>검색 범위</label>
+      <select id="selectMaxRank">
+        <option value="100">100위까지</option>
+        <option value="200">200위까지</option>
+        <option value="300" selected>300위까지</option>
       </select>
     </div>
-    <div class="form-group">
-      <label>키워드 (예: 강남역 맛집)</label>
-      <input type="text" id="keyword" placeholder="검색할 키워드 입력">
+    <button class="btn btn-primary" id="btnSearch">순위 조회</button>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <div class="loading-text" id="loadingText">검색 중...</div>
     </div>
-    <div class="form-group">
-      <label>Place ID (대상 업체)</label>
-      <input type="text" id="placeId" placeholder="플레이스 ID 입력">
-    </div>
-    <div class="form-group">
-      <label>최대 검색 순위</label>
-      <select id="maxRank">
-        <option value="100">Top 100</option>
-        <option value="200">Top 200</option>
-        <option value="300">Top 300</option>
-      </select>
-    </div>
-    <button class="btn" id="searchBtn" onclick="doSearch()">🔍 순위 조회</button>
+
+    <div class="result-box" id="resultBox"></div>
   </div>
 
-  <!-- 결과 -->
-  <div id="resultArea"></div>
-
-  <!-- 히스토리 -->
-  <div class="card">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-      <strong style="font-size:14px;">📋 조회 히스토리</strong>
-      <button class="clear-history-btn" onclick="clearHistory()">전체 삭제</button>
+  <div class="card" id="tableCard" style="display:none;">
+    <h2>검색 결과 (<span id="tableKeyword"></span>)</h2>
+    <div style="overflow-x:auto;max-height:600px;overflow-y:auto;">
+      <table class="rank-table" id="rankTable">
+        <thead>
+          <tr>
+            <th>순위</th>
+            <th>업체명</th>
+            <th>카테고리</th>
+            <th>블로그</th>
+            <th>방문자</th>
+            <th>별점</th>
+            <th>저장</th>
+            <th>이미지</th>
+          </tr>
+        </thead>
+        <tbody id="rankTableBody"></tbody>
+      </table>
     </div>
-    <div id="historyList" class="history-section"></div>
+    <div class="page-info" id="pageInfo"></div>
+  </div>
+
+  <div class="card">
+    <h2>최근 조회 기록</h2>
+    <div class="history-list" id="historyList"></div>
+    <div id="historyEmpty" style="text-align:center;padding:20px;color:#aaa;font-size:13px;">
+      조회 기록이 없습니다
+    </div>
+  </div>
+</div>
+
+<!-- Drawer Menu -->
+<div class="drawer-overlay" id="drawer">
+  <div class="drawer" role="dialog" aria-modal="true">
+    <div class="drawer-head">
+      <div class="drawer-title">메뉴</div>
+      <button class="drawer-close" id="btnDrawerClose" aria-label="닫기">x</button>
+    </div>
+    <div class="mutedlink">페이지 이동</div>
+    <a href="./index.html">실시간 조회</a>
+    <a href="#" id="linkTracker">플레이스 추적</a>
   </div>
 </div>
 
 <script>
-// ── 메뉴 ──
-function toggleMenu() {
-  document.getElementById('navMenu').classList.toggle('active');
-}
-document.addEventListener('click', e => {
-  if (!e.target.closest('.hamburger-menu')) {
-    document.getElementById('navMenu').classList.remove('active');
-  }
-});
-
-// ── 검색 ──
-async function doSearch() {
-  const kind = document.getElementById('kind').value;
-  const keyword = document.getElementById('keyword').value.trim();
-  const placeId = document.getElementById('placeId').value.trim();
-  const maxRank = parseInt(document.getElementById('maxRank').value);
-
-  if (!keyword || !placeId) {
-    alert('키워드와 Place ID를 입력하세요.');
-    return;
-  }
-
-  const btn = document.getElementById('searchBtn');
-  btn.disabled = true;
-  btn.textContent = '조회 중...';
-  document.getElementById('resultArea').innerHTML = '<div class="loading">순위 검색 중</div>';
-
-  const display = 50;
-  const pages = Math.ceil(maxRank / display);
-  let allItems = [];
-  let total = 0;
-  let foundRank = -1;
-  let error = null;
-
-  try {
-    for (let page = 0; page < pages; page++) {
-      const start = page * display + 1;
-      const url = `${PROXY_API_BASE}?kind=${encodeURIComponent(kind)}&keyword=${encodeURIComponent(keyword)}&start=${start}&display=${display}`;
-      const resp = await fetch(url, { method: 'POST' });
-      const data = await resp.json();
-
-      if (data.error) {
-        error = data.error;
-        break;
-      }
-
-      total = data.total || total;
-      if (data.items) {
-        allItems = allItems.concat(data.items);
-      }
-
-      // 이미 찾았으면 더 이상 호출 안함
-      if (foundRank < 0) {
-        for (let i = 0; i < (data.items||[]).length; i++) {
-          if (String(data.items[i].id) === String(placeId)) {
-            foundRank = data.items[i].rank;
-            break;
-          }
-        }
-      }
-
-      // 더 이상 아이템이 없으면 중단
-      if (!data.items || data.items.length < display) break;
-
-      // rate limit 방지
-      if (page < pages - 1) await sleep(300);
-    }
-  } catch (e) {
-    error = e.message;
-  }
-
-  btn.disabled = false;
-  btn.textContent = '🔍 순위 조회';
-
-  renderResult(kind, keyword, placeId, maxRank, total, allItems, foundRank, error);
-  saveHistory(kind, keyword, placeId, maxRank, foundRank, total);
-}
-
-function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-
-function renderResult(kind, keyword, placeId, maxRank, total, items, foundRank, error) {
-  const area = document.getElementById('resultArea');
-  let html = '';
-
-  if (error) {
-    html += `<div class="card"><div class="result-summary not-found">⚠️ 오류: ${escHtml(error)}</div></div>`;
-  }
-
-  if (foundRank > 0) {
-    html += `<div class="card"><div class="result-summary">
-      🎯 <strong>${escHtml(keyword)}</strong> 에서<br>
-      <span class="rank-highlight">${foundRank}위</span>
-      <span style="font-size:14px;color:var(--text-light)"> / 전체 ${total}개</span>
-    </div></div>`;
-  } else if (!error) {
-    html += `<div class="card"><div class="result-summary not-found">
-      😔 Top ${maxRank} 안에 해당 업체가 없습니다.<br>
-      <span style="font-size:14px;color:var(--text-light)">전체 ${total}개 중 ${items.length}개 검색 완료</span>
-    </div></div>`;
-  }
-
-  // 테이블
-  if (items.length > 0) {
-    html += `<div class="card"><div class="table-wrap"><table>
-    <thead><tr>
-      <th>#</th><th>업체명</th><th>카테고리</th><th>블로그</th><th>방문자</th><th>저장</th><th>별점</th>
-    </tr></thead><tbody>`;
-    items.forEach(it => {
-      const isTarget = String(it.id) === String(placeId);
-      html += `<tr class="${isTarget ? 'highlight' : ''}">
-        <td>${it.rank}</td>
-        <td>${escHtml(it.name)}${isTarget ? ' ⭐' : ''}</td>
-        <td>${escHtml(it.category || '')}</td>
-        <td>${it.blogCount||0}</td>
-        <td>${it.visitorCount||0}</td>
-        <td>${it.saveCount||0}</td>
-        <td>${it.score||'-'}</td>
-      </tr>`;
-    });
-    html += `</tbody></table></div></div>`;
-  }
-
-  // tracker 이동 버튼
-  html += `<div style="text-align:center; margin:12px 0;">
-    <a href="tracker.html?kind=${encodeURIComponent(kind)}&keyword=${encodeURIComponent(keyword)}&placeId=${encodeURIComponent(placeId)}" style="color:var(--primary);font-weight:600;text-decoration:none;">📈 이 키워드를 추적하기 →</a>
-  </div>`;
-
-  area.innerHTML = html;
-}
-
-function escHtml(s) {
-  if (!s) return '';
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-// ── 히스토리 (localStorage) ──
-function getHistory() {
-  try { return JSON.parse(localStorage.getItem('rankHistory') || '[]'); }
-  catch { return []; }
-}
-function saveHistory(kind, keyword, placeId, maxRank, rank, total) {
-  const hist = getHistory();
-  hist.unshift({
-    kind, keyword, placeId, maxRank, rank, total,
-    time: new Date().toLocaleString('ko-KR')
-  });
-  if (hist.length > 30) hist.length = 30;
-  localStorage.setItem('rankHistory', JSON.stringify(hist));
-  renderHistory();
-}
-function clearHistory() {
-  localStorage.removeItem('rankHistory');
-  renderHistory();
-}
-function renderHistory() {
-  const hist = getHistory();
-  const el = document.getElementById('historyList');
-  if (!hist.length) { el.innerHTML = '<div style="text-align:center;color:var(--text-light);font-size:13px;padding:12px;">아직 조회 기록이 없습니다</div>'; return; }
-  el.innerHTML = hist.map(h => `
-    <div class="history-item" onclick="loadHistory('${escAttr(h.kind)}','${escAttr(h.keyword)}','${escAttr(h.placeId)}',${h.maxRank})">
-      <div>
-        <span class="hi-keyword">${escHtml(h.keyword)}</span>
-        <span style="color:var(--text-light);font-size:11px;">(${kindLabel(h.kind)})</span><br>
-        <span class="hi-time">${h.time}</span>
-      </div>
-      <div class="hi-rank">${h.rank > 0 ? h.rank + '위' : '미발견'}</div>
-    </div>
-  `).join('');
-}
-function loadHistory(kind, keyword, placeId, maxRank) {
-  document.getElementById('kind').value = kind;
-  document.getElementById('keyword').value = keyword;
-  document.getElementById('placeId').value = placeId;
-  document.getElementById('maxRank').value = maxRank;
-  doSearch();
-}
-function escAttr(s) { return (s||'').replace(/'/g, "\\'").replace(/"/g, '&quot;'); }
-function kindLabel(k) {
-  const m = { restaurant:'식당/카페', hairshop:'미용실', nailshop:'네일', hospital:'병원', accommodation:'숙박' };
-  return m[k] || k;
-}
-
-// ── 초기화 ──
-renderHistory();
-
-// URL 파라미터로 자동 채우기
 (function() {
-  const p = new URLSearchParams(location.search);
-  if (p.get('kind')) document.getElementById('kind').value = p.get('kind');
-  if (p.get('keyword')) document.getElementById('keyword').value = p.get('keyword');
-  if (p.get('placeId')) document.getElementById('placeId').value = p.get('placeId');
+  "use strict";
+
+  // ★★★ Worker A 도메인을 여기서 변경 ★★★
+  var PROXY = "https://naverrank.YOUR.workers.dev/";
+
+  var TRACKER_PAGE = "tracker.html";
+  var HKEY = "npt_rank_history";
+  var allItems = [];
+
+  // 업종별 응답 파싱 함수
+  function extractItems(kind, data) {
+    try {
+      if (kind === "restaurant") {
+        var r = data[0].data && data[0].data.restaurants;
+        if (r) return { items: r.items || [], total: r.total || 0 };
+      } else if (kind === "accommodation") {
+        var a = data[0].data && data[0].data.accommodationSearch && data[0].data.accommodationSearch.business;
+        if (a) return { items: a.items || [], total: a.total || 0 };
+      } else {
+        // hairshop, nailshop, hospital
+        var b = data[0].data && data[0].data.businesses;
+        if (b) return { items: b.items || [], total: b.total || 0 };
+      }
+    } catch(e) {}
+    return { items: [], total: 0 };
+  }
+
+  // 업종에 따라 필드 이름이 다름 => 정규화
+  function normalizeItem(kind, it) {
+    return {
+      id: it.id,
+      name: it.name || "",
+      category: it.category || "",
+      businessCategory: it.businessCategory || "",
+      blogCafeReviewCount: it.blogCafeReviewCount || 0,
+      visitorReviewCount: it.visitorReviewCount || it.placeReviewCount || 0,
+      visitorReviewScore: it.visitorReviewScore || it.placeReviewScore || null,
+      saveCount: it.saveCount || 0,
+      imageCount: it.imageCount || 0,
+      microReview: it.microReview || "",
+      // restaurant 전용 필드 (있으면 사용, 없으면 무시)
+      hasBooking: it.hasBooking || false,
+      hasNPay: it.hasNPay || false,
+      naverOrder: it.naverOrder || {},
+      posInfo: it.posInfo || {},
+      coupon: it.coupon || null,
+      newOpening: it.newOpening || false,
+      broadcastInfo: it.broadcastInfo || {},
+      hasWheelchairEntrance: it.hasWheelchairEntrance || false,
+      options: it.options || "",
+      dbType: it.dbType || ""
+    };
+  }
+
+  function esc(s) { return s ? String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") : ""; }
+  function val(v, d) { return (v !== null && v !== undefined && v !== "") ? v : (d !== undefined ? d : "-"); }
+
+  function kindLabel(k) {
+    var m = { restaurant:"식당/카페", hairshop:"미용실", nailshop:"네일", hospital:"병원", accommodation:"숙박" };
+    return m[k] || k;
+  }
+
+  // 히스토리
+  function loadH() { try { return JSON.parse(localStorage.getItem(HKEY)) || []; } catch(e) { return []; } }
+  function saveH(l) { localStorage.setItem(HKEY, JSON.stringify(l)); }
+  function addH(kind, kw, pid, rank, name) {
+    var l = loadH();
+    l.unshift({ kind:kind, keyword:kw, placeId:pid, rank:rank, name:name||"", time:new Date().toLocaleString("ko-KR") });
+    if (l.length > 50) l = l.slice(0,50);
+    saveH(l);
+    renderH();
+  }
+  function renderH() {
+    var l = loadH();
+    var c = document.getElementById("historyList");
+    var e = document.getElementById("historyEmpty");
+    c.innerHTML = "";
+    if (l.length === 0) { e.style.display = "block"; return; }
+    e.style.display = "none";
+    for (var i = 0; i < l.length; i++) {
+      (function(idx) {
+        var it = l[idx];
+        var d = document.createElement("div");
+        d.className = "history-item";
+        var rt = it.rank ? it.rank + "위" : "순위밖";
+        var nt = it.name ? " - " + it.name : "";
+        var kl = kindLabel(it.kind || "restaurant");
+        d.innerHTML =
+          '<div><span class="history-keyword">' + esc(it.keyword) + '</span>' +
+          '<span style="color:#888;font-size:12px;"> [' + kl + '] (ID: ' + esc(it.placeId) + ')</span>' +
+          '<br><span style="font-size:11px;color:#aaa;">' + it.time + ' / ' + rt + nt + '</span></div>' +
+          '<div style="display:flex;gap:6px;">' +
+          '<button class="btn-tiny re">재조회</button>' +
+          '<button class="btn-tiny btn-tiny-del del">삭제</button></div>';
+        d.querySelector(".re").onclick = function(ev) {
+          ev.stopPropagation();
+          document.getElementById("selectKind").value = it.kind || "restaurant";
+          document.getElementById("inputKeyword").value = it.keyword;
+          document.getElementById("inputPlaceId").value = it.placeId;
+          doSearch();
+        };
+        d.querySelector(".del").onclick = function(ev) {
+          ev.stopPropagation();
+          var ll = loadH(); ll.splice(idx,1); saveH(ll); renderH();
+        };
+        c.appendChild(d);
+      })(i);
+    }
+  }
+
+  // 배지
+  function bc(r) {
+    if (r===1) return "badge-1";
+    if (r<=3) return "badge-3";
+    if (r<=5) return "badge-5";
+    if (r<=10) return "badge-10";
+    if (r<=20) return "badge-20";
+    return "badge-other";
+  }
+
+  // 로딩/결과
+  function showLoad(m) {
+    document.getElementById("loading").style.display = "block";
+    document.getElementById("loadingText").textContent = m || "검색 중...";
+    document.getElementById("resultBox").style.display = "none";
+    document.getElementById("tableCard").style.display = "none";
+  }
+  function hideLoad() { document.getElementById("loading").style.display = "none"; }
+  function showRes(h, c) {
+    var b = document.getElementById("resultBox");
+    b.className = "result-box " + c;
+    b.innerHTML = h;
+    b.style.display = "block";
+  }
+
+  // API 호출
+  function fetchPage(kind, kw, start, display) {
+    return new Promise(function(resolve, reject) {
+      var url = PROXY + "?kind=" + encodeURIComponent(kind) + "&keyword=" + encodeURIComponent(kw) + "&start=" + start + "&display=" + display;
+      var x = new XMLHttpRequest();
+      x.open("POST", url, true);
+      x.setRequestHeader("Content-Type", "application/json");
+      x.timeout = 20000;
+      x.onload = function() {
+        if (x.status === 200) {
+          try { resolve(JSON.parse(x.responseText)); }
+          catch(e) { reject("응답 파싱 실패"); }
+        } else { reject("HTTP " + x.status); }
+      };
+      x.onerror = function() { reject("네트워크 오류"); };
+      x.ontimeout = function() { reject("시간 초과"); };
+      x.send("{}");
+    });
+  }
+
+  // 검색 실행
+  function doSearch() {
+    var kind = document.getElementById("selectKind").value;
+    var kw = document.getElementById("inputKeyword").value.trim();
+    var pid = document.getElementById("inputPlaceId").value.trim();
+    var maxR = parseInt(document.getElementById("selectMaxRank").value) || 300;
+    if (!kw) { alert("키워드를 입력하세요."); return; }
+    if (!pid) { alert("플레이스 ID를 입력하세요."); return; }
+
+    document.getElementById("btnSearch").disabled = true;
+    showLoad("'" + kw + "' 검색 중... (1~100위)");
+
+    allItems = [];
+    var total = 0, page = 0, ps = 100, mp = Math.ceil(maxR / ps);
+
+    function next() {
+      page++;
+      var s = (page-1)*ps+1, d = Math.min(ps, maxR-s+1);
+      if (page > 1) document.getElementById("loadingText").textContent = "'" + kw + "' 검색 중... (" + s + "~" + (s+d-1) + "위)";
+
+      fetchPage(kind, kw, s, d).then(function(data) {
+        var extracted = extractItems(kind, data);
+        var items = extracted.items;
+        total = extracted.total || total;
+
+        // 정규화
+        var normalized = items.map(function(it) { return normalizeItem(kind, it); });
+        allItems = allItems.concat(normalized);
+
+        var fi = -1;
+        for (var i = 0; i < allItems.length; i++) {
+          if (String(allItems[i].id) === String(pid)) { fi = i; break; }
+        }
+
+        if (fi >= 0 || items.length < d || page >= mp) {
+          hideLoad();
+          document.getElementById("btnSearch").disabled = false;
+          render(kind, kw, pid, total, maxR);
+        } else {
+          setTimeout(next, 300);
+        }
+      }).catch(function(err) {
+        hideLoad();
+        document.getElementById("btnSearch").disabled = false;
+        showRes('<div style="font-size:15px;font-weight:600;color:#e67e22;">조회 실패</div><div class="result-detail">' + esc(String(err)) + '</div>', "result-error");
+      });
+    }
+    next();
+  }
+  window.doSearch = doSearch;
+
+  // 결과 렌더링
+  function render(kind, kw, pid, total, maxR) {
+    var fi = -1, found = null;
+    for (var i = 0; i < allItems.length; i++) {
+      if (String(allItems[i].id) === String(pid)) { fi = i; found = allItems[i]; break; }
+    }
+
+    if (fi >= 0) {
+      var rank = fi + 1;
+      showRes(
+        '<div class="result-name">' + esc(found.name) + '</div>' +
+        '<div class="result-detail">' + esc(found.category) + ' / ' + esc(found.businessCategory) + '</div>' +
+        '<div class="result-rank">' + rank + '<span style="font-size:20px;">위</span></div>' +
+        '<div class="result-rank-sub">전체 ' + total + '개 중</div>' +
+        '<div class="result-stats">' +
+          '<div class="result-stat"><div class="result-stat-value">' + val(found.blogCafeReviewCount, 0) + '</div><div class="result-stat-label">블로그리뷰</div></div>' +
+          '<div class="result-stat"><div class="result-stat-value">' + val(found.visitorReviewCount, 0) + '</div><div class="result-stat-label">방문자리뷰</div></div>' +
+          '<div class="result-stat"><div class="result-stat-value">' + val(found.visitorReviewScore, "-") + '</div><div class="result-stat-label">별점</div></div>' +
+          '<div class="result-stat"><div class="result-stat-value">' + val(found.saveCount, 0) + '</div><div class="result-stat-label">저장</div></div>' +
+          '<div class="result-stat"><div class="result-stat-value">' + val(found.imageCount, 0) + '</div><div class="result-stat-label">이미지</div></div>' +
+        '</div>' +
+        (found.microReview ? '<div class="result-detail" style="font-style:italic;color:#888;margin-top:10px;">"' + esc(found.microReview) + '"</div>' : ''),
+        "result-found"
+      );
+      addH(kind, kw, pid, rank, found.name);
+    } else {
+      showRes(
+        '<div style="font-size:16px;font-weight:600;color:#e74c3c;">' + maxR + '위 안에 없습니다</div>' +
+        '<div class="result-detail">플레이스 ID: ' + esc(pid) + '</div>' +
+        '<div class="result-detail">전체 검색 결과: ' + total + '개</div>',
+        "result-notfound"
+      );
+      addH(kind, kw, pid, null, "");
+    }
+
+    // 테이블
+    if (allItems.length > 0) {
+      document.getElementById("tableCard").style.display = "block";
+      document.getElementById("tableKeyword").textContent = kw;
+      var tb = document.getElementById("rankTableBody");
+      tb.innerHTML = "";
+      for (var j = 0; j < allItems.length; j++) {
+        var it = allItems[j];
+        var isT = String(it.id) === String(pid);
+        var tr = document.createElement("tr");
+        if (isT) tr.className = "highlight";
+        var rn = j + 1;
+        tr.innerHTML =
+          '<td><span class="badge ' + bc(rn) + '">' + rn + '</span></td>' +
+          '<td><span class="table-name">' + esc(it.name) + '</span>' +
+            (isT ? ' <span style="color:#e74c3c;font-size:10px;font-weight:700;">[대상]</span>' : '') +
+            (it.microReview ? '<span class="table-micro">' + esc(it.microReview) + '</span>' : '') +
+          '</td>' +
+          '<td>' + esc(it.category) + '</td>' +
+          '<td>' + val(it.blogCafeReviewCount, 0) + '</td>' +
+          '<td>' + val(it.visitorReviewCount, 0) + '</td>' +
+          '<td>' + val(it.visitorReviewScore, "-") + '</td>' +
+          '<td>' + val(it.saveCount, 0) + '</td>' +
+          '<td>' + val(it.imageCount, 0) + '</td>';
+        tb.appendChild(tr);
+      }
+      document.getElementById("pageInfo").textContent = allItems.length + "개 표시 / 전체 " + total + "개";
+    }
+  }
+
+  // 이벤트
+  document.getElementById("btnSearch").onclick = doSearch;
+  document.getElementById("inputKeyword").onkeydown = function(e) { if (e.key === "Enter") doSearch(); };
+  document.getElementById("inputPlaceId").onkeydown = function(e) { if (e.key === "Enter") doSearch(); };
+
+  // Drawer
+  var drawer = document.getElementById("drawer");
+  var btnMenu = document.getElementById("btnMenu");
+  var btnDrawerClose = document.getElementById("btnDrawerClose");
+  var linkTracker = document.getElementById("linkTracker");
+
+  function openDrawer(){
+    var kind = document.getElementById("selectKind").value;
+    var kw = document.getElementById("inputKeyword").value.trim();
+    var pid = document.getElementById("inputPlaceId").value.trim();
+    linkTracker.href = "./" + TRACKER_PAGE + "?kind=" + encodeURIComponent(kind) + "&keyword=" + encodeURIComponent(kw) + "&placeId=" + encodeURIComponent(pid);
+    drawer.classList.add("show");
+  }
+  function closeDrawer(){ drawer.classList.remove("show"); }
+  btnMenu.onclick = openDrawer;
+  btnDrawerClose.onclick = closeDrawer;
+  drawer.onclick = function(e){ if(e.target === drawer) closeDrawer(); };
+
+  // URL 파라미터 자동 채우기
+  (function(){
+    var qs = new URLSearchParams(location.search);
+    if (qs.get("kind")) document.getElementById("selectKind").value = qs.get("kind");
+    if (qs.get("keyword")) document.getElementById("inputKeyword").value = qs.get("keyword");
+    if (qs.get("placeId")) document.getElementById("inputPlaceId").value = qs.get("placeId");
+  })();
+
+  renderH();
 })();
 </script>
 </body>
