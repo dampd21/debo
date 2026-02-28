@@ -6,83 +6,40 @@
   <title>플레이스 추적</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
-    body{
-      font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
-      background:#f5f5f5;color:#333;
-    }
-
-    /* === header (index 톤과 통일) === */
+    body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:#f5f5f5;color:#333}
     .header{background:#1a1a2e;color:#fff;padding:20px 0}
     .header-inner{max-width:900px;margin:0 auto;padding:0 20px}
     .header-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
     .header h1{font-size:22px;font-weight:700}
     .header p{font-size:13px;color:#aaa;margin-top:4px}
 
-    /* hamburger */
-    .menu-btn {
-      width:38px;height:38px;
-      border:1px solid rgba(255,255,255,0.25);
-      background:transparent;
-      border-radius:8px;
-      cursor:pointer;
-      display:flex;align-items:center;justify-content:center;
-    }
+    .menu-btn{width:38px;height:38px;border:1px solid rgba(255,255,255,0.25);background:transparent;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}
     .menu-btn span{display:block;width:18px;height:2px;background:#fff;position:relative}
-    .menu-btn span:before,.menu-btn span:after{
-      content:"";position:absolute;left:0;width:18px;height:2px;background:#fff;
-    }
+    .menu-btn span:before,.menu-btn span:after{content:"";position:absolute;left:0;width:18px;height:2px;background:#fff}
     .menu-btn span:before{top:-6px}
     .menu-btn span:after{top:6px}
 
-    .drawer-overlay{
-      position:fixed; inset:0;
-      background:rgba(0,0,0,0.45);
-      display:none; z-index:9999;
-    }
+    .drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;z-index:9999}
     .drawer-overlay.show{display:block}
-    .drawer{
-      position:absolute; top:0; right:0;
-      width:280px; height:100%;
-      background:#fff;
-      box-shadow:-10px 0 30px rgba(0,0,0,0.18);
-      padding:16px;
-    }
-    .drawer-head{
-      display:flex;justify-content:space-between;align-items:center;
-      padding-bottom:10px;border-bottom:1px solid #eee;margin-bottom:10px;
-    }
+    .drawer{position:absolute;top:0;right:0;width:280px;height:100%;background:#fff;box-shadow:-10px 0 30px rgba(0,0,0,0.18);padding:16px}
+    .drawer-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:1px solid #eee;margin-bottom:10px}
     .drawer-title{font-weight:800;color:#1a1a2e}
     .drawer-close{border:none;background:none;font-size:22px;cursor:pointer;color:#666}
-    .drawer a{
-      display:block;padding:12px 10px;border-radius:10px;
-      color:#333;text-decoration:none;font-weight:700;
-    }
+    .drawer a{display:block;padding:12px 10px;border-radius:10px;color:#333;text-decoration:none;font-weight:700}
     .drawer a:hover{background:#f5f5f5}
     .drawer .mutedlink{font-size:12px;color:#888;font-weight:600;padding:0 10px 8px}
 
     .container{max-width:900px;margin:0 auto;padding:20px}
-    .card{
-      background:#fff;border:1px solid #ddd;border-radius:8px;
-      padding:24px;margin-bottom:20px;
-    }
-    .card h2{
-      font-size:16px;margin-bottom:16px;padding-bottom:12px;
-      border-bottom:1px solid #eee;
-    }
+    .card{background:#fff;border:1px solid #ddd;border-radius:8px;padding:24px;margin-bottom:20px}
+    .card h2{font-size:16px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #eee}
 
     .form-row{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap}
     .form-group{flex:1;min-width:180px}
     .form-group label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#555}
-    input,select{
-      width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:6px;
-      font-size:14px;outline:none;
-    }
+    input,select{width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:6px;font-size:14px;outline:none}
     input:focus,select:focus{border-color:#1a1a2e}
 
-    .btn{
-      padding:10px 28px;border:none;border-radius:6px;font-size:14px;
-      font-weight:600;cursor:pointer;transition:background .2s;
-    }
+    .btn{padding:10px 28px;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s}
     .btn-primary{background:#1a1a2e;color:#fff}
     .btn-primary:hover{background:#16213e}
     .btn-ghost{background:#fff;border:1px solid #ccc;color:#333}
@@ -92,7 +49,6 @@
     .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
     .pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#f0f0f0;color:#555;font-size:11px;margin-left:6px}
 
-    /* === 내 트랙 === */
     .track-item{padding:14px 0;border-bottom:1px solid #eee}
     .track-item:last-child{border-bottom:none}
     .track-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
@@ -100,39 +56,24 @@
     .track-sub{margin-top:4px;font-size:12px;color:#888}
     .track-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 
-    /* === 미니 타임라인 (테두리 강화) === */
     .mini-wrap{margin-top:10px;overflow-x:auto;padding-bottom:8px}
     .mini-grid{display:flex;gap:10px;min-width:max-content}
     .mini-cell{
-      width:70px;
-      border:1px solid #cfcfcf;           /* 더 진하게 */
-      border-radius:12px;
-      padding:10px 8px;
-      background:#fff;                     /* 흰 배경 */
-      cursor:pointer;
-      box-shadow:0 1px 2px rgba(0,0,0,0.04);
-      transition:transform .05s, box-shadow .15s, border-color .15s;
+      width:70px;border:1px solid #cfcfcf;border-radius:12px;padding:10px 8px;background:#fff;
+      cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,0.04);transition:box-shadow .15s,border-color .15s;
     }
-    .mini-cell:hover{
-      border-color:#9aa0a6;
-      box-shadow:0 4px 10px rgba(0,0,0,0.08);
-    }
-    .mini-cell.active{
-      border-color:#1a1a2e;
-      box-shadow:0 0 0 3px rgba(26,26,46,0.12);
-    }
+    .mini-cell:hover{border-color:#9aa0a6;box-shadow:0 4px 10px rgba(0,0,0,0.08)}
+    .mini-cell.active{border-color:#1a1a2e;box-shadow:0 0 0 3px rgba(26,26,46,0.12)}
     .mini-date{font-size:11px;color:#666;font-weight:800}
     .mini-rank{margin-top:8px;font-size:20px;font-weight:900;color:#4b56ff;line-height:1}
     .mini-out{color:#999}
     .mini-metric{margin-top:8px;font-size:10px;color:#888;line-height:14px}
     .mini-metric b{color:#555}
-
     .delta{font-size:11px;font-weight:900;margin-left:4px}
     .up{color:#e74c3c}
     .down{color:#3498db}
     .flat{color:#aaa}
 
-    /* === 스냅샷 테이블 === */
     table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
     th{background:#f8f8f8;padding:8px 6px;text-align:left;font-weight:600;border-bottom:2px solid #ddd;position:sticky;top:0}
     td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
@@ -158,7 +99,6 @@
     </div>
   </div>
 
-  <!-- drawer -->
   <div class="drawer-overlay" id="drawer">
     <div class="drawer" role="dialog" aria-modal="true">
       <div class="drawer-head">
@@ -166,20 +106,29 @@
         <button class="drawer-close" id="btnDrawerClose" aria-label="닫기">×</button>
       </div>
       <div class="mutedlink">페이지 이동</div>
-      <a href="./index.html" id="linkRealtime">실시간 조회</a>
+      <a href="./index.html">실시간 조회</a>
       <a href="./tracker.html">플레이스 추적</a>
     </div>
   </div>
 
   <div class="container">
-    <!-- 설정 카드 제거 (요청사항) -->
-
     <div class="card">
       <h2>트랙 추가</h2>
+
       <div class="form-row">
         <div class="form-group">
+          <label>업종</label>
+          <select id="kind">
+            <option value="restaurant" selected>식당/카페</option>
+            <option value="hairshop">미용실(헤어샵)</option>
+            <option value="nailshop">네일</option>
+            <option value="hospital">병원</option>
+            <option value="accommodation">펜션/숙박</option>
+          </select>
+        </div>
+        <div class="form-group">
           <label>키워드</label>
-          <input id="keyword" placeholder="예: 남영역맛집">
+          <input id="keyword" placeholder="예: 마곡 미용실">
         </div>
         <div class="form-group">
           <label>대상 플레이스 ID</label>
@@ -193,7 +142,7 @@
           <select id="city"></select>
         </div>
         <div class="form-group">
-          <label>구/군 (서울/인천 등)</label>
+          <label>구/군 (서울/인천 일부)</label>
           <select id="district"></select>
         </div>
         <div class="form-group">
@@ -244,10 +193,8 @@
   </div>
 
 <script>
-  // ====== API ======
-  const API_BASE = "https://ranktracker.dampd21.workers.dev"; // 슬래시 없이
+  const API_BASE = "https://ranktracker.dampd21.workers.dev";
 
-  // workspaceId(표시 안 함)
   const WS_KEY = "ranktracker_workspace_id";
   function getWS(){
     let v = localStorage.getItem(WS_KEY);
@@ -264,11 +211,13 @@
     const qs = new URLSearchParams(location.search);
     const kw = qs.get("keyword") || "";
     const pid = qs.get("placeId") || "";
+    const kind = qs.get("kind") || "";
     if (kw) document.getElementById("keyword").value = kw;
     if (pid) document.getElementById("placeId").value = pid;
+    if (kind) document.getElementById("kind").value = kind;
   })();
 
-  // 햄버거 메뉴
+  // 햄버거
   const drawer = document.getElementById("drawer");
   document.getElementById("btnMenu").onclick = () => drawer.classList.add("show");
   document.getElementById("btnDrawerClose").onclick = () => drawer.classList.remove("show");
@@ -301,50 +250,32 @@
     return j;
   }
 
-  // ====== 지역 좌표(전국 확장) ======
-  // city: 시/도 대표 좌표(시청/도청급)
-  // districts: 일부 지역(서울/인천)은 구/군 대표 좌표 제공
+  // 지역 좌표(필요 시 확장)
   const REGIONS = {
     "서울특별시": {
       city: { x:"126.9783882", y:"37.5666103" },
       districts: {
-        "종로구": { x:"126.9770", y:"37.5729" },
-        "중구": { x:"126.9977", y:"37.5636" },
         "용산구": { x:"126.9903", y:"37.5324" },
-        "마포구": { x:"126.9016", y:"37.5663" },
-        "영등포구": { x:"126.8963", y:"37.5264" },
         "강남구": { x:"127.0473", y:"37.5172" },
-        "서초구": { x:"127.0327", y:"37.4836" },
-        "송파구": { x:"127.1059", y:"37.5145" }
-        // 필요하면 25개 구 모두 확장 가능(기존 데이터 붙이면 됨)
+        "마포구": { x:"126.9016", y:"37.5663" },
+        "영등포구": { x:"126.8963", y:"37.5264" }
       }
     },
-    "인천광역시": {
-      city: { x:"126.7052", y:"37.4563" },
-      districts: {
-        "부평구": { x:"126.7219", y:"37.5071" },
-        "남동구": { x:"126.7310", y:"37.4470" },
-        "서구": { x:"126.6760", y:"37.5454" },
-        "연수구": { x:"126.6783", y:"37.4102" },
-        "미추홀구": { x:"126.6507", y:"37.4637" },
-        "계양구": { x:"126.7377", y:"37.5372" },
-        "중구": { x:"126.6217", y:"37.4738" }
-      }
-    },
-    "경기도": { city: { x:"127.0095", y:"37.2751" } },     // 수원(도청)
-    "강원특별자치도": { city: { x:"127.7298", y:"37.8813" } }, // 춘천
-    "충청북도": { city: { x:"127.4890", y:"36.6424" } },    // 청주
-    "충청남도": { city: { x:"126.6628", y:"36.6588" } },    // 홍성(도청)
-    "세종특별자치시": { city: { x:"127.2890", y:"36.4801" } },
-    "대전광역시": { city: { x:"127.3845", y:"36.3504" } },
-    "전북특별자치도": { city: { x:"127.1480", y:"35.8242" } }, // 전주
-    "전라남도": { city: { x:"126.4629", y:"34.8118" } },    // 무안(도청)
-    "광주광역시": { city: { x:"126.8526", y:"35.1595" } },
-    "경상북도": { city: { x:"128.5056", y:"36.5760" } },    // 안동(도청)
-    "경상남도": { city: { x:"128.6811", y:"35.2270" } },    // 창원(도청)
-    "대구광역시": { city: { x:"128.6014", y:"35.8714" } },
+    "인천광역시": { city: { x:"126.7052", y:"37.4563" } },
+    "경기도": { city: { x:"127.0095", y:"37.2751" } },
+    "강원특별자치도": { city: { x:"127.7298", y:"37.8813" } },
+    "충청북도": { city: { x:"127.4890", y:"36.6424" } },
+    "충청남도": { city: { x:"126.6628", y:"36.6588" } },
+    "전북특별자치도": { city: { x:"127.1480", y:"35.8242" } },
+    "전라남도": { city: { x:"126.4629", y:"34.8118" } },
+    "경상북도": { city: { x:"128.5056", y:"36.5760" } },
+    "경상남도": { city: { x:"128.6811", y:"35.2270" } },
     "부산광역시": { city: { x:"129.0756", y:"35.1796" } },
+    "대구광역시": { city: { x:"128.6014", y:"35.8714" } },
+    "광주광역시": { city: { x:"126.8526", y:"35.1595" } },
+    "대전광역시": { city: { x:"127.3845", y:"36.3504" } },
     "울산광역시": { city: { x:"129.3114", y:"35.5395" } },
+    "세종특별자치시": { city: { x:"127.2890", y:"36.4801" } },
     "제주특별자치도": { city: { x:"126.5312", y:"33.4996" } }
   };
 
@@ -377,7 +308,6 @@
   fillCities(); fillDistricts();
   $city.addEventListener("change", fillDistricts);
 
-  // ====== Snapshot 렌더링 ======
   async function loadSnapshot(trackId, date, targetPlaceId){
     const data = await api(`/api/snapshot?workspaceId=${encodeURIComponent(workspaceId)}&trackId=${trackId}&date=${encodeURIComponent(date)}`, { method:"GET", headers:{} });
 
@@ -398,7 +328,7 @@
     }
 
     snapTitle.textContent = `스냅샷: ${data.snapshot.base_date}`;
-    snapSub.textContent = `전일 기준: ${data.prevDate || "-"} · 대상 순위: ${(data.snapshot.target_rank==null) ? "50위권 밖" : (data.snapshot.target_rank+"위")}`;
+    snapSub.textContent = `전일 기준: ${data.prevDate || "-"} · 대상 순위: ${(data.snapshot.target_rank==null) ? "50위권 밖" : (data.snapshot.target_rank+"위")} · 업종: ${esc(data.track.kind)}`;
 
     let targetIn = false;
     snapBody.innerHTML = "";
@@ -419,7 +349,7 @@
         <td>${esc(it.category||"-")}</td>
         <td class="num">${comma(it.blog_count ?? 0)}</td>
         <td class="num">${comma(it.visitor_count ?? 0)}</td>
-        <td class="num">${comma(it.save_count ?? 0)}</td>
+        <td class="num">${(it.save_count==null) ? "-" : comma(it.save_count)}</td>
         <td class="num">${comma(it.image_count ?? 0)}</td>
         <td class="num">${(it.score ?? "-")}</td>
       `;
@@ -434,7 +364,6 @@
     }
   }
 
-  // ====== 트랙 렌더링 (미니 타임라인 포함) ======
   async function renderTrackMiniTimeline(track, mountEl){
     const data = await api(`/api/timeline?workspaceId=${encodeURIComponent(workspaceId)}&trackId=${track.id}&limit=14`, { method:"GET", headers:{} });
     const tl = data.timeline || [];
@@ -479,11 +408,19 @@
     miniWrap.appendChild(grid);
     mountEl.appendChild(miniWrap);
 
-    // 최신 날짜 자동 로드 + active
     if (tl.length) {
       setActive(tl[0].date);
       await loadSnapshot(track.id, tl[0].date, track.target_place_id);
     }
+  }
+
+  function kindLabel(k){
+    if (k==="restaurant") return "식당/카페";
+    if (k==="hairshop") return "미용실";
+    if (k==="nailshop") return "네일";
+    if (k==="hospital") return "병원";
+    if (k==="accommodation") return "펜션/숙박";
+    return k || "-";
   }
 
   async function loadTracks(){
@@ -501,11 +438,10 @@
       item.className = "track-item";
 
       const region = t.region_city + (t.region_district ? (" / " + t.region_district) : "");
-      // 좌표는 표시하지 않음(요청사항)
       item.innerHTML = `
         <div class="track-head">
           <div>
-            <div class="track-title">[${esc(region)}] ${esc(t.keyword)} <span class="mono">${esc(t.target_place_id)}</span></div>
+            <div class="track-title">[${esc(kindLabel(t.kind))}] [${esc(region)}] ${esc(t.keyword)} <span class="mono">${esc(t.target_place_id)}</span></div>
             <div class="track-sub">기기: ${esc(t.device_type||"pc")} · 최근 14일(날짜 클릭 → 해당일 Top50)</div>
           </div>
           <div class="track-actions">
@@ -516,21 +452,20 @@
         <div class="miniMount"></div>
       `;
 
-      const collectBtn = item.querySelector('[data-act="collect"]');
-      collectBtn.onclick = async () => {
-        collectBtn.disabled = true;
+      item.querySelector('[data-act="collect"]').onclick = async (ev) => {
+        const btn = ev.target;
+        btn.disabled = true;
         try {
           await api(`/api/collect?workspaceId=${encodeURIComponent(workspaceId)}&trackId=${t.id}`, { method:"POST", body:"{}" });
           await loadTracks();
         } catch (e) {
           alert("수집 실패: " + e.message);
         } finally {
-          collectBtn.disabled = false;
+          btn.disabled = false;
         }
       };
 
-      const delBtn = item.querySelector('[data-act="del"]');
-      delBtn.onclick = async () => {
+      item.querySelector('[data-act="del"]').onclick = async () => {
         if (!confirm("삭제할까요?")) return;
         await api(`/api/track?workspaceId=${encodeURIComponent(workspaceId)}&id=${t.id}`, { method:"DELETE", headers:{} });
         await loadTracks();
@@ -550,6 +485,7 @@
   document.getElementById("btnReload").onclick = loadTracks;
 
   document.getElementById("btnAdd").onclick = async () => {
+    const kind = document.getElementById("kind").value;
     const kw = document.getElementById("keyword").value.trim();
     const pid = document.getElementById("placeId").value.trim();
     const city = $city.value;
@@ -573,6 +509,7 @@
         method:"POST",
         body: JSON.stringify({
           workspaceId,
+          kind,
           keyword: kw,
           targetPlaceId: pid,
           regionCity: city,
