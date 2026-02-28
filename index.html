@@ -502,24 +502,29 @@ body {
   var HKEY = "npt_rank_history";
   var allItems = [];
 
-  // 업종별 응답에서 items, total 추출
+  function parseCount(v) {
+    if (v == null) return 0;
+    if (typeof v === "number") return v;
+    var s = String(v).replace(/,/g, "").replace(/~/g, "").trim();
+    var n = parseInt(s, 10);
+    return isNaN(n) ? 0 : n;
+  }
+
   function extractItems(kind, rawData) {
     try {
       var d = rawData[0].data;
       if (kind === "restaurant") {
         return { items: d.restaurants.items || [], total: d.restaurants.total || 0 };
       }
-      if (kind === "hairshop") {
-        return { items: d.hairshops.items || [], total: d.hairshops.total || 0 };
-      }
-      if (kind === "nailshop") {
-        return { items: d.nailshops.items || [], total: d.nailshops.total || 0 };
+      if (kind === "hairshop" || kind === "nailshop") {
+        return { items: d.businesses.items || [], total: d.businesses.total || 0 };
       }
       if (kind === "hospital") {
         return { items: d.hospitals.items || [], total: d.hospitals.total || 0 };
       }
       if (kind === "accommodation") {
-        return { items: d.accommodations.items || [], total: d.accommodations.total || 0 };
+        var biz = d.accommodationSearch && d.accommodationSearch.business;
+        if (biz) return { items: biz.items || [], total: biz.total || 0 };
       }
     } catch(e) {
       console.error("extractItems error:", e, rawData);
@@ -533,11 +538,11 @@ body {
       name: it.name || "",
       category: it.category || "",
       businessCategory: it.businessCategory || "",
-      blogCafeReviewCount: it.blogCafeReviewCount || 0,
-      visitorReviewCount: it.visitorReviewCount || it.placeReviewCount || 0,
-      visitorReviewScore: it.visitorReviewScore || it.placeReviewScore || null,
-      saveCount: it.saveCount || 0,
-      imageCount: it.imageCount || 0,
+      blogCafeReviewCount: parseCount(it.blogCafeReviewCount),
+      visitorReviewCount: parseCount(it.visitorReviewCount || it.placeReviewCount),
+      visitorReviewScore: it.visitorReviewScore || it.placeReviewScore || it.bookingReviewScore || null,
+      saveCount: parseCount(it.saveCount),
+      imageCount: parseCount(it.imageCount),
       microReview: it.microReview || ""
     };
   }
