@@ -1,601 +1,516 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>네이버 플레이스 추적</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>플레이스 추적</title>
 <style>
-:root {
-  --primary: #03c75a;
-  --primary-dark: #02a04a;
-  --bg: #f5f7fa;
-  --card: #ffffff;
-  --text: #333;
-  --text-light: #888;
-  --border: #e0e0e0;
-  --danger: #e74c3c;
-  --success: #27ae60;
-  --warning: #f39c12;
+*{margin:0;padding:0;box-sizing:border-box}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  background:#f5f5f5;color:#333;
 }
-* { margin:0; padding:0; box-sizing:border-box; }
-body { font-family: 'Pretendard','Apple SD Gothic Neo','Malgun Gothic',sans-serif; background:var(--bg); color:var(--text); }
-
-.hamburger-menu { position: relative; }
-.hamburger-btn {
-  background: none; border: none; font-size: 28px; cursor: pointer;
-  color: #fff; padding: 4px 8px; line-height: 1;
-}
-.hamburger-dropdown {
-  display: none; position: absolute; top: 44px; right: 0;
-  background: #fff; border-radius: 8px; box-shadow: 0 4px 20px rgba(0,0,0,.15);
-  min-width: 200px; z-index: 999; overflow: hidden;
-}
-.hamburger-dropdown.active { display: block; }
-.hamburger-dropdown a {
-  display: block; padding: 14px 20px; text-decoration: none;
-  color: var(--text); font-size: 15px; border-bottom: 1px solid #f0f0f0;
-  transition: background .2s;
-}
-.hamburger-dropdown a:last-child { border-bottom: none; }
-.hamburger-dropdown a:hover { background: #f0faf4; }
-.hamburger-dropdown a.current { color: var(--primary); font-weight: 700; }
-
-header {
-  background: var(--primary); color: #fff; padding: 16px 20px;
-  display: flex; align-items: center; justify-content: space-between;
-  position: sticky; top: 0; z-index: 100;
-}
-header h1 { font-size: 18px; font-weight: 700; }
-
-.container { max-width: 800px; margin: 0 auto; padding: 20px; }
-
-.card {
-  background: var(--card); border-radius: 12px; padding: 24px;
-  box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 20px;
-}
-
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; font-size: 13px; font-weight: 600; color: var(--text-light); margin-bottom: 6px; }
-.form-group select,
-.form-group input {
-  width: 100%; padding: 12px 14px; border: 1px solid var(--border);
-  border-radius: 8px; font-size: 15px; outline: none; transition: border .2s;
-}
-.form-group select:focus,
-.form-group input:focus { border-color: var(--primary); }
-
-.form-row { display: flex; gap: 12px; }
-.form-row .form-group { flex: 1; }
-
-.btn {
-  display: inline-block; padding: 14px 24px; background: var(--primary);
-  color: #fff; border: none; border-radius: 8px; font-size: 15px;
-  font-weight: 600; cursor: pointer; width: 100%; text-align: center;
-  transition: background .2s;
-}
-.btn:hover { background: var(--primary-dark); }
-.btn:disabled { background: #ccc; cursor: not-allowed; }
-.btn-danger { background: var(--danger); }
-.btn-danger:hover { background: #c0392b; }
-.btn-sm { padding: 8px 14px; font-size: 13px; width: auto; }
-
-/* 트랙 카드 */
-.track-card {
-  border: 1px solid var(--border); border-radius: 10px; padding: 16px;
-  margin-bottom: 16px; position: relative;
-}
-.track-card .track-header {
-  display: flex; justify-content: space-between; align-items: flex-start;
-  margin-bottom: 12px;
-}
-.track-card .track-keyword { font-size: 16px; font-weight: 700; }
-.track-card .track-meta { font-size: 12px; color: var(--text-light); margin-top: 4px; }
-.track-card .track-delete { font-size: 12px; color: var(--danger); cursor: pointer; border: none; background: none; }
-
-/* 미니 타임라인 */
-.mini-timeline {
-  display: flex; gap: 4px; overflow-x: auto; padding: 4px 0;
-  scrollbar-width: thin;
-}
-.mini-timeline::-webkit-scrollbar { height: 4px; }
-.mini-timeline::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
-
-.tl-day {
-  min-width: 52px; padding: 6px 4px; border-radius: 6px;
-  text-align: center; cursor: pointer; transition: background .2s;
-  border: 1px solid var(--border); font-size: 11px; flex-shrink: 0;
-}
-.tl-day:hover { background: #f0faf4; }
-.tl-day.active { background: var(--primary); color: #fff; border-color: var(--primary); }
-.tl-day .tl-date { font-weight: 600; }
-.tl-day .tl-rank { font-size: 14px; font-weight: 700; margin-top: 2px; }
-.tl-day .tl-rank.found { color: var(--primary); }
-.tl-day .tl-rank.notfound { color: var(--danger); font-size: 11px; }
-.tl-day.active .tl-rank.found { color: #fff; }
-.tl-day .tl-delta { font-size: 10px; }
-.tl-day .tl-delta.up { color: var(--success); }
-.tl-day .tl-delta.down { color: var(--danger); }
-.tl-day.active .tl-delta { color: rgba(255,255,255,.8); }
-
-/* 스냅샷 테이블 */
-.table-wrap { overflow-x: auto; }
-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-th { background: #f8f9fa; padding: 10px 8px; text-align: left; font-weight: 600; border-bottom: 2px solid var(--border); white-space: nowrap; }
-td { padding: 10px 8px; border-bottom: 1px solid #f0f0f0; white-space: nowrap; }
-tr:hover { background: #fafafa; }
-tr.highlight { background: #e8f8ee !important; font-weight: 700; }
-
-.delta-up { color: var(--success); font-weight: 700; }
-.delta-down { color: var(--danger); font-weight: 700; }
-.delta-same { color: var(--text-light); }
-.delta-new { color: var(--warning); font-size: 11px; }
-
-.loading { text-align: center; padding: 40px; color: var(--text-light); }
-.loading::after { content: ''; display: inline-block; width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin .8s linear infinite; margin-left: 8px; vertical-align: middle; }
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.msg { padding: 12px; border-radius: 8px; margin-bottom: 12px; font-size: 14px; text-align: center; }
-.msg-success { background: #e8f8ee; color: var(--success); }
-.msg-error { background: #fdf0ef; color: var(--danger); }
-
-@media (max-width: 600px) {
-  .form-row { flex-direction: column; gap: 0; }
-  header h1 { font-size: 16px; }
-}
+.header{background:#1a1a2e;color:#fff;padding:20px 0}
+.header-inner{max-width:900px;margin:0 auto;padding:0 20px}
+.header-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.header h1{font-size:22px;font-weight:700}
+.header p{font-size:13px;color:#aaa;margin-top:4px}
+.menu-btn{width:38px;height:38px;border:1px solid rgba(255,255,255,0.25);background:transparent;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.menu-btn span{display:block;width:18px;height:2px;background:#fff;position:relative}
+.menu-btn span:before,.menu-btn span:after{content:"";position:absolute;left:0;width:18px;height:2px;background:#fff}
+.menu-btn span:before{top:-6px}
+.menu-btn span:after{top:6px}
+.drawer-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;z-index:9999}
+.drawer-overlay.show{display:block}
+.drawer{position:absolute;top:0;right:0;width:280px;height:100%;background:#fff;box-shadow:-10px 0 30px rgba(0,0,0,0.18);padding:16px}
+.drawer-head{display:flex;justify-content:space-between;align-items:center;padding-bottom:10px;border-bottom:1px solid #eee;margin-bottom:10px}
+.drawer-title{font-weight:800;color:#1a1a2e}
+.drawer-close{border:none;background:none;font-size:22px;cursor:pointer;color:#666}
+.drawer a{display:block;padding:12px 10px;border-radius:10px;color:#333;text-decoration:none;font-weight:700}
+.drawer a:hover{background:#f5f5f5}
+.drawer .mutedlink{font-size:12px;color:#888;font-weight:600;padding:0 10px 8px}
+.container{max-width:900px;margin:0 auto;padding:20px}
+.card{background:#fff;border:1px solid #ddd;border-radius:8px;padding:24px;margin-bottom:20px}
+.card h2{font-size:16px;margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid #eee}
+.form-row{display:flex;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.form-group{flex:1;min-width:180px}
+.form-group label{display:block;font-size:13px;font-weight:600;margin-bottom:6px;color:#555}
+input,select{width:100%;padding:10px 12px;border:1px solid #ccc;border-radius:6px;font-size:14px;outline:none}
+input:focus,select:focus{border-color:#1a1a2e}
+.btn{padding:10px 28px;border:none;border-radius:6px;font-size:14px;font-weight:600;cursor:pointer;transition:background .2s}
+.btn-primary{background:#1a1a2e;color:#fff}
+.btn-primary:hover{background:#16213e}
+.btn-ghost{background:#fff;border:1px solid #ccc;color:#333}
+.btn-danger{background:#fff;border:1px solid #e74c3c;color:#e74c3c}
+.muted{color:#888;font-size:12px}
+.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.pill{display:inline-block;padding:2px 8px;border-radius:999px;background:#f0f0f0;color:#555;font-size:11px;margin-left:6px}
+.track-item{padding:14px 0;border-bottom:1px solid #eee}
+.track-item:last-child{border-bottom:none}
+.track-head{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.track-title{font-weight:800;color:#1a1a2e}
+.track-sub{margin-top:4px;font-size:12px;color:#888}
+.track-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mini-wrap{margin-top:10px;overflow-x:auto;padding-bottom:8px}
+.mini-grid{display:flex;gap:10px;min-width:max-content}
+.mini-cell{width:70px;border:1px solid #cfcfcf;border-radius:12px;padding:10px 8px;background:#fff;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,0.04);transition:transform .05s,box-shadow .15s,border-color .15s}
+.mini-cell:hover{border-color:#9aa0a6;box-shadow:0 4px 10px rgba(0,0,0,0.08)}
+.mini-cell.active{border-color:#1a1a2e;box-shadow:0 0 0 3px rgba(26,26,46,0.12)}
+.mini-date{font-size:11px;color:#666;font-weight:800}
+.mini-rank{margin-top:8px;font-size:20px;font-weight:900;color:#4b56ff;line-height:1}
+.mini-out{color:#999}
+.mini-metric{margin-top:8px;font-size:10px;color:#888;line-height:14px}
+.mini-metric b{color:#555}
+.delta{font-size:11px;font-weight:900;margin-left:4px}
+.up{color:#e74c3c}
+.down{color:#3498db}
+.flat{color:#aaa}
+table{width:100%;border-collapse:collapse;font-size:12px;margin-top:10px}
+th{background:#f8f8f8;padding:8px 6px;text-align:left;font-weight:600;border-bottom:2px solid #ddd;position:sticky;top:0}
+td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
+.hl{background:#fff9c4}
+.num{text-align:right}
+.note{margin-top:10px;padding:10px;border:1px dashed #ddd;border-radius:10px;background:#fafafa;font-size:12px;color:#777}
+@media(max-width:600px){.form-row{flex-direction:column}.form-group{min-width:100%}.mini-cell{width:66px}}
 </style>
 </head>
 <body>
 
-<!-- ★ Worker B 도메인을 여기서 변경 ★ -->
-<script>
-  const API_BASE = 'https://ranktracker.dampd21.workers.dev'.replace(/\/+$/, '');
-</script>
-
-<header>
-  <h1>📈 네이버 플레이스 추적</h1>
-  <div class="hamburger-menu">
-    <button class="hamburger-btn" onclick="toggleMenu()">☰</button>
-    <div class="hamburger-dropdown" id="navMenu">
-      <a href="index.html">📊 실시간 순위 조회</a>
-      <a href="tracker.html" class="current">📈 플레이스 추적</a>
+<div class="header">
+  <div class="header-inner">
+    <div class="header-top">
+      <h1>플레이스 추적</h1>
+      <button class="menu-btn" id="btnMenu" aria-label="메뉴"><span></span></button>
     </div>
+    <p>트랙 추가 시 즉시 1회 수집, 이후 매일 KST 12:00 자동 저장</p>
   </div>
-</header>
+</div>
+
+<div class="drawer-overlay" id="drawer">
+  <div class="drawer" role="dialog" aria-modal="true">
+    <div class="drawer-head">
+      <div class="drawer-title">메뉴</div>
+      <button class="drawer-close" id="btnDrawerClose" aria-label="닫기">x</button>
+    </div>
+    <div class="mutedlink">페이지 이동</div>
+    <a href="./index.html" id="linkRealtime">실시간 조회</a>
+    <a href="./tracker.html">플레이스 추적</a>
+  </div>
+</div>
 
 <div class="container">
-
-  <!-- 추가 폼 -->
   <div class="card">
-    <h3 style="margin-bottom:16px; font-size:15px;">➕ 새 추적 등록</h3>
-    <div class="form-group">
-      <label>업종</label>
-      <select id="kind">
-        <option value="restaurant">🍽️ 식당/카페</option>
-        <option value="hairshop">💇 미용실(헤어샵)</option>
-        <option value="nailshop">💅 네일</option>
-        <option value="hospital">🏥 병원</option>
-        <option value="accommodation">🏨 펜션/숙박</option>
-      </select>
+    <h2>트랙 추가</h2>
+    <div class="form-row">
+      <div class="form-group">
+        <label>업종</label>
+        <select id="selectKind">
+          <option value="restaurant">식당/카페</option>
+          <option value="hairshop">미용실(헤어샵)</option>
+          <option value="nailshop">네일</option>
+          <option value="hospital">병원</option>
+          <option value="accommodation">펜션/숙박</option>
+        </select>
+      </div>
     </div>
-    <div class="form-group">
-      <label>키워드</label>
-      <input type="text" id="keyword" placeholder="예: 강남역 맛집">
-    </div>
-    <div class="form-group">
-      <label>Place ID (대상 업체)</label>
-      <input type="text" id="placeId" placeholder="플레이스 ID">
+    <div class="form-row">
+      <div class="form-group">
+        <label>키워드</label>
+        <input id="keyword" placeholder="예: 강남역맛집">
+      </div>
+      <div class="form-group">
+        <label>대상 플레이스 ID</label>
+        <input id="placeId" placeholder="예: 1951454277">
+      </div>
     </div>
     <div class="form-row">
       <div class="form-group">
         <label>시/도</label>
-        <select id="regionCity" onchange="onCityChange()">
-          <option value="">선택 안 함</option>
-        </select>
+        <select id="city"></select>
       </div>
       <div class="form-group">
-        <label>구/군</label>
-        <select id="regionDistrict" onchange="onDistrictChange()">
-          <option value="">선택 안 함</option>
+        <label>구/군 (서울/인천 등)</label>
+        <select id="district"></select>
+      </div>
+      <div class="form-group">
+        <label>기기 타입</label>
+        <select id="deviceType">
+          <option value="pc" selected>pc</option>
+          <option value="mobile">mobile</option>
         </select>
       </div>
     </div>
-    <div id="msgArea"></div>
-    <button class="btn" id="addBtn" onclick="addTrack()">➕ 추가 + 즉시 수집</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+      <button class="btn btn-primary" id="btnAdd">추가 + 즉시 수집</button>
+      <button class="btn btn-ghost" id="btnReload">목록 새로고침</button>
+      <span class="muted" id="addStatus"></span>
+    </div>
   </div>
 
-  <!-- 트랙 목록 -->
   <div class="card">
-    <h3 style="margin-bottom:16px; font-size:15px;">📋 내 추적 목록</h3>
-    <div id="trackList"></div>
+    <h2>내 트랙</h2>
+    <div id="tracks"></div>
+    <div id="tracksEmpty" class="muted" style="display:none;padding:10px 0;">등록된 트랙이 없습니다.</div>
   </div>
 
-  <!-- 스냅샷 상세 -->
-  <div id="snapshotDetail"></div>
+  <div class="card" id="snapCard" style="display:none;">
+    <h2 id="snapTitle">스냅샷</h2>
+    <div class="muted" id="snapSub"></div>
+    <div id="targetNote" class="note" style="display:none;"></div>
+    <div style="overflow:auto;max-height:650px;">
+      <table>
+        <thead>
+          <tr>
+            <th>순위</th>
+            <th>업체</th>
+            <th>카테고리</th>
+            <th class="num">블로그</th>
+            <th class="num">방문자</th>
+            <th class="num">저장</th>
+            <th class="num">이미지</th>
+            <th class="num">별점</th>
+          </tr>
+        </thead>
+        <tbody id="snapBody"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <script>
-// ── 지역 좌표 ──
-const REGIONS = {
-  '서울특별시': {
-    x: '126.9783', y: '37.5665',
-    districts: {
-      '강남구': { x: '127.0473', y: '37.5172' },
-      '강동구': { x: '127.1237', y: '37.5301' },
-      '강북구': { x: '127.0255', y: '37.6396' },
-      '강서구': { x: '126.8495', y: '37.5509' },
-      '관악구': { x: '126.9516', y: '37.4784' },
-      '광진구': { x: '127.0821', y: '37.5384' },
-      '구로구': { x: '126.8875', y: '37.4954' },
-      '금천구': { x: '126.8957', y: '37.4568' },
-      '노원구': { x: '127.0561', y: '37.6543' },
-      '도봉구': { x: '127.0472', y: '37.6688' },
-      '동대문구': { x: '127.0397', y: '37.5744' },
-      '동작구': { x: '126.9516', y: '37.5124' },
-      '마포구': { x: '126.9082', y: '37.5637' },
-      '서대문구': { x: '126.9388', y: '37.5794' },
-      '서초구': { x: '127.0327', y: '37.4836' },
-      '성동구': { x: '127.0369', y: '37.5633' },
-      '성북구': { x: '127.0176', y: '37.5894' },
-      '송파구': { x: '127.1058', y: '37.5145' },
-      '양천구': { x: '126.8665', y: '37.5270' },
-      '영등포구': { x: '126.8963', y: '37.5264' },
-      '용산구': { x: '126.9906', y: '37.5322' },
-      '은평구': { x: '126.9293', y: '37.6027' },
-      '종로구': { x: '126.9789', y: '37.5735' },
-      '중구': { x: '126.9973', y: '37.5636' },
-      '중랑구': { x: '127.0928', y: '37.6063' }
+  // ★★★ Worker B 도메인을 여기서 변경 ★★★
+  const API_BASE = "https://ranktracker.YOUR.workers.dev";
+
+  const WS_KEY = "ranktracker_workspace_id";
+  function getWS(){
+    let v = localStorage.getItem(WS_KEY);
+    if(!v){
+      v = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "-" + Math.random());
+      localStorage.setItem(WS_KEY, v);
     }
-  },
-  '부산광역시': { x: '129.0756', y: '35.1796', districts: {} },
-  '대구광역시': { x: '128.6014', y: '35.8714', districts: {} },
-  '인천광역시': {
-    x: '126.7052', y: '37.4563',
-    districts: {
-      '남동구': { x: '126.7310', y: '37.4488' },
-      '부평구': { x: '126.7218', y: '37.5068' },
-      '서구': { x: '126.6764', y: '37.5451' },
-      '연수구': { x: '126.6780', y: '37.4101' },
-      '중구': { x: '126.6217', y: '37.4738' },
-      '미추홀구': { x: '126.6503', y: '37.4421' }
+    return v;
+  }
+  const workspaceId = getWS();
+
+  // URL 파라미터 자동 채우기
+  (function(){
+    const qs = new URLSearchParams(location.search);
+    if (qs.get("kind")) document.getElementById("selectKind").value = qs.get("kind");
+    if (qs.get("keyword")) document.getElementById("keyword").value = qs.get("keyword");
+    if (qs.get("placeId")) document.getElementById("placeId").value = qs.get("placeId");
+  })();
+
+  // 메뉴
+  const drawer = document.getElementById("drawer");
+  document.getElementById("btnMenu").onclick = () => drawer.classList.add("show");
+  document.getElementById("btnDrawerClose").onclick = () => drawer.classList.remove("show");
+  drawer.onclick = (e) => { if (e.target === drawer) drawer.classList.remove("show"); };
+
+  function esc(s){ return s==null ? "" : String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+  function comma(n){ return (n==null) ? "-" : String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
+  function fmtRank(r){ return (r==null) ? "OUT" : String(r); }
+  function fmtDelta(n){
+    if(n==null) return "";
+    if(n===0) return '<span class="delta flat">-</span>';
+    if(n>0) return '<span class="delta up">&#9650;' + Math.abs(n) + '</span>';
+    return '<span class="delta down">&#9660;' + Math.abs(n) + '</span>';
+  }
+  function fmtDateLabel(dateStr){
+    const d = new Date(dateStr + "T00:00:00+09:00");
+    const mm = String(d.getMonth()+1).padStart(2,"0");
+    const dd = String(d.getDate()).padStart(2,"0");
+    const wk = ["일","월","화","수","목","금","토"][d.getDay()];
+    return mm + "." + dd + " " + wk;
+  }
+  function kindLabel(k) {
+    var m = { restaurant:"식당/카페", hairshop:"미용실", nailshop:"네일", hospital:"병원", accommodation:"숙박" };
+    return m[k] || k;
+  }
+
+  async function api(path, opts={}){
+    const base = API_BASE.replace(/\/+$/, "");
+    const r = await fetch(base + path, {
+      ...opts,
+      headers: { "Content-Type":"application/json", ...(opts.headers||{}) }
+    });
+    const j = await r.json().catch(()=>null);
+    if(!r.ok) throw new Error(j?.error || ("HTTP " + r.status));
+    return j;
+  }
+
+  // 지역 좌표
+  const REGIONS = {
+    "서울특별시": {
+      city: { x:"126.9783882", y:"37.5666103" },
+      districts: {
+        "종로구": { x:"126.9770", y:"37.5729" },
+        "중구": { x:"126.9977", y:"37.5636" },
+        "용산구": { x:"126.9903", y:"37.5324" },
+        "마포구": { x:"126.9016", y:"37.5663" },
+        "영등포구": { x:"126.8963", y:"37.5264" },
+        "강남구": { x:"127.0473", y:"37.5172" },
+        "서초구": { x:"127.0327", y:"37.4836" },
+        "송파구": { x:"127.1059", y:"37.5145" }
+      }
+    },
+    "인천광역시": {
+      city: { x:"126.7052", y:"37.4563" },
+      districts: {
+        "부평구": { x:"126.7219", y:"37.5071" },
+        "남동구": { x:"126.7310", y:"37.4470" },
+        "서구": { x:"126.6760", y:"37.5454" },
+        "연수구": { x:"126.6783", y:"37.4102" },
+        "미추홀구": { x:"126.6507", y:"37.4637" },
+        "중구": { x:"126.6217", y:"37.4738" }
+      }
+    },
+    "경기도": { city: { x:"127.0095", y:"37.2751" } },
+    "강원특별자치도": { city: { x:"127.7298", y:"37.8813" } },
+    "충청북도": { city: { x:"127.4890", y:"36.6424" } },
+    "충청남도": { city: { x:"126.6628", y:"36.6588" } },
+    "세종특별자치시": { city: { x:"127.2890", y:"36.4801" } },
+    "대전광역시": { city: { x:"127.3845", y:"36.3504" } },
+    "전북특별자치도": { city: { x:"127.1480", y:"35.8242" } },
+    "전라남도": { city: { x:"126.4629", y:"34.8118" } },
+    "광주광역시": { city: { x:"126.8526", y:"35.1595" } },
+    "경상북도": { city: { x:"128.5056", y:"36.5760" } },
+    "경상남도": { city: { x:"128.6811", y:"35.2270" } },
+    "대구광역시": { city: { x:"128.6014", y:"35.8714" } },
+    "부산광역시": { city: { x:"129.0756", y:"35.1796" } },
+    "울산광역시": { city: { x:"129.3114", y:"35.5395" } },
+    "제주특별자치도": { city: { x:"126.5312", y:"33.4996" } }
+  };
+
+  const $city = document.getElementById("city");
+  const $district = document.getElementById("district");
+  function fillCities(){
+    $city.innerHTML="";
+    Object.keys(REGIONS).forEach(name=>{
+      const opt=document.createElement("option");
+      opt.value=name; opt.textContent=name;
+      $city.appendChild(opt);
+    });
+    $city.value="서울특별시";
+  }
+  function fillDistricts(){
+    const ds = REGIONS[$city.value]?.districts || null;
+    $district.innerHTML="";
+    const opt0=document.createElement("option");
+    opt0.value=""; opt0.textContent=ds ? "선택(권장)" : "해당없음";
+    $district.appendChild(opt0);
+    if(ds){
+      Object.keys(ds).forEach(d=>{
+        const opt=document.createElement("option");
+        opt.value=d; opt.textContent=d;
+        $district.appendChild(opt);
+      });
     }
-  },
-  '광주광역시': { x: '126.8526', y: '35.1595', districts: {} },
-  '대전광역시': { x: '127.3845', y: '36.3504', districts: {} },
-  '울산광역시': { x: '129.3114', y: '35.5396', districts: {} },
-  '세종특별자치시': { x: '127.0090', y: '36.4800', districts: {} },
-  '경기도': { x: '127.0093', y: '37.2750', districts: {} },
-  '강원도': { x: '128.2093', y: '37.8228', districts: {} },
-  '충청북도': { x: '127.9300', y: '36.6357', districts: {} },
-  '충청남도': { x: '126.6602', y: '36.6588', districts: {} },
-  '전라북도': { x: '127.1089', y: '35.8203', districts: {} },
-  '전라남도': { x: '126.4629', y: '34.8161', districts: {} },
-  '경상북도': { x: '128.8889', y: '36.4919', districts: {} },
-  '경상남도': { x: '128.6923', y: '35.2383', districts: {} },
-  '제주특별자치도': { x: '126.5312', y: '33.4996', districts: {} }
-};
-
-function initRegions() {
-  const cityEl = document.getElementById('regionCity');
-  Object.keys(REGIONS).forEach(city => {
-    const opt = document.createElement('option');
-    opt.value = city;
-    opt.textContent = city;
-    cityEl.appendChild(opt);
-  });
-}
-
-function onCityChange() {
-  const city = document.getElementById('regionCity').value;
-  const distEl = document.getElementById('regionDistrict');
-  distEl.innerHTML = '<option value="">선택 안 함</option>';
-  if (city && REGIONS[city] && REGIONS[city].districts) {
-    Object.keys(REGIONS[city].districts).forEach(d => {
-      const opt = document.createElement('option');
-      opt.value = d;
-      opt.textContent = d;
-      distEl.appendChild(opt);
-    });
   }
-}
+  fillCities(); fillDistricts();
+  $city.addEventListener("change", fillDistricts);
 
-function onDistrictChange() {}
+  // 스냅샷 렌더링
+  async function loadSnapshot(trackId, date, targetPlaceId){
+    const data = await api("/api/snapshot?workspaceId=" + encodeURIComponent(workspaceId) + "&trackId=" + trackId + "&date=" + encodeURIComponent(date), { method:"GET", headers:{} });
+    const snapCard = document.getElementById("snapCard");
+    const snapTitle = document.getElementById("snapTitle");
+    const snapSub = document.getElementById("snapSub");
+    const snapBody = document.getElementById("snapBody");
+    const targetNote = document.getElementById("targetNote");
+    snapCard.style.display="block";
 
-function getSelectedCoords() {
-  const city = document.getElementById('regionCity').value;
-  const dist = document.getElementById('regionDistrict').value;
-  if (!city) return { x: '', y: '' };
-  if (dist && REGIONS[city] && REGIONS[city].districts && REGIONS[city].districts[dist]) {
-    return REGIONS[city].districts[dist];
-  }
-  return { x: REGIONS[city].x, y: REGIONS[city].y };
-}
-
-// ── Workspace ID ──
-function getWorkspaceId() {
-  let wid = localStorage.getItem('workspaceId');
-  if (!wid) {
-    wid = 'ws_' + Math.random().toString(36).substr(2, 12);
-    localStorage.setItem('workspaceId', wid);
-  }
-  return wid;
-}
-
-// ── 메뉴 ──
-function toggleMenu() {
-  document.getElementById('navMenu').classList.toggle('active');
-}
-document.addEventListener('click', e => {
-  if (!e.target.closest('.hamburger-menu')) {
-    document.getElementById('navMenu').classList.remove('active');
-  }
-});
-
-// ── 메시지 ──
-function showMsg(text, type) {
-  document.getElementById('msgArea').innerHTML = `<div class="msg msg-${type}">${text}</div>`;
-  setTimeout(() => { document.getElementById('msgArea').innerHTML = ''; }, 5000);
-}
-
-// ── 트랙 추가 ──
-async function addTrack() {
-  const kind = document.getElementById('kind').value;
-  const keyword = document.getElementById('keyword').value.trim();
-  const placeId = document.getElementById('placeId').value.trim();
-  const regionCity = document.getElementById('regionCity').value;
-  const regionDistrict = document.getElementById('regionDistrict').value;
-  const coords = getSelectedCoords();
-
-  if (!keyword || !placeId) {
-    alert('키워드와 Place ID를 입력하세요.');
-    return;
-  }
-
-  const btn = document.getElementById('addBtn');
-  btn.disabled = true;
-  btn.textContent = '등록 중...';
-
-  try {
-    // 1) 트랙 등록
-    const resp = await fetch(`${API_BASE}/api/track`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        workspaceId: getWorkspaceId(),
-        kind,
-        keyword,
-        targetPlaceId: placeId,
-        regionCity,
-        regionDistrict,
-        x: coords.x,
-        y: coords.y,
-        deviceType: 'pcmap'
-      })
-    });
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error);
-
-    showMsg('✅ 트랙 등록 완료! 즉시 수집 중...', 'success');
-
-    // 2) 즉시 수집
-    btn.textContent = '수집 중...';
-    const cResp = await fetch(`${API_BASE}/api/collect?workspaceId=${encodeURIComponent(getWorkspaceId())}&trackId=${data.trackId}`, {
-      method: 'POST'
-    });
-    const cData = await cResp.json();
-    if (cData.error) {
-      showMsg('⚠️ 등록됨, 수집 오류: ' + cData.error, 'error');
-    } else {
-      const rankMsg = cData.targetRank > 0 ? `순위: ${cData.targetRank}위` : '순위권 밖';
-      showMsg(`✅ 수집 완료! ${rankMsg}`, 'success');
-    }
-
-    loadTracks();
-  } catch (e) {
-    showMsg('❌ ' + e.message, 'error');
-  }
-
-  btn.disabled = false;
-  btn.textContent = '➕ 추가 + 즉시 수집';
-}
-
-// ── 트랙 목록 로드 ──
-async function loadTracks() {
-  const listEl = document.getElementById('trackList');
-  listEl.innerHTML = '<div class="loading">트랙 로딩 중</div>';
-
-  try {
-    const resp = await fetch(`${API_BASE}/api/tracks?workspaceId=${encodeURIComponent(getWorkspaceId())}`);
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error);
-
-    if (!data.tracks || data.tracks.length === 0) {
-      listEl.innerHTML = '<div style="text-align:center;color:var(--text-light);padding:20px;">등록된 추적이 없습니다</div>';
+    if(!data.snapshot){
+      snapTitle.textContent = "스냅샷: " + date;
+      snapSub.textContent = "해당 날짜 데이터가 없습니다.";
+      snapBody.innerHTML = "";
+      targetNote.style.display="none";
       return;
     }
 
-    listEl.innerHTML = '';
-    for (const track of data.tracks) {
-      const card = document.createElement('div');
-      card.className = 'track-card';
-      card.id = `track-${track.id}`;
+    snapTitle.textContent = "스냅샷: " + data.snapshot.base_date;
+    snapSub.textContent = "전일 기준: " + (data.prevDate || "-") + " / 대상 순위: " + ((data.snapshot.target_rank==null) ? "50위권 밖" : (data.snapshot.target_rank+"위"));
 
-      const kindLabel = { restaurant:'🍽️식당/카페', hairshop:'💇미용실', nailshop:'💅네일', hospital:'🏥병원', accommodation:'🏨숙박' }[track.kind] || track.kind;
-      const regionStr = [track.region_city, track.region_district].filter(Boolean).join(' ');
-
-      card.innerHTML = `
-        <div class="track-header">
-          <div>
-            <div class="track-keyword">${escHtml(track.keyword)}</div>
-            <div class="track-meta">
-              ${kindLabel} · Place ID: ${escHtml(track.target_place_id)}
-              ${regionStr ? ' · ' + escHtml(regionStr) : ''}
-            </div>
-          </div>
-          <button class="track-delete" onclick="deleteTrack(${track.id})">🗑 삭제</button>
-        </div>
-        <div class="mini-timeline" id="timeline-${track.id}">
-          <div class="loading" style="padding:8px;font-size:12px;">타임라인 로딩...</div>
-        </div>
-      `;
-      listEl.appendChild(card);
-
-      // 타임라인 로드
-      loadTimeline(track);
-    }
-  } catch (e) {
-    listEl.innerHTML = `<div class="msg msg-error">❌ ${e.message}</div>`;
-  }
-}
-
-// ── 타임라인 로드 ──
-async function loadTimeline(track) {
-  const el = document.getElementById(`timeline-${track.id}`);
-  try {
-    const resp = await fetch(`${API_BASE}/api/timeline?workspaceId=${encodeURIComponent(getWorkspaceId())}&trackId=${track.id}&limit=14`);
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error);
-
-    if (!data.timeline || data.timeline.length === 0) {
-      el.innerHTML = '<div style="font-size:12px;color:var(--text-light);padding:8px;">데이터 없음</div>';
-      return;
-    }
-
-    // 날짜 역순 → 오래된 순으로 표시
-    const days = data.timeline.slice().reverse();
-    el.innerHTML = days.map(d => {
-      const dateShort = d.baseDate.slice(5); // MM-DD
-      const rankText = d.targetRank > 0 ? d.targetRank + '위' : '-';
-      const rankClass = d.targetRank > 0 ? 'found' : 'notfound';
-      let deltaHtml = '';
-      if (d.rankDelta !== null && d.rankDelta !== undefined) {
-        if (d.rankDelta > 0) deltaHtml = `<div class="tl-delta up">▲${d.rankDelta}</div>`;
-        else if (d.rankDelta < 0) deltaHtml = `<div class="tl-delta down">▼${Math.abs(d.rankDelta)}</div>`;
-        else deltaHtml = `<div class="tl-delta">-</div>`;
-      }
-      return `<div class="tl-day" onclick="showSnapshot(${track.id},'${d.baseDate}',this)">
-        <div class="tl-date">${dateShort}</div>
-        <div class="tl-rank ${rankClass}">${rankText}</div>
-        ${deltaHtml}
-      </div>`;
-    }).join('');
-  } catch (e) {
-    el.innerHTML = `<div style="font-size:12px;color:var(--danger);">${e.message}</div>`;
-  }
-}
-
-// ── 스냅샷 상세 ──
-async function showSnapshot(trackId, date, dayEl) {
-  // active 표시
-  document.querySelectorAll('.tl-day').forEach(d => d.classList.remove('active'));
-  if (dayEl) dayEl.classList.add('active');
-
-  const detailEl = document.getElementById('snapshotDetail');
-  detailEl.innerHTML = '<div class="card"><div class="loading">상세 로딩 중</div></div>';
-
-  try {
-    const resp = await fetch(`${API_BASE}/api/snapshot?workspaceId=${encodeURIComponent(getWorkspaceId())}&trackId=${trackId}&date=${date}`);
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error);
-
-    let html = `<div class="card">
-      <h3 style="margin-bottom:12px; font-size:15px;">📅 ${data.baseDate} 상세 (Top 50)</h3>`;
-
-    if (data.targetRank > 0) {
-      html += `<div style="margin-bottom:12px; padding:12px; background:#e8f8ee; border-radius:8px; text-align:center; font-size:16px;">
-        🎯 대상 업체 순위: <strong style="color:var(--primary); font-size:22px;">${data.targetRank}위</strong>
-        <span style="font-size:13px; color:var(--text-light);"> / ${data.total}개</span>
-      </div>`;
-    } else {
-      html += `<div style="margin-bottom:12px; padding:12px; background:#fdf0ef; border-radius:8px; text-align:center; color:var(--danger);">
-        😔 Top 50에 없음 (전체 ${data.total}개)
-      </div>`;
-    }
-
-    html += `<div class="table-wrap"><table>
-      <thead><tr>
-        <th>#</th><th>변동</th><th>업체명</th><th>카테고리</th><th>블로그</th><th>방문자</th><th>저장</th><th>별점</th>
-      </tr></thead><tbody>`;
-
-    // 현재 트랙의 placeId를 가져오기
-    const tracks = JSON.parse(localStorage.getItem('cachedTracks') || '[]');
-    const currentTrack = tracks.find(t => t.id == trackId);
-    const targetPlaceId = currentTrack ? currentTrack.target_place_id : '';
-
-    data.items.forEach(item => {
-      const isTarget = String(item.placeId) === String(targetPlaceId);
-      let deltaHtml = '';
-      if (item.rankDelta !== null && item.rankDelta !== undefined) {
-        if (item.rankDelta > 0) deltaHtml = `<span class="delta-up">▲${item.rankDelta}</span>`;
-        else if (item.rankDelta < 0) deltaHtml = `<span class="delta-down">▼${Math.abs(item.rankDelta)}</span>`;
-        else deltaHtml = `<span class="delta-same">─</span>`;
-      } else {
-        deltaHtml = `<span class="delta-new">NEW</span>`;
-      }
-
-      html += `<tr class="${isTarget ? 'highlight' : ''}">
-        <td>${item.rank}</td>
-        <td>${deltaHtml}</td>
-        <td>${escHtml(item.name)}${isTarget ? ' ⭐' : ''}</td>
-        <td>${escHtml(item.category || '')}</td>
-        <td>${item.blogCount||0}</td>
-        <td>${item.visitorCount||0}</td>
-        <td>${item.saveCount||0}</td>
-        <td>${item.score||'-'}</td>
-      </tr>`;
+    let targetIn = false;
+    snapBody.innerHTML = "";
+    (data.items || []).forEach(it=>{
+      const isT = String(it.place_id) === String(targetPlaceId);
+      if(isT) targetIn = true;
+      const tr = document.createElement("tr");
+      if(isT) tr.className = "hl";
+      tr.innerHTML =
+        '<td class="num"><b>' + it.rank + '</b> ' + (it.delta ? fmtDelta(it.delta.rankDelta) : "") + '</td>' +
+        '<td><div><b>' + esc(it.name||"-") + '</b>' + (isT ? ' <span class="pill">대상</span>' : '') + '</div><div class="muted mono">' + esc(it.place_id) + '</div></td>' +
+        '<td>' + esc(it.category||"-") + '</td>' +
+        '<td class="num">' + comma(it.blog_count || 0) + '</td>' +
+        '<td class="num">' + comma(it.visitor_count || 0) + '</td>' +
+        '<td class="num">' + comma(it.save_count || 0) + '</td>' +
+        '<td class="num">' + comma(it.image_count || 0) + '</td>' +
+        '<td class="num">' + (it.score || "-") + '</td>';
+      snapBody.appendChild(tr);
     });
 
-    html += `</tbody></table></div></div>`;
-    detailEl.innerHTML = html;
-
-    // 스크롤
-    detailEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-  } catch (e) {
-    detailEl.innerHTML = `<div class="card"><div class="msg msg-error">❌ ${e.message}</div></div>`;
+    if(!targetIn){
+      targetNote.style.display="block";
+      targetNote.innerHTML = '대상 업체(placeId <span class="mono">' + esc(targetPlaceId) + '</span>)는 이 날짜에 <b>Top50에 없습니다</b>.';
+    }else{
+      targetNote.style.display="none";
+    }
   }
-}
 
-// ── 트랙 삭제 ──
-async function deleteTrack(id) {
-  if (!confirm('이 추적을 삭제하시겠습니까?')) return;
-  try {
-    const resp = await fetch(`${API_BASE}/api/track?workspaceId=${encodeURIComponent(getWorkspaceId())}&id=${id}`, {
-      method: 'DELETE'
+  // 트랙 렌더링
+  async function renderTrackMiniTimeline(track, mountEl){
+    const data = await api("/api/timeline?workspaceId=" + encodeURIComponent(workspaceId) + "&trackId=" + track.id + "&limit=14", { method:"GET", headers:{} });
+    const tl = data.timeline || [];
+    const miniWrap = document.createElement("div");
+    miniWrap.className = "mini-wrap";
+    const grid = document.createElement("div");
+    grid.className = "mini-grid";
+
+    const setActive = (date) => {
+      const cells = grid.querySelectorAll(".mini-cell");
+      for (let c of cells) c.classList.remove("active");
+      const active = grid.querySelector('.mini-cell[data-date="' + date + '"]');
+      if (active) active.classList.add("active");
+    };
+
+    tl.forEach(row=>{
+      const cell = document.createElement("div");
+      cell.className = "mini-cell";
+      cell.setAttribute("data-date", row.date);
+      cell.innerHTML =
+        '<div class="mini-date">' + esc(fmtDateLabel(row.date)) + '</div>' +
+        '<div class="mini-rank ' + (row.targetRank==null ? 'mini-out' : '') + '">' +
+          esc(fmtRank(row.targetRank)) +
+          fmtDelta(row.rankDelta) +
+        '</div>' +
+        '<div class="mini-metric">' +
+          '<div><b>블</b> ' + (row.blogCount==null ? "-" : comma(row.blogCount)) + '</div>' +
+          '<div><b>방</b> ' + (row.visitorCount==null ? "-" : comma(row.visitorCount)) + '</div>' +
+        '</div>';
+      cell.onclick = async () => {
+        setActive(row.date);
+        await loadSnapshot(track.id, row.date, track.target_place_id);
+      };
+      grid.appendChild(cell);
     });
-    const data = await resp.json();
-    if (data.error) throw new Error(data.error);
-    loadTracks();
-  } catch (e) {
-    alert('삭제 오류: ' + e.message);
+
+    miniWrap.appendChild(grid);
+    mountEl.appendChild(miniWrap);
+
+    if (tl.length) {
+      setActive(tl[0].date);
+      await loadSnapshot(track.id, tl[0].date, track.target_place_id);
+    }
   }
-}
 
-function escHtml(s) {
-  if (!s) return '';
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
+  async function loadTracks(){
+    const box = document.getElementById("tracks");
+    const empty = document.getElementById("tracksEmpty");
+    box.innerHTML = "";
+    document.getElementById("snapCard").style.display = "none";
 
-// ── 초기화 ──
-initRegions();
+    const data = await api("/api/tracks?workspaceId=" + encodeURIComponent(workspaceId), { method:"GET", headers:{} });
+    const tracks = data.tracks || [];
+    empty.style.display = tracks.length ? "none" : "block";
 
-// URL 파라미터 자동 채우기
-(function() {
-  const p = new URLSearchParams(location.search);
-  if (p.get('kind')) document.getElementById('kind').value = p.get('kind');
-  if (p.get('keyword')) document.getElementById('keyword').value = p.get('keyword');
-  if (p.get('placeId')) document.getElementById('placeId').value = p.get('placeId');
-})();
+    for (const t of tracks) {
+      const item = document.createElement("div");
+      item.className = "track-item";
+      const region = t.region_city + (t.region_district ? (" / " + t.region_district) : "");
+      const kl = kindLabel(t.kind || "restaurant");
 
-// 트랙 로드 + 캐시
-(async function() {
-  await loadTracks();
-  // 트랙 캐시 (스냅샷에서 targetPlaceId 비교용)
-  try {
-    const resp = await fetch(`${API_BASE}/api/tracks?workspaceId=${encodeURIComponent(getWorkspaceId())}`);
-    const data = await resp.json();
-    if (data.tracks) localStorage.setItem('cachedTracks', JSON.stringify(data.tracks));
-  } catch(e) {}
-})();
+      item.innerHTML =
+        '<div class="track-head">' +
+          '<div>' +
+            '<div class="track-title">[' + esc(kl) + '] [' + esc(region) + '] ' + esc(t.keyword) + ' <span class="mono">' + esc(t.target_place_id) + '</span></div>' +
+            '<div class="track-sub">기기: ' + esc(t.device_type||"pc") + ' / 최근 14일(날짜 클릭 -> 해당일 Top50)</div>' +
+          '</div>' +
+          '<div class="track-actions">' +
+            '<button class="btn btn-ghost" data-act="collect">수동수집</button>' +
+            '<button class="btn btn-danger" data-act="del">삭제</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="miniMount"></div>';
+
+      const collectBtn = item.querySelector('[data-act="collect"]');
+      collectBtn.onclick = async () => {
+        collectBtn.disabled = true;
+        try {
+          await api("/api/collect?workspaceId=" + encodeURIComponent(workspaceId) + "&trackId=" + t.id, { method:"POST", body:"{}" });
+          await loadTracks();
+        } catch (e) {
+          alert("수집 실패: " + e.message);
+        } finally {
+          collectBtn.disabled = false;
+        }
+      };
+
+      const delBtn = item.querySelector('[data-act="del"]');
+      delBtn.onclick = async () => {
+        if (!confirm("삭제할까요?")) return;
+        await api("/api/track?workspaceId=" + encodeURIComponent(workspaceId) + "&id=" + t.id, { method:"DELETE", headers:{} });
+        await loadTracks();
+      };
+
+      box.appendChild(item);
+      const mount = item.querySelector(".miniMount");
+      try {
+        await renderTrackMiniTimeline(t, mount);
+      } catch (e) {
+        mount.innerHTML = '<div class="muted" style="margin-top:10px;">타임라인 로드 실패: ' + esc(e.message) + '</div>';
+      }
+    }
+  }
+
+  document.getElementById("btnReload").onclick = loadTracks;
+
+  document.getElementById("btnAdd").onclick = async () => {
+    const kind = document.getElementById("selectKind").value;
+    const kw = document.getElementById("keyword").value.trim();
+    const pid = document.getElementById("placeId").value.trim();
+    const city = $city.value;
+    const district = $district.value || null;
+    const deviceType = document.getElementById("deviceType").value;
+    const statusEl = document.getElementById("addStatus");
+
+    if(!kw) return alert("키워드를 입력하세요.");
+    if(!pid) return alert("플레이스 ID를 입력하세요.");
+
+    let xy = null;
+    const ds = REGIONS[city]?.districts || null;
+    if(ds && district && ds[district]) xy = ds[district];
+    else xy = REGIONS[city]?.city;
+    if(!xy) return alert("지역 좌표를 찾을 수 없습니다.");
+
+    statusEl.textContent = "등록 중...";
+    try {
+      const r = await api("/api/track", {
+        method:"POST",
+        body: JSON.stringify({
+          workspaceId,
+          kind: kind,
+          keyword: kw,
+          targetPlaceId: pid,
+          regionCity: city,
+          regionDistrict: district,
+          x: xy.x,
+          y: xy.y,
+          deviceType
+        })
+      });
+
+      statusEl.textContent = "등록 완료. 즉시 수집 중...";
+      await api("/api/collect?workspaceId=" + encodeURIComponent(workspaceId) + "&trackId=" + r.id, { method:"POST", body:"{}" });
+
+      statusEl.textContent = "완료: 오늘 데이터가 저장되었습니다.";
+      await loadTracks();
+    } catch (e) {
+      statusEl.textContent = "실패: " + e.message;
+      alert(e.message);
+    }
+  };
+
+  loadTracks().catch(e => alert(e.message));
 </script>
 </body>
 </html>
