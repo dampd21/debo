@@ -5,379 +5,119 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>네이버 플레이스 순위 조회</title>
 <style>
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    background: #f5f5f5;
-    color: #333;
-}
-.header {
-    background: #1a1a2e;
-    color: #fff;
-    padding: 20px 0;
-}
-.header-inner {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 0 20px;
-}
-.header h1 {
-    font-size: 22px;
-    font-weight: 700;
-}
-.header p {
-    font-size: 13px;
-    color: #aaa;
-    margin-top: 4px;
-}
-.header-top {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-}
-.menu-btn {
-    width: 38px;
-    height: 38px;
-    border: 1px solid rgba(255,255,255,0.25);
-    background: transparent;
-    border-radius: 8px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.menu-btn span {
-    display: block;
-    width: 18px;
-    height: 2px;
-    background: #fff;
-    position: relative;
-}
-.menu-btn span:before,
-.menu-btn span:after {
-    content: "";
-    position: absolute;
-    left: 0;
-    width: 18px;
-    height: 2px;
-    background: #fff;
-}
-.menu-btn span:before { top: -6px; }
-.menu-btn span:after { top: 6px; }
-.drawer-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.45);
-    display: none;
-    z-index: 9999;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f5f5; color: #333; }
+
+.header { background: #1a1a2e; color: #fff; padding: 20px 0; }
+.header-inner { max-width: 900px; margin: 0 auto; padding: 0 20px; }
+.header h1 { font-size: 22px; font-weight: 700; }
+.header p { font-size: 13px; color: #aaa; margin-top: 4px; }
+.header-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+.menu-btn { width: 38px; height: 38px; border: 1px solid rgba(255,255,255,0.25); background: transparent; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+.menu-btn span { display: block; width: 18px; height: 2px; background: #fff; position: relative; }
+.menu-btn span:before, .menu-btn span:after { content: ""; position: absolute; left: 0; width: 18px; height: 2px; background: #fff; }
+.menu-btn span:before { top: -6px; } .menu-btn span:after { top: 6px; }
+
+.drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; z-index: 9999; }
 .drawer-overlay.show { display: block; }
-.drawer {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 280px;
-    height: 100%;
-    background: #fff;
-    box-shadow: -10px 0 30px rgba(0,0,0,0.18);
-    padding: 16px;
-}
-.drawer-head {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
-    margin-bottom: 10px;
-}
+.drawer { position: absolute; top: 0; right: 0; width: 280px; height: 100%; background: #fff; box-shadow: -10px 0 30px rgba(0,0,0,0.18); padding: 16px; }
+.drawer-head { display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid #eee; margin-bottom: 10px; }
 .drawer-title { font-weight: 800; color: #1a1a2e; }
-.drawer-close {
-    border: none;
-    background: none;
-    font-size: 22px;
-    cursor: pointer;
-    color: #666;
-}
-.drawer a {
-    display: block;
-    padding: 12px 10px;
-    border-radius: 10px;
-    color: #333;
-    text-decoration: none;
-    font-weight: 700;
-}
+.drawer-close { border: none; background: none; font-size: 22px; cursor: pointer; color: #666; }
+.drawer a { display: block; padding: 12px 10px; border-radius: 10px; color: #333; text-decoration: none; font-weight: 700; }
 .drawer a:hover { background: #f5f5f5; }
-.drawer .mutedlink {
-    font-size: 12px;
-    color: #888;
-    font-weight: 600;
-    padding: 0 10px 8px;
-}
-.container {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 20px;
-}
-.card {
-    background: #fff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    padding: 24px;
-    margin-bottom: 20px;
-}
-.card h2 {
-    font-size: 16px;
-    margin-bottom: 16px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #eee;
-}
-.form-row {
-    display: flex;
-    gap: 12px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-}
-.form-group {
-    flex: 1;
-    min-width: 180px;
-}
-.form-group label {
-    display: block;
-    font-size: 13px;
-    font-weight: 600;
-    margin-bottom: 6px;
-    color: #555;
-}
-.form-group input,
-.form-group select {
-    width: 100%;
-    padding: 10px 12px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 14px;
-    outline: none;
-}
-.form-group input:focus {
-    border-color: #1a1a2e;
-}
-.btn {
-    padding: 10px 28px;
-    border: none;
-    border-radius: 6px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background 0.2s;
-}
-.btn-primary {
-    background: #1a1a2e;
-    color: #fff;
-}
-.btn-primary:hover {
-    background: #16213e;
-}
-.btn-primary:disabled {
-    background: #999;
-    cursor: not-allowed;
-}
-.result-box {
-    display: none;
-    margin-top: 20px;
-    padding: 24px;
-    border-radius: 8px;
-    text-align: center;
-}
-.result-found {
-    background: #eafaf1;
-    border: 2px solid #2ecc71;
-}
-.result-notfound {
-    background: #fdedec;
-    border: 2px solid #e74c3c;
-}
-.result-error {
-    background: #fef9e7;
-    border: 2px solid #f39c12;
-}
-.result-rank {
-    font-size: 52px;
-    font-weight: 800;
-    color: #1a1a2e;
-    margin: 8px 0;
-}
-.result-rank-sub {
-    font-size: 14px;
-    color: #888;
-}
-.result-name {
-    font-size: 18px;
-    font-weight: 700;
-    margin-bottom: 4px;
-}
-.result-detail {
-    font-size: 13px;
-    color: #666;
-    margin-top: 6px;
-}
-.result-stats {
-    display: flex;
-    justify-content: center;
-    gap: 16px;
-    flex-wrap: wrap;
-    margin-top: 14px;
-}
-.result-stat {
-    text-align: center;
-}
-.result-stat-value {
-    font-size: 18px;
-    font-weight: 700;
-    color: #1a1a2e;
-}
-.result-stat-label {
-    font-size: 11px;
-    color: #999;
-}
-.loading {
-    display: none;
-    text-align: center;
-    padding: 30px;
-}
-.spinner {
-    display: inline-block;
-    width: 32px;
-    height: 32px;
-    border: 3px solid #ddd;
-    border-top-color: #1a1a2e;
-    border-radius: 50%;
-    animation: spin 0.6s linear infinite;
-}
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-.loading-text {
-    margin-top: 10px;
-    font-size: 13px;
-    color: #888;
-}
-.rank-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 12px;
-    margin-top: 16px;
-}
-.rank-table th {
-    background: #f8f8f8;
-    padding: 8px 6px;
-    text-align: left;
-    font-weight: 600;
-    border-bottom: 2px solid #ddd;
-    white-space: nowrap;
-    position: sticky;
-    top: 0;
-}
-.rank-table td {
-    padding: 8px 6px;
-    border-bottom: 1px solid #eee;
-    vertical-align: middle;
-}
-.rank-table tbody tr:hover {
-    background: #f5f5f5;
-}
-.rank-table .highlight {
-    background: #fff9c4;
-}
-.badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 12px;
-    font-weight: 700;
-    font-size: 11px;
-    color: #fff;
-}
-.badge-1 { background: #e74c3c; }
-.badge-3 { background: #2ecc71; }
-.badge-5 { background: #3498db; }
-.badge-10 { background: #f39c12; }
-.badge-20 { background: #e67e22; }
-.badge-other { background: #95a5a6; }
-.table-name {
-    font-weight: 600;
-    color: #1a1a2e;
-}
-.table-micro {
-    font-size: 10px;
-    color: #999;
-    font-style: italic;
-    display: block;
-    margin-top: 2px;
-}
-.max-select {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 14px;
-}
-.max-select label {
-    font-size: 13px;
-    font-weight: 600;
-    color: #555;
-}
-.max-select select {
-    padding: 6px 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
-    font-size: 13px;
-}
-.page-info {
-    text-align: center;
-    font-size: 12px;
-    color: #aaa;
-    margin-top: 8px;
-}
-.history-list {
-    margin-top: 16px;
-}
-.history-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    border-bottom: 1px solid #f0f0f0;
-    font-size: 13px;
-}
-.history-item:hover {
-    background: #fafafa;
-}
-.history-keyword {
-    font-weight: 600;
-}
-.btn-tiny {
-    padding: 4px 10px;
-    font-size: 11px;
-    border: 1px solid #ddd;
-    background: #fff;
-    border-radius: 4px;
-    cursor: pointer;
-}
-.btn-tiny:hover {
-    background: #f0f0f0;
-}
-.btn-tiny-del {
-    color: #e74c3c;
-    border-color: #e74c3c;
-}
+.drawer .mutedlink { font-size: 12px; color: #888; font-weight: 600; padding: 0 10px 8px; }
+
+.container { max-width: 900px; margin: 0 auto; padding: 20px; }
+.card { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 24px; margin-bottom: 20px; }
+.card h2 { font-size: 16px; margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #eee; }
+
+.form-row { display: flex; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+.form-group { flex: 1; min-width: 180px; }
+.form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: #555; }
+.form-group input, .form-group select { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; outline: none; }
+.form-group input:focus { border-color: #1a1a2e; }
+
+.btn { padding: 10px 28px; border: none; border-radius: 6px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+.btn-primary { background: #1a1a2e; color: #fff; }
+.btn-primary:hover { background: #16213e; }
+.btn-primary:disabled { background: #999; cursor: not-allowed; }
+
+.btn-ghost { background:#fff; border:1px solid #ccc; color:#333; }
+.btn-ghost:hover { background:#f1f1f1; }
+
+.result-box { display: none; margin-top: 20px; padding: 24px; border-radius: 8px; text-align: center; }
+.result-found { background: #eafaf1; border: 2px solid #2ecc71; }
+.result-notfound { background: #fdedec; border: 2px solid #e74c3c; }
+.result-error { background: #fef9e7; border: 2px solid #f39c12; }
+
+.result-rank { font-size: 52px; font-weight: 800; color: #1a1a2e; margin: 8px 0; }
+.result-rank-sub { font-size: 14px; color: #888; }
+.result-name { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.result-detail { font-size: 13px; color: #666; margin-top: 6px; }
+
+.result-stats { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; margin-top: 14px; }
+.result-stat { text-align: center; }
+.result-stat-value { font-size: 18px; font-weight: 700; color: #1a1a2e; }
+.result-stat-label { font-size: 11px; color: #999; }
+
+.loading { display: none; text-align: center; padding: 30px; }
+.spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid #ddd; border-top-color: #1a1a2e; border-radius: 50%; animation: spin 0.6s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { margin-top: 10px; font-size: 13px; color: #888; }
+
+.rank-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 16px; }
+.rank-table th { background: #f8f8f8; padding: 8px 6px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd; white-space: nowrap; position: sticky; top: 0; }
+.rank-table td { padding: 8px 6px; border-bottom: 1px solid #eee; vertical-align: middle; }
+.rank-table tbody tr:hover { background: #f5f5f5; }
+.rank-table .highlight { background: #fff9c4; }
+
+.badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-weight: 700; font-size: 11px; color: #fff; }
+.badge-1 { background: #e74c3c; } .badge-3 { background: #2ecc71; } .badge-5 { background: #3498db; }
+.badge-10 { background: #f39c12; } .badge-20 { background: #e67e22; } .badge-other { background: #95a5a6; }
+
+.table-name { font-weight: 600; color: #1a1a2e; }
+.table-micro { font-size: 10px; color: #999; font-style: italic; display: block; margin-top: 2px; }
+
+.max-select { display: flex; gap: 8px; align-items: center; margin-bottom: 14px; }
+.max-select label { font-size: 13px; font-weight: 600; color: #555; }
+.max-select select { padding: 6px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
+.page-info { text-align: center; font-size: 12px; color: #aaa; margin-top: 8px; }
+
+.history-list { margin-top: 16px; }
+.history-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; font-size: 13px; }
+.history-item:hover { background: #fafafa; }
+.history-keyword { font-weight: 600; }
+.btn-tiny { padding: 4px 10px; font-size: 11px; border: 1px solid #ddd; background: #fff; border-radius: 4px; cursor: pointer; }
+.btn-tiny:hover { background: #f0f0f0; }
+.btn-tiny-del { color: #e74c3c; border-color: #e74c3c; }
+
+/* Modal (리뷰 통계) */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; z-index: 10000; padding: 24px; overflow:auto; }
+.modal-overlay.show { display: block; }
+.modal { max-width: 860px; margin: 0 auto; background:#fff; border-radius: 12px; border: 1px solid #e5e5e5; }
+.modal-head { padding: 14px 16px; border-bottom:1px solid #eee; display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.modal-title { font-weight: 900; color:#1a1a2e; }
+.modal-close { border:none; background:none; font-size:22px; cursor:pointer; color:#666; }
+.modal-body { padding: 16px; }
+.muted { color:#888; font-size: 12px; }
+.mono { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+.kv { display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; }
+.kv .box { flex:1; min-width: 140px; border:1px solid #eee; border-radius:10px; padding:12px; background:#fafafa; }
+.kv .box b { display:block; font-size:18px; color:#1a1a2e; }
+.kv .box span { font-size: 11px; color:#888; }
+
+.tag { display:inline-block; padding:3px 8px; border-radius: 999px; background:#eef2ff; color:#1a1a2e; font-size: 11px; font-weight: 700; margin: 2px 4px 0 0; }
+.tag-neg { background:#ffecec; color:#b12b2b; }
+
 @media (max-width: 600px) {
-    .form-row { flex-direction: column; }
-    .form-group { min-width: 100%; }
-    .result-rank { font-size: 40px; }
-    .rank-table { font-size: 11px; }
-    .rank-table th, .rank-table td { padding: 6px 4px; }
+  .form-row { flex-direction: column; }
+  .form-group { min-width: 100%; }
+  .result-rank { font-size: 40px; }
+  .rank-table { font-size: 11px; }
+  .rank-table th, .rank-table td { padding: 6px 4px; }
 }
 </style>
 </head>
@@ -396,6 +136,7 @@ body {
 <div class="container">
   <div class="card">
     <h2>순위 조회</h2>
+
     <div class="form-row">
       <div class="form-group">
         <label>업종</label>
@@ -408,6 +149,7 @@ body {
         </select>
       </div>
     </div>
+
     <div class="form-row">
       <div class="form-group">
         <label>검색 키워드</label>
@@ -418,6 +160,7 @@ body {
         <input type="text" id="inputPlaceId" placeholder="예: 1951454277">
       </div>
     </div>
+
     <div class="max-select">
       <label>검색 범위</label>
       <select id="selectMaxRank">
@@ -426,11 +169,14 @@ body {
         <option value="300" selected>300위까지</option>
       </select>
     </div>
+
     <button class="btn btn-primary" id="btnSearch">순위 조회</button>
+
     <div class="loading" id="loading">
       <div class="spinner"></div>
       <div class="loading-text" id="loadingText">검색 중...</div>
     </div>
+
     <div class="result-box" id="resultBox"></div>
   </div>
 
@@ -468,16 +214,65 @@ body {
   </div>
 </div>
 
+<!-- 리뷰 통계 모달(1개 업체) -->
+<div class="modal-overlay" id="reviewModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div>
+        <div class="modal-title" id="rmTitle">리뷰 통계</div>
+        <div class="muted" id="rmSub"></div>
+      </div>
+      <button class="modal-close" id="rmClose" aria-label="닫기">x</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+        <button class="btn btn-ghost" id="rm7">7일</button>
+        <button class="btn btn-ghost" id="rm30">30일</button>
+        <button class="btn btn-ghost" id="rmCustomBtn">직접입력</button>
+        <button class="btn btn-ghost" id="rmDownload">HTML 다운로드</button>
+        <span class="muted" id="rmRangeText"></span>
+      </div>
+
+      <div id="rmCustomBox" style="display:none;gap:8px;flex-wrap:wrap;align-items:center;margin-top:10px;">
+        <input id="rmStart" placeholder="YYYY-MM-DD">
+        <input id="rmEnd" placeholder="YYYY-MM-DD">
+        <button class="btn btn-primary" id="rmApply">적용</button>
+      </div>
+
+      <div id="rmStatus" class="muted" style="margin-top:10px;"></div>
+      <div id="rmContent" style="margin-top:10px;"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 (function() {
   "use strict";
 
-  // ★★★ Worker A 도메인 ★★★
+  // Worker A (검색)
   var PROXY = "https://naverrank.dampd21.workers.dev/";
+
+  // Worker C (리뷰통계 캐시 프록시)
+  var DASH_BASE = "https://naverdashboard.dampd21.workers.dev";
 
   var TRACKER_PAGE = "tracker.html";
   var HKEY = "npt_rank_history";
   var allItems = [];
+  var lastFound = null; // {placeId, name}
+
+  function ymd(d){
+    var yyyy = d.getFullYear();
+    var mm = String(d.getMonth()+1).padStart(2,"0");
+    var dd = String(d.getDate()).padStart(2,"0");
+    return yyyy + "-" + mm + "-" + dd;
+  }
+  function calcRange(days){
+    var now = new Date();
+    var end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1); // 오늘 미포함: 어제
+    var start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - (days - 1));
+    return { startDate: ymd(start), endDate: ymd(end) };
+  }
+  function isYMD(s){ return /^\d{4}-\d{2}-\d{2}$/.test(String(s||"")); }
 
   function parseCount(v) {
     if (v == null) return 0;
@@ -489,13 +284,14 @@ body {
 
   function extractItems(kind, rawData) {
     try {
+      // GraphQL errors 체크
+      if (Array.isArray(rawData) && rawData[0] && rawData[0].errors && rawData[0].errors.length) {
+        return { items: [], total: 0, error: rawData[0].errors[0].message || "GRAPHQL_ERROR" };
+      }
+
       var d = rawData[0].data;
-      if (kind === "restaurant") {
-        return { items: d.restaurants.items || [], total: d.restaurants.total || 0 };
-      }
-      if (kind === "hairshop" || kind === "nailshop" || kind === "hospital") {
-        return { items: d.businesses.items || [], total: d.businesses.total || 0 };
-      }
+      if (kind === "restaurant") return { items: d.restaurants.items || [], total: d.restaurants.total || 0 };
+      if (kind === "hairshop" || kind === "nailshop" || kind === "hospital") return { items: d.businesses.items || [], total: d.businesses.total || 0 };
       if (kind === "accommodation") {
         var biz = d.accommodationSearch && d.accommodationSearch.business;
         if (biz) return { items: biz.items || [], total: biz.total || 0 };
@@ -523,10 +319,8 @@ body {
 
   function esc(s) { return s ? String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;") : ""; }
   function val(v, d) { return (v !== null && v !== undefined && v !== "") ? v : (d !== undefined ? d : "-"); }
-  function kindLabel(k) {
-    var m = { restaurant:"식당/카페", hairshop:"미용실", nailshop:"네일", hospital:"병원", accommodation:"숙박" };
-    return m[k] || k;
-  }
+  function kindLabel(k) { var m = { restaurant:"식당/카페", hairshop:"미용실", nailshop:"네일", hospital:"병원", accommodation:"숙박" }; return m[k] || k; }
+  function bc(r) { if (r===1) return "badge-1"; if (r<=3) return "badge-3"; if (r<=5) return "badge-5"; if (r<=10) return "badge-10"; if (r<=20) return "badge-20"; return "badge-other"; }
 
   function loadH() { try { return JSON.parse(localStorage.getItem(HKEY)) || []; } catch(e) { return []; } }
   function saveH(l) { localStorage.setItem(HKEY, JSON.stringify(l)); }
@@ -574,11 +368,6 @@ body {
     }
   }
 
-  function bc(r) {
-    if (r===1) return "badge-1"; if (r<=3) return "badge-3"; if (r<=5) return "badge-5";
-    if (r<=10) return "badge-10"; if (r<=20) return "badge-20"; return "badge-other";
-  }
-
   function showLoad(m) {
     document.getElementById("loading").style.display = "block";
     document.getElementById("loadingText").textContent = m || "검색 중...";
@@ -600,9 +389,20 @@ body {
       x.timeout = 20000;
       x.onload = function() {
         if (x.status === 200) {
-          try { resolve(JSON.parse(x.responseText)); }
-          catch(e) { reject("응답 파싱 실패: " + x.responseText.substring(0, 200)); }
-        } else { reject("HTTP " + x.status + ": " + x.responseText.substring(0, 200)); }
+          try {
+            var j = JSON.parse(x.responseText);
+            // GraphQL errors 체크
+            if (Array.isArray(j) && j[0] && j[0].errors && j[0].errors.length) {
+              reject("GRAPHQL_ERROR: " + (j[0].errors[0].message || "unknown"));
+              return;
+            }
+            resolve(j);
+          } catch(e) {
+            reject("응답 파싱 실패: " + x.responseText.substring(0, 200));
+          }
+        } else {
+          reject("HTTP " + x.status + ": " + x.responseText.substring(0, 200));
+        }
       };
       x.onerror = function() { reject("네트워크 오류"); };
       x.ontimeout = function() { reject("시간 초과"); };
@@ -622,6 +422,8 @@ body {
     showLoad("'" + kw + "' 검색 중... (1~100위)");
 
     allItems = [];
+    lastFound = null;
+
     var total = 0, page = 0, ps = 100, mp = Math.ceil(maxR / ps);
 
     function next() {
@@ -630,21 +432,25 @@ body {
       if (page > 1) document.getElementById("loadingText").textContent = "'" + kw + "' 검색 중... (" + s + "~" + (s+d-1) + "위)";
       fetchPage(kind, kw, s, d).then(function(rawData) {
         var extracted = extractItems(kind, rawData);
+        if (extracted.error) throw new Error(extracted.error);
+
         var items = extracted.items;
         total = extracted.total || total;
         var normalized = items.map(function(it) { return normalizeItem(kind, it); });
         allItems = allItems.concat(normalized);
+
         var fi = -1;
         for (var i = 0; i < allItems.length; i++) {
           if (String(allItems[i].id) === String(pid)) { fi = i; break; }
         }
+
         if (fi >= 0 || items.length < d || page >= mp) {
           hideLoad(); document.getElementById("btnSearch").disabled = false;
           render(kind, kw, pid, total, maxR);
         } else { setTimeout(next, 300); }
       }).catch(function(err) {
         hideLoad(); document.getElementById("btnSearch").disabled = false;
-        showRes('<div style="font-size:15px;font-weight:600;color:#e67e22;">조회 실패</div><div class="result-detail">' + esc(String(err)) + '</div>', "result-error");
+        showRes('<div style="font-size:15px;font-weight:600;color:#e67e22;">조회 실패</div><div class="result-detail">' + esc(String(err.message || err)) + '</div>', "result-error");
       });
     }
     next();
@@ -656,8 +462,11 @@ body {
     for (var i = 0; i < allItems.length; i++) {
       if (String(allItems[i].id) === String(pid)) { fi = i; found = allItems[i]; break; }
     }
+
     if (fi >= 0) {
       var rank = fi + 1;
+      lastFound = { placeId: pid, name: found.name, keyword: kw, kind: kind };
+
       showRes(
         '<div class="result-name">' + esc(found.name) + '</div>' +
         '<div class="result-detail">' + esc(found.category) + ' / ' + esc(found.businessCategory) + '</div>' +
@@ -670,11 +479,22 @@ body {
           '<div class="result-stat"><div class="result-stat-value">' + val(found.saveCount, 0) + '</div><div class="result-stat-label">저장</div></div>' +
           '<div class="result-stat"><div class="result-stat-value">' + val(found.imageCount, 0) + '</div><div class="result-stat-label">이미지</div></div>' +
         '</div>' +
-        (found.microReview ? '<div class="result-detail" style="font-style:italic;color:#888;margin-top:10px;">"' + esc(found.microReview) + '"</div>' : ''),
+        (found.microReview ? '<div class="result-detail" style="font-style:italic;color:#888;margin-top:10px;">"' + esc(found.microReview) + '"</div>' : '') +
+        '<div style="margin-top:14px;display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">' +
+          '<button class="btn btn-primary" id="btnOneDash">리뷰 통계 보기</button>' +
+        '</div>',
         "result-found"
       );
+
+      // 버튼 바인딩
+      setTimeout(function(){
+        var b = document.getElementById("btnOneDash");
+        if (b) b.onclick = function(){ openReviewModal(pid, found.name); };
+      }, 0);
+
       addH(kind, kw, pid, rank, found.name);
     } else {
+      lastFound = null;
       showRes(
         '<div style="font-size:16px;font-weight:600;color:#e74c3c;">' + maxR + '위 안에 없습니다</div>' +
         '<div class="result-detail">플레이스 ID: ' + esc(pid) + '</div>' +
@@ -683,6 +503,7 @@ body {
       );
       addH(kind, kw, pid, null, "");
     }
+
     if (allItems.length > 0) {
       document.getElementById("tableCard").style.display = "block";
       document.getElementById("tableKeyword").textContent = kw;
@@ -711,6 +532,157 @@ body {
       document.getElementById("pageInfo").textContent = allItems.length + "개 표시 / 전체 " + total + "개";
     }
   }
+
+  // 리뷰 통계(1개 업체) =====
+  var rm = document.getElementById("reviewModal");
+  var rmTitle = document.getElementById("rmTitle");
+  var rmSub = document.getElementById("rmSub");
+  var rmStatus = document.getElementById("rmStatus");
+  var rmContent = document.getElementById("rmContent");
+  var rmRangeText = document.getElementById("rmRangeText");
+
+  var rmState = { businessId:null, name:null, range:null, data:null };
+
+  function sumRef(arr){ arr = arr || []; var s=0; for(var i=0;i<arr.length;i++) s += (arr[i].value||0); return s; }
+  function computeSent(themes){
+    themes = themes || [];
+    var pos=0, neg=0;
+    for(var i=0;i<themes.length;i++){
+      var t=themes[i];
+      if(t.name==="total" && t.preference==="positive") pos += (t.value||0);
+      if(t.name==="total" && t.preference==="negative") neg += (t.value||0);
+    }
+    var den=pos+neg;
+    if(!den) return null;
+    return Math.round((pos/den)*1000)/10;
+  }
+  function kwList(themes, pref){
+    themes = themes || [];
+    var a = themes.filter(function(t){
+      return t.preference===pref && t.name!=="total" && (t.value||0)>0;
+    });
+    a.sort(function(x,y){ return (y.value||0)-(x.value||0); });
+    return a;
+  }
+
+  function apiOne(businessId, startDate, endDate){
+    var u = DASH_BASE.replace(/\/+$/,"") + "/stats?businessId=" + encodeURIComponent(businessId)
+      + "&startDate=" + encodeURIComponent(startDate)
+      + "&endDate=" + encodeURIComponent(endDate);
+    return fetch(u).then(function(r){
+      return r.json().then(function(j){
+        if(!r.ok || !j.ok) throw new Error(j.error || ("HTTP " + r.status));
+        return j;
+      });
+    });
+  }
+
+  function renderOne(data){
+    var totalReviews = sumRef(data.reviews && data.reviews.referrers);
+    var totalReviewers = sumRef(data.reviewers && data.reviewers.referrers);
+    var sent = computeSent(data.themes);
+    var posKW = kwList(data.themes, "positive").slice(0,5);
+    var negKW = kwList(data.themes, "negative").slice(0,5);
+
+    var topAge = (data.characters || []).slice().sort(function(a,b){ return (b.ratio||0)-(a.ratio||0); }).slice(0,3);
+
+    rmContent.innerHTML =
+      '<div class="kv">' +
+        '<div class="box"><b>' + comma(totalReviews) + '</b><span>총 리뷰 수</span></div>' +
+        '<div class="box"><b>' + comma(totalReviewers) + '</b><span>총 리뷰어 수</span></div>' +
+        '<div class="box"><b>' + (data.charactersRatio ? (data.charactersRatio.male + "/" + data.charactersRatio.female) : "-") + '</b><span>성별(M/F)</span></div>' +
+        '<div class="box"><b>' + (sent==null ? "-" : (sent + "%")) + '</b><span>긍정률(총합)</span></div>' +
+      '</div>' +
+      '<div style="margin-top:12px;">' +
+        '<div style="font-weight:800;color:#1a1a2e;margin-bottom:6px;">주요 고객층(상위 3)</div>' +
+        (topAge.length ? topAge.map(function(c){
+          return '<span class="tag">' + (c.gender==="M"?"남":"여") + " " + c.age + "대 (" + c.ratio + "%)</span>";
+        }).join(" ") : '<span class="muted">데이터 없음</span>') +
+      '</div>' +
+      '<div style="margin-top:12px;">' +
+        '<div style="font-weight:800;color:#1a1a2e;margin-bottom:6px;">긍정 키워드</div>' +
+        (posKW.length ? posKW.map(function(k){ return '<span class="tag">' + esc(k.name) + "(" + k.value + ")</span>"; }).join(" ") : '<span class="muted">없음</span>') +
+      '</div>' +
+      '<div style="margin-top:12px;">' +
+        '<div style="font-weight:800;color:#1a1a2e;margin-bottom:6px;">부정 키워드</div>' +
+        (negKW.length ? negKW.map(function(k){ return '<span class="tag tag-neg">' + esc(k.name) + "(" + k.value + ")</span>"; }).join(" ") : '<span class="muted">없음</span>') +
+      '</div>';
+  }
+
+  function openReviewModal(placeId, name){
+    rmState.businessId = String(placeId);
+    rmState.name = name || placeId;
+    rmState.data = null;
+
+    rmTitle.textContent = "리뷰 통계: " + rmState.name;
+    rmSub.textContent = "businessId(placeId): " + rmState.businessId;
+    rmStatus.textContent = "";
+    rmContent.innerHTML = "";
+
+    rm.classList.add("show");
+    runOne(calcRange(7));
+  }
+
+  function closeReviewModal(){ rm.classList.remove("show"); }
+
+  function runOne(range){
+    rmState.range = range;
+    rmRangeText.textContent = "기간: " + range.startDate + " ~ " + range.endDate + " (오늘 미포함)";
+    rmStatus.textContent = "로딩중...";
+    rmContent.innerHTML = "";
+
+    apiOne(rmState.businessId, range.startDate, range.endDate)
+      .then(function(resp){
+        rmState.data = resp.data;
+        rmStatus.textContent = resp.cached ? "완료(캐시)" : "완료";
+        renderOne(resp.data);
+      })
+      .catch(function(e){
+        rmStatus.textContent = "실패: " + e.message;
+      });
+  }
+
+  document.getElementById("rmClose").onclick = closeReviewModal;
+  document.getElementById("reviewModal").onclick = function(e){ if(e.target === this) closeReviewModal(); };
+
+  document.getElementById("rm7").onclick = function(){ runOne(calcRange(7)); };
+  document.getElementById("rm30").onclick = function(){ runOne(calcRange(30)); };
+  document.getElementById("rmCustomBtn").onclick = function(){
+    var box = document.getElementById("rmCustomBox");
+    box.style.display = (box.style.display === "none" ? "flex" : "none");
+  };
+  document.getElementById("rmApply").onclick = function(){
+    var s = document.getElementById("rmStart").value.trim();
+    var e = document.getElementById("rmEnd").value.trim();
+    if(!isYMD(s) || !isYMD(e)) return alert("YYYY-MM-DD 형식으로 입력하세요.");
+    runOne({ startDate:s, endDate:e });
+  };
+
+  document.getElementById("rmDownload").onclick = function(){
+    if(!rmState.data || !rmState.range) return alert("다운로드할 데이터가 없습니다.");
+
+    var d = rmState.data;
+    var title = "review_" + rmState.businessId + "_" + rmState.range.startDate + "_" + rmState.range.endDate;
+
+    var html = '<!doctype html><html lang="ko"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>' +
+      '<title>' + esc(title) + '</title>' +
+      '<style>body{font-family:system-ui,Segoe UI,Malgun Gothic,sans-serif;padding:18px}h2{margin:0 0 6px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border-bottom:1px solid #eee;padding:8px;text-align:left}th{background:#f7f7f7}</style>' +
+      '</head><body>' +
+      '<h2>리뷰 통계: ' + esc(rmState.name) + '</h2>' +
+      '<div>businessId(placeId): <b>' + esc(rmState.businessId) + '</b></div>' +
+      '<div>기간: <b>' + esc(rmState.range.startDate) + ' ~ ' + esc(rmState.range.endDate) + '</b> (오늘 미포함)</div>' +
+      '<pre style="margin-top:12px;background:#fafafa;border:1px solid #eee;padding:12px;border-radius:10px;overflow:auto;max-height:70vh;">' +
+      esc(JSON.stringify(d, null, 2)) +
+      '</pre>' +
+      '</body></html>';
+
+    var blob = new Blob([html], {type:"text/html;charset=utf-8"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = title + ".html";
+    a.click();
+  };
+  // =====
 
   document.getElementById("btnSearch").onclick = doSearch;
   document.getElementById("inputKeyword").onkeydown = function(e) { if (e.key === "Enter") doSearch(); };
