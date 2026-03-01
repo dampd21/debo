@@ -93,7 +93,7 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
       <button class="drawer-close" id="btnDrawerClose" aria-label="닫기">x</button>
     </div>
     <div class="mutedlink">페이지 이동</div>
-    <a href="./index.html" id="linkRealtime">실시간 조회</a>
+    <a href="./index.html">실시간 조회</a>
     <a href="./tracker.html">플레이스 추적</a>
   </div>
 </div>
@@ -116,28 +116,11 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
     <div class="form-row">
       <div class="form-group">
         <label>키워드</label>
-        <input id="keyword" placeholder="예: 강남역맛집">
+        <input id="keyword" placeholder="예: 강남역맛집, 마곡미용실">
       </div>
       <div class="form-group">
         <label>대상 플레이스 ID</label>
         <input id="placeId" placeholder="예: 1951454277">
-      </div>
-    </div>
-    <div class="form-row">
-      <div class="form-group">
-        <label>시/도</label>
-        <select id="city"></select>
-      </div>
-      <div class="form-group">
-        <label>구/군 (서울/인천 등)</label>
-        <select id="district"></select>
-      </div>
-      <div class="form-group">
-        <label>기기 타입</label>
-        <select id="deviceType">
-          <option value="pc" selected>pc</option>
-          <option value="mobile">mobile</option>
-        </select>
       </div>
     </div>
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
@@ -175,6 +158,10 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
 <script>
   // ★★★ Worker B 도메인 ★★★
   var API_BASE = "https://ranktracker.dampd21.workers.dev";
+
+  // 기본 좌표 (서울시청)
+  var DEFAULT_X = "126.9783882";
+  var DEFAULT_Y = "37.5666103";
 
   var WS_KEY = "ranktracker_workspace_id";
   function getWS(){
@@ -234,79 +221,6 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
       });
     });
   }
-
-  var REGIONS = {
-    "서울특별시": {
-      city: { x:"126.9783882", y:"37.5666103" },
-      districts: {
-        "종로구":{x:"126.9770",y:"37.5729"},"중구":{x:"126.9977",y:"37.5636"},
-        "용산구":{x:"126.9903",y:"37.5324"},"마포구":{x:"126.9016",y:"37.5663"},
-        "영등포구":{x:"126.8963",y:"37.5264"},"강남구":{x:"127.0473",y:"37.5172"},
-        "서초구":{x:"127.0327",y:"37.4836"},"송파구":{x:"127.1059",y:"37.5145"},
-        "강서구":{x:"126.8495",y:"37.5509"},"강동구":{x:"127.1237",y:"37.5301"},
-        "강북구":{x:"127.0255",y:"37.6396"},"관악구":{x:"126.9516",y:"37.4784"},
-        "광진구":{x:"127.0821",y:"37.5384"},"구로구":{x:"126.8875",y:"37.4954"},
-        "금천구":{x:"126.8957",y:"37.4568"},"노원구":{x:"127.0561",y:"37.6543"},
-        "도봉구":{x:"127.0472",y:"37.6688"},"동대문구":{x:"127.0397",y:"37.5744"},
-        "동작구":{x:"126.9516",y:"37.5124"},"서대문구":{x:"126.9388",y:"37.5794"},
-        "성동구":{x:"127.0369",y:"37.5633"},"성북구":{x:"127.0176",y:"37.5894"},
-        "양천구":{x:"126.8665",y:"37.5270"},"은평구":{x:"126.9293",y:"37.6027"},
-        "중랑구":{x:"127.0928",y:"37.6063"}
-      }
-    },
-    "인천광역시": {
-      city: { x:"126.7052", y:"37.4563" },
-      districts: {
-        "부평구":{x:"126.7219",y:"37.5071"},"남동구":{x:"126.7310",y:"37.4470"},
-        "서구":{x:"126.6760",y:"37.5454"},"연수구":{x:"126.6783",y:"37.4102"},
-        "미추홀구":{x:"126.6507",y:"37.4637"},"중구":{x:"126.6217",y:"37.4738"}
-      }
-    },
-    "경기도":{city:{x:"127.0095",y:"37.2751"}},
-    "강원특별자치도":{city:{x:"127.7298",y:"37.8813"}},
-    "충청북도":{city:{x:"127.4890",y:"36.6424"}},
-    "충청남도":{city:{x:"126.6628",y:"36.6588"}},
-    "세종특별자치시":{city:{x:"127.2890",y:"36.4801"}},
-    "대전광역시":{city:{x:"127.3845",y:"36.3504"}},
-    "전북특별자치도":{city:{x:"127.1480",y:"35.8242"}},
-    "전라남도":{city:{x:"126.4629",y:"34.8118"}},
-    "광주광역시":{city:{x:"126.8526",y:"35.1595"}},
-    "경상북도":{city:{x:"128.5056",y:"36.5760"}},
-    "경상남도":{city:{x:"128.6811",y:"35.2270"}},
-    "대구광역시":{city:{x:"128.6014",y:"35.8714"}},
-    "부산광역시":{city:{x:"129.0756",y:"35.1796"}},
-    "울산광역시":{city:{x:"129.3114",y:"35.5395"}},
-    "제주특별자치도":{city:{x:"126.5312",y:"33.4996"}}
-  };
-
-  var $city = document.getElementById("city");
-  var $district = document.getElementById("district");
-
-  function fillCities(){
-    $city.innerHTML="";
-    Object.keys(REGIONS).forEach(function(name){
-      var opt=document.createElement("option");
-      opt.value=name; opt.textContent=name;
-      $city.appendChild(opt);
-    });
-    $city.value="서울특별시";
-  }
-  function fillDistricts(){
-    var ds = REGIONS[$city.value] && REGIONS[$city.value].districts ? REGIONS[$city.value].districts : null;
-    $district.innerHTML="";
-    var opt0=document.createElement("option");
-    opt0.value=""; opt0.textContent=ds ? "선택(권장)" : "해당없음";
-    $district.appendChild(opt0);
-    if(ds){
-      Object.keys(ds).forEach(function(d){
-        var opt=document.createElement("option");
-        opt.value=d; opt.textContent=d;
-        $district.appendChild(opt);
-      });
-    }
-  }
-  fillCities(); fillDistricts();
-  $city.addEventListener("change", fillDistricts);
 
   function loadSnapshot(trackId, date, targetPlaceId){
     return api("/api/snapshot?workspaceId=" + encodeURIComponent(workspaceId) + "&trackId=" + trackId + "&date=" + encodeURIComponent(date)).then(function(data){
@@ -417,14 +331,13 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
         chain = chain.then(function() {
           var item = document.createElement("div");
           item.className = "track-item";
-          var region = t.region_city + (t.region_district ? (" / " + t.region_district) : "");
           var kl = kindLabel(t.kind || "restaurant");
 
           item.innerHTML =
             '<div class="track-head">' +
               '<div>' +
-                '<div class="track-title">[' + esc(kl) + '] [' + esc(region) + '] ' + esc(t.keyword) + ' <span class="mono">' + esc(t.target_place_id) + '</span></div>' +
-                '<div class="track-sub">기기: ' + esc(t.device_type||"pc") + ' / 최근 14일(날짜 클릭 -> 해당일 Top50)</div>' +
+                '<div class="track-title">[' + esc(kl) + '] ' + esc(t.keyword) + ' <span class="mono">' + esc(t.target_place_id) + '</span></div>' +
+                '<div class="track-sub">최근 14일 (날짜 클릭 -> 해당일 Top50)</div>' +
               '</div>' +
               '<div class="track-actions">' +
                 '<button class="btn btn-ghost" data-act="collect">수동수집</button>' +
@@ -466,19 +379,10 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
     var kind = document.getElementById("selectKind").value;
     var kw = document.getElementById("keyword").value.trim();
     var pid = document.getElementById("placeId").value.trim();
-    var city = $city.value;
-    var district = $district.value || null;
-    var deviceType = document.getElementById("deviceType").value;
     var statusEl = document.getElementById("addStatus");
 
     if(!kw){ alert("키워드를 입력하세요."); return; }
     if(!pid){ alert("플레이스 ID를 입력하세요."); return; }
-
-    var xy = null;
-    var ds = REGIONS[city] && REGIONS[city].districts ? REGIONS[city].districts : null;
-    if(ds && district && ds[district]) xy = ds[district];
-    else xy = REGIONS[city] && REGIONS[city].city ? REGIONS[city].city : null;
-    if(!xy){ alert("지역 좌표를 찾을 수 없습니다."); return; }
 
     statusEl.textContent = "등록 중...";
     api("/api/track", {
@@ -488,11 +392,11 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
         kind: kind,
         keyword: kw,
         targetPlaceId: pid,
-        regionCity: city,
-        regionDistrict: district,
-        x: xy.x,
-        y: xy.y,
-        deviceType: deviceType
+        regionCity: "",
+        regionDistrict: null,
+        x: DEFAULT_X,
+        y: DEFAULT_Y,
+        deviceType: "pc"
       })
     }).then(function(r){
       statusEl.textContent = "등록 완료. 즉시 수집 중...";
