@@ -161,14 +161,9 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
       <table>
         <thead>
           <tr>
-            <th>순위</th>
-            <th>업체</th>
-            <th>카테고리</th>
-            <th class="num">블로그</th>
-            <th class="num">방문자</th>
-            <th class="num">저장</th>
-            <th class="num">이미지</th>
-            <th class="num">별점</th>
+            <th>순위</th><th>업체</th><th>카테고리</th>
+            <th class="num">블로그</th><th class="num">방문자</th>
+            <th class="num">저장</th><th class="num">이미지</th><th class="num">별점</th>
           </tr>
         </thead>
         <tbody id="snapBody"></tbody>
@@ -178,33 +173,31 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
 </div>
 
 <script>
-  // ★★★ Worker B 도메인을 여기서 변경 ★★★
-  const API_BASE = "https://ranktracker.dampd21.workers.dev";
+  // ★★★ Worker B 도메인 ★★★
+  var API_BASE = "https://ranktracker.dampd21.workers.dev";
 
-  const WS_KEY = "ranktracker_workspace_id";
+  var WS_KEY = "ranktracker_workspace_id";
   function getWS(){
-    let v = localStorage.getItem(WS_KEY);
+    var v = localStorage.getItem(WS_KEY);
     if(!v){
       v = (crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + "-" + Math.random());
       localStorage.setItem(WS_KEY, v);
     }
     return v;
   }
-  const workspaceId = getWS();
+  var workspaceId = getWS();
 
-  // URL 파라미터 자동 채우기
   (function(){
-    const qs = new URLSearchParams(location.search);
+    var qs = new URLSearchParams(location.search);
     if (qs.get("kind")) document.getElementById("selectKind").value = qs.get("kind");
     if (qs.get("keyword")) document.getElementById("keyword").value = qs.get("keyword");
     if (qs.get("placeId")) document.getElementById("placeId").value = qs.get("placeId");
   })();
 
-  // 메뉴
-  const drawer = document.getElementById("drawer");
-  document.getElementById("btnMenu").onclick = () => drawer.classList.add("show");
-  document.getElementById("btnDrawerClose").onclick = () => drawer.classList.remove("show");
-  drawer.onclick = (e) => { if (e.target === drawer) drawer.classList.remove("show"); };
+  var drawer = document.getElementById("drawer");
+  document.getElementById("btnMenu").onclick = function(){ drawer.classList.add("show"); };
+  document.getElementById("btnDrawerClose").onclick = function(){ drawer.classList.remove("show"); };
+  drawer.onclick = function(e){ if(e.target===drawer) drawer.classList.remove("show"); };
 
   function esc(s){ return s==null ? "" : String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
   function comma(n){ return (n==null) ? "-" : String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ","); }
@@ -216,10 +209,10 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
     return '<span class="delta down">&#9660;' + Math.abs(n) + '</span>';
   }
   function fmtDateLabel(dateStr){
-    const d = new Date(dateStr + "T00:00:00+09:00");
-    const mm = String(d.getMonth()+1).padStart(2,"0");
-    const dd = String(d.getDate()).padStart(2,"0");
-    const wk = ["일","월","화","수","목","금","토"][d.getDay()];
+    var d = new Date(dateStr + "T00:00:00+09:00");
+    var mm = String(d.getMonth()+1).padStart(2,"0");
+    var dd = String(d.getDate()).padStart(2,"0");
+    var wk = ["일","월","화","수","목","금","토"][d.getDay()];
     return mm + "." + dd + " " + wk;
   }
   function kindLabel(k) {
@@ -227,80 +220,86 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
     return m[k] || k;
   }
 
-  async function api(path, opts={}){
-    const base = API_BASE.replace(/\/+$/, "");
-    const r = await fetch(base + path, {
-      ...opts,
-      headers: { "Content-Type":"application/json", ...(opts.headers||{}) }
+  function api(path, opts){
+    opts = opts || {};
+    var base = API_BASE.replace(/\/+$/, "");
+    return fetch(base + path, {
+      method: opts.method || "GET",
+      headers: { "Content-Type":"application/json" },
+      body: opts.body || undefined
+    }).then(function(r){
+      return r.json().then(function(j){
+        if(!r.ok) throw new Error(j.error || ("HTTP " + r.status));
+        return j;
+      });
     });
-    const j = await r.json().catch(()=>null);
-    if(!r.ok) throw new Error(j?.error || ("HTTP " + r.status));
-    return j;
   }
 
-  // 지역 좌표
-  const REGIONS = {
+  var REGIONS = {
     "서울특별시": {
       city: { x:"126.9783882", y:"37.5666103" },
       districts: {
-        "종로구": { x:"126.9770", y:"37.5729" },
-        "중구": { x:"126.9977", y:"37.5636" },
-        "용산구": { x:"126.9903", y:"37.5324" },
-        "마포구": { x:"126.9016", y:"37.5663" },
-        "영등포구": { x:"126.8963", y:"37.5264" },
-        "강남구": { x:"127.0473", y:"37.5172" },
-        "서초구": { x:"127.0327", y:"37.4836" },
-        "송파구": { x:"127.1059", y:"37.5145" }
+        "종로구":{x:"126.9770",y:"37.5729"},"중구":{x:"126.9977",y:"37.5636"},
+        "용산구":{x:"126.9903",y:"37.5324"},"마포구":{x:"126.9016",y:"37.5663"},
+        "영등포구":{x:"126.8963",y:"37.5264"},"강남구":{x:"127.0473",y:"37.5172"},
+        "서초구":{x:"127.0327",y:"37.4836"},"송파구":{x:"127.1059",y:"37.5145"},
+        "강서구":{x:"126.8495",y:"37.5509"},"강동구":{x:"127.1237",y:"37.5301"},
+        "강북구":{x:"127.0255",y:"37.6396"},"관악구":{x:"126.9516",y:"37.4784"},
+        "광진구":{x:"127.0821",y:"37.5384"},"구로구":{x:"126.8875",y:"37.4954"},
+        "금천구":{x:"126.8957",y:"37.4568"},"노원구":{x:"127.0561",y:"37.6543"},
+        "도봉구":{x:"127.0472",y:"37.6688"},"동대문구":{x:"127.0397",y:"37.5744"},
+        "동작구":{x:"126.9516",y:"37.5124"},"서대문구":{x:"126.9388",y:"37.5794"},
+        "성동구":{x:"127.0369",y:"37.5633"},"성북구":{x:"127.0176",y:"37.5894"},
+        "양천구":{x:"126.8665",y:"37.5270"},"은평구":{x:"126.9293",y:"37.6027"},
+        "중랑구":{x:"127.0928",y:"37.6063"}
       }
     },
     "인천광역시": {
       city: { x:"126.7052", y:"37.4563" },
       districts: {
-        "부평구": { x:"126.7219", y:"37.5071" },
-        "남동구": { x:"126.7310", y:"37.4470" },
-        "서구": { x:"126.6760", y:"37.5454" },
-        "연수구": { x:"126.6783", y:"37.4102" },
-        "미추홀구": { x:"126.6507", y:"37.4637" },
-        "중구": { x:"126.6217", y:"37.4738" }
+        "부평구":{x:"126.7219",y:"37.5071"},"남동구":{x:"126.7310",y:"37.4470"},
+        "서구":{x:"126.6760",y:"37.5454"},"연수구":{x:"126.6783",y:"37.4102"},
+        "미추홀구":{x:"126.6507",y:"37.4637"},"중구":{x:"126.6217",y:"37.4738"}
       }
     },
-    "경기도": { city: { x:"127.0095", y:"37.2751" } },
-    "강원특별자치도": { city: { x:"127.7298", y:"37.8813" } },
-    "충청북도": { city: { x:"127.4890", y:"36.6424" } },
-    "충청남도": { city: { x:"126.6628", y:"36.6588" } },
-    "세종특별자치시": { city: { x:"127.2890", y:"36.4801" } },
-    "대전광역시": { city: { x:"127.3845", y:"36.3504" } },
-    "전북특별자치도": { city: { x:"127.1480", y:"35.8242" } },
-    "전라남도": { city: { x:"126.4629", y:"34.8118" } },
-    "광주광역시": { city: { x:"126.8526", y:"35.1595" } },
-    "경상북도": { city: { x:"128.5056", y:"36.5760" } },
-    "경상남도": { city: { x:"128.6811", y:"35.2270" } },
-    "대구광역시": { city: { x:"128.6014", y:"35.8714" } },
-    "부산광역시": { city: { x:"129.0756", y:"35.1796" } },
-    "울산광역시": { city: { x:"129.3114", y:"35.5395" } },
-    "제주특별자치도": { city: { x:"126.5312", y:"33.4996" } }
+    "경기도":{city:{x:"127.0095",y:"37.2751"}},
+    "강원특별자치도":{city:{x:"127.7298",y:"37.8813"}},
+    "충청북도":{city:{x:"127.4890",y:"36.6424"}},
+    "충청남도":{city:{x:"126.6628",y:"36.6588"}},
+    "세종특별자치시":{city:{x:"127.2890",y:"36.4801"}},
+    "대전광역시":{city:{x:"127.3845",y:"36.3504"}},
+    "전북특별자치도":{city:{x:"127.1480",y:"35.8242"}},
+    "전라남도":{city:{x:"126.4629",y:"34.8118"}},
+    "광주광역시":{city:{x:"126.8526",y:"35.1595"}},
+    "경상북도":{city:{x:"128.5056",y:"36.5760"}},
+    "경상남도":{city:{x:"128.6811",y:"35.2270"}},
+    "대구광역시":{city:{x:"128.6014",y:"35.8714"}},
+    "부산광역시":{city:{x:"129.0756",y:"35.1796"}},
+    "울산광역시":{city:{x:"129.3114",y:"35.5395"}},
+    "제주특별자치도":{city:{x:"126.5312",y:"33.4996"}}
   };
 
-  const $city = document.getElementById("city");
-  const $district = document.getElementById("district");
+  var $city = document.getElementById("city");
+  var $district = document.getElementById("district");
+
   function fillCities(){
     $city.innerHTML="";
-    Object.keys(REGIONS).forEach(name=>{
-      const opt=document.createElement("option");
+    Object.keys(REGIONS).forEach(function(name){
+      var opt=document.createElement("option");
       opt.value=name; opt.textContent=name;
       $city.appendChild(opt);
     });
     $city.value="서울특별시";
   }
   function fillDistricts(){
-    const ds = REGIONS[$city.value]?.districts || null;
+    var ds = REGIONS[$city.value] && REGIONS[$city.value].districts ? REGIONS[$city.value].districts : null;
     $district.innerHTML="";
-    const opt0=document.createElement("option");
+    var opt0=document.createElement("option");
     opt0.value=""; opt0.textContent=ds ? "선택(권장)" : "해당없음";
     $district.appendChild(opt0);
     if(ds){
-      Object.keys(ds).forEach(d=>{
-        const opt=document.createElement("option");
+      Object.keys(ds).forEach(function(d){
+        var opt=document.createElement("option");
         opt.value=d; opt.textContent=d;
         $district.appendChild(opt);
       });
@@ -309,208 +308,205 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
   fillCities(); fillDistricts();
   $city.addEventListener("change", fillDistricts);
 
-  // 스냅샷 렌더링
-  async function loadSnapshot(trackId, date, targetPlaceId){
-    const data = await api("/api/snapshot?workspaceId=" + encodeURIComponent(workspaceId) + "&trackId=" + trackId + "&date=" + encodeURIComponent(date), { method:"GET", headers:{} });
-    const snapCard = document.getElementById("snapCard");
-    const snapTitle = document.getElementById("snapTitle");
-    const snapSub = document.getElementById("snapSub");
-    const snapBody = document.getElementById("snapBody");
-    const targetNote = document.getElementById("targetNote");
-    snapCard.style.display="block";
+  function loadSnapshot(trackId, date, targetPlaceId){
+    return api("/api/snapshot?workspaceId=" + encodeURIComponent(workspaceId) + "&trackId=" + trackId + "&date=" + encodeURIComponent(date)).then(function(data){
+      var snapCard = document.getElementById("snapCard");
+      var snapTitle = document.getElementById("snapTitle");
+      var snapSub = document.getElementById("snapSub");
+      var snapBody = document.getElementById("snapBody");
+      var targetNote = document.getElementById("targetNote");
+      snapCard.style.display="block";
 
-    if(!data.snapshot){
-      snapTitle.textContent = "스냅샷: " + date;
-      snapSub.textContent = "해당 날짜 데이터가 없습니다.";
+      if(!data.snapshot){
+        snapTitle.textContent = "스냅샷: " + date;
+        snapSub.textContent = "해당 날짜 데이터가 없습니다.";
+        snapBody.innerHTML = "";
+        targetNote.style.display="none";
+        return;
+      }
+
+      snapTitle.textContent = "스냅샷: " + data.snapshot.base_date;
+      snapSub.textContent = "전일 기준: " + (data.prevDate || "-") + " / 대상 순위: " + ((data.snapshot.target_rank==null) ? "50위권 밖" : (data.snapshot.target_rank+"위"));
+
+      var targetIn = false;
       snapBody.innerHTML = "";
-      targetNote.style.display="none";
-      return;
-    }
+      (data.items || []).forEach(function(it){
+        var isT = String(it.place_id) === String(targetPlaceId);
+        if(isT) targetIn = true;
+        var tr = document.createElement("tr");
+        if(isT) tr.className = "hl";
+        tr.innerHTML =
+          '<td class="num"><b>' + it.rank + '</b> ' + (it.delta ? fmtDelta(it.delta.rankDelta) : "") + '</td>' +
+          '<td><div><b>' + esc(it.name||"-") + '</b>' + (isT ? ' <span class="pill">대상</span>' : '') + '</div><div class="muted mono">' + esc(it.place_id) + '</div></td>' +
+          '<td>' + esc(it.category||"-") + '</td>' +
+          '<td class="num">' + comma(it.blog_count || 0) + '</td>' +
+          '<td class="num">' + comma(it.visitor_count || 0) + '</td>' +
+          '<td class="num">' + comma(it.save_count || 0) + '</td>' +
+          '<td class="num">' + comma(it.image_count || 0) + '</td>' +
+          '<td class="num">' + (it.score || "-") + '</td>';
+        snapBody.appendChild(tr);
+      });
 
-    snapTitle.textContent = "스냅샷: " + data.snapshot.base_date;
-    snapSub.textContent = "전일 기준: " + (data.prevDate || "-") + " / 대상 순위: " + ((data.snapshot.target_rank==null) ? "50위권 밖" : (data.snapshot.target_rank+"위"));
-
-    let targetIn = false;
-    snapBody.innerHTML = "";
-    (data.items || []).forEach(it=>{
-      const isT = String(it.place_id) === String(targetPlaceId);
-      if(isT) targetIn = true;
-      const tr = document.createElement("tr");
-      if(isT) tr.className = "hl";
-      tr.innerHTML =
-        '<td class="num"><b>' + it.rank + '</b> ' + (it.delta ? fmtDelta(it.delta.rankDelta) : "") + '</td>' +
-        '<td><div><b>' + esc(it.name||"-") + '</b>' + (isT ? ' <span class="pill">대상</span>' : '') + '</div><div class="muted mono">' + esc(it.place_id) + '</div></td>' +
-        '<td>' + esc(it.category||"-") + '</td>' +
-        '<td class="num">' + comma(it.blog_count || 0) + '</td>' +
-        '<td class="num">' + comma(it.visitor_count || 0) + '</td>' +
-        '<td class="num">' + comma(it.save_count || 0) + '</td>' +
-        '<td class="num">' + comma(it.image_count || 0) + '</td>' +
-        '<td class="num">' + (it.score || "-") + '</td>';
-      snapBody.appendChild(tr);
+      if(!targetIn){
+        targetNote.style.display="block";
+        targetNote.innerHTML = '대상 업체(placeId <span class="mono">' + esc(targetPlaceId) + '</span>)는 이 날짜에 <b>Top50에 없습니다</b>.';
+      } else {
+        targetNote.style.display="none";
+      }
     });
-
-    if(!targetIn){
-      targetNote.style.display="block";
-      targetNote.innerHTML = '대상 업체(placeId <span class="mono">' + esc(targetPlaceId) + '</span>)는 이 날짜에 <b>Top50에 없습니다</b>.';
-    }else{
-      targetNote.style.display="none";
-    }
   }
 
-  // 트랙 렌더링
-  async function renderTrackMiniTimeline(track, mountEl){
-    const data = await api("/api/timeline?workspaceId=" + encodeURIComponent(workspaceId) + "&trackId=" + track.id + "&limit=14", { method:"GET", headers:{} });
-    const tl = data.timeline || [];
-    const miniWrap = document.createElement("div");
-    miniWrap.className = "mini-wrap";
-    const grid = document.createElement("div");
-    grid.className = "mini-grid";
+  function renderTrackMiniTimeline(track, mountEl){
+    return api("/api/timeline?workspaceId=" + encodeURIComponent(workspaceId) + "&trackId=" + track.id + "&limit=14").then(function(data){
+      var tl = data.timeline || [];
+      var miniWrap = document.createElement("div");
+      miniWrap.className = "mini-wrap";
+      var grid = document.createElement("div");
+      grid.className = "mini-grid";
 
-    const setActive = (date) => {
-      const cells = grid.querySelectorAll(".mini-cell");
-      for (let c of cells) c.classList.remove("active");
-      const active = grid.querySelector('.mini-cell[data-date="' + date + '"]');
-      if (active) active.classList.add("active");
-    };
-
-    tl.forEach(row=>{
-      const cell = document.createElement("div");
-      cell.className = "mini-cell";
-      cell.setAttribute("data-date", row.date);
-      cell.innerHTML =
-        '<div class="mini-date">' + esc(fmtDateLabel(row.date)) + '</div>' +
-        '<div class="mini-rank ' + (row.targetRank==null ? 'mini-out' : '') + '">' +
-          esc(fmtRank(row.targetRank)) +
-          fmtDelta(row.rankDelta) +
-        '</div>' +
-        '<div class="mini-metric">' +
-          '<div><b>블</b> ' + (row.blogCount==null ? "-" : comma(row.blogCount)) + '</div>' +
-          '<div><b>방</b> ' + (row.visitorCount==null ? "-" : comma(row.visitorCount)) + '</div>' +
-        '</div>';
-      cell.onclick = async () => {
-        setActive(row.date);
-        await loadSnapshot(track.id, row.date, track.target_place_id);
+      var setActive = function(date) {
+        var cells = grid.querySelectorAll(".mini-cell");
+        for (var i = 0; i < cells.length; i++) cells[i].classList.remove("active");
+        var active = grid.querySelector('.mini-cell[data-date="' + date + '"]');
+        if (active) active.classList.add("active");
       };
-      grid.appendChild(cell);
+
+      tl.forEach(function(row){
+        var cell = document.createElement("div");
+        cell.className = "mini-cell";
+        cell.setAttribute("data-date", row.date);
+        cell.innerHTML =
+          '<div class="mini-date">' + esc(fmtDateLabel(row.date)) + '</div>' +
+          '<div class="mini-rank ' + (row.targetRank==null ? 'mini-out' : '') + '">' +
+            esc(fmtRank(row.targetRank)) +
+            fmtDelta(row.rankDelta) +
+          '</div>' +
+          '<div class="mini-metric">' +
+            '<div><b>블</b> ' + (row.blogCount==null ? "-" : comma(row.blogCount)) + '</div>' +
+            '<div><b>방</b> ' + (row.visitorCount==null ? "-" : comma(row.visitorCount)) + '</div>' +
+          '</div>';
+        cell.onclick = function() {
+          setActive(row.date);
+          loadSnapshot(track.id, row.date, track.target_place_id);
+        };
+        grid.appendChild(cell);
+      });
+
+      miniWrap.appendChild(grid);
+      mountEl.appendChild(miniWrap);
+
+      if (tl.length) {
+        setActive(tl[0].date);
+        return loadSnapshot(track.id, tl[0].date, track.target_place_id);
+      }
     });
-
-    miniWrap.appendChild(grid);
-    mountEl.appendChild(miniWrap);
-
-    if (tl.length) {
-      setActive(tl[0].date);
-      await loadSnapshot(track.id, tl[0].date, track.target_place_id);
-    }
   }
 
-  async function loadTracks(){
-    const box = document.getElementById("tracks");
-    const empty = document.getElementById("tracksEmpty");
+  function loadTracks(){
+    var box = document.getElementById("tracks");
+    var empty = document.getElementById("tracksEmpty");
     box.innerHTML = "";
     document.getElementById("snapCard").style.display = "none";
 
-    const data = await api("/api/tracks?workspaceId=" + encodeURIComponent(workspaceId), { method:"GET", headers:{} });
-    const tracks = data.tracks || [];
-    empty.style.display = tracks.length ? "none" : "block";
+    return api("/api/tracks?workspaceId=" + encodeURIComponent(workspaceId)).then(function(data){
+      var tracks = data.tracks || [];
+      empty.style.display = tracks.length ? "none" : "block";
 
-    for (const t of tracks) {
-      const item = document.createElement("div");
-      item.className = "track-item";
-      const region = t.region_city + (t.region_district ? (" / " + t.region_district) : "");
-      const kl = kindLabel(t.kind || "restaurant");
+      var chain = Promise.resolve();
+      tracks.forEach(function(t) {
+        chain = chain.then(function() {
+          var item = document.createElement("div");
+          item.className = "track-item";
+          var region = t.region_city + (t.region_district ? (" / " + t.region_district) : "");
+          var kl = kindLabel(t.kind || "restaurant");
 
-      item.innerHTML =
-        '<div class="track-head">' +
-          '<div>' +
-            '<div class="track-title">[' + esc(kl) + '] [' + esc(region) + '] ' + esc(t.keyword) + ' <span class="mono">' + esc(t.target_place_id) + '</span></div>' +
-            '<div class="track-sub">기기: ' + esc(t.device_type||"pc") + ' / 최근 14일(날짜 클릭 -> 해당일 Top50)</div>' +
-          '</div>' +
-          '<div class="track-actions">' +
-            '<button class="btn btn-ghost" data-act="collect">수동수집</button>' +
-            '<button class="btn btn-danger" data-act="del">삭제</button>' +
-          '</div>' +
-        '</div>' +
-        '<div class="miniMount"></div>';
+          item.innerHTML =
+            '<div class="track-head">' +
+              '<div>' +
+                '<div class="track-title">[' + esc(kl) + '] [' + esc(region) + '] ' + esc(t.keyword) + ' <span class="mono">' + esc(t.target_place_id) + '</span></div>' +
+                '<div class="track-sub">기기: ' + esc(t.device_type||"pc") + ' / 최근 14일(날짜 클릭 -> 해당일 Top50)</div>' +
+              '</div>' +
+              '<div class="track-actions">' +
+                '<button class="btn btn-ghost" data-act="collect">수동수집</button>' +
+                '<button class="btn btn-danger" data-act="del">삭제</button>' +
+              '</div>' +
+            '</div>' +
+            '<div class="miniMount"></div>';
 
-      const collectBtn = item.querySelector('[data-act="collect"]');
-      collectBtn.onclick = async () => {
-        collectBtn.disabled = true;
-        try {
-          await api("/api/collect?workspaceId=" + encodeURIComponent(workspaceId) + "&trackId=" + t.id, { method:"POST", body:"{}" });
-          await loadTracks();
-        } catch (e) {
-          alert("수집 실패: " + e.message);
-        } finally {
-          collectBtn.disabled = false;
-        }
-      };
+          var collectBtn = item.querySelector('[data-act="collect"]');
+          collectBtn.onclick = function() {
+            collectBtn.disabled = true;
+            api("/api/collect?workspaceId=" + encodeURIComponent(workspaceId) + "&trackId=" + t.id, { method:"POST", body:"{}" })
+              .then(function(){ return loadTracks(); })
+              .catch(function(e){ alert("수집 실패: " + e.message); })
+              .then(function(){ collectBtn.disabled = false; });
+          };
 
-      const delBtn = item.querySelector('[data-act="del"]');
-      delBtn.onclick = async () => {
-        if (!confirm("삭제할까요?")) return;
-        await api("/api/track?workspaceId=" + encodeURIComponent(workspaceId) + "&id=" + t.id, { method:"DELETE", headers:{} });
-        await loadTracks();
-      };
+          var delBtn = item.querySelector('[data-act="del"]');
+          delBtn.onclick = function() {
+            if (!confirm("삭제할까요?")) return;
+            api("/api/track?workspaceId=" + encodeURIComponent(workspaceId) + "&id=" + t.id, { method:"DELETE" })
+              .then(function(){ return loadTracks(); });
+          };
 
-      box.appendChild(item);
-      const mount = item.querySelector(".miniMount");
-      try {
-        await renderTrackMiniTimeline(t, mount);
-      } catch (e) {
-        mount.innerHTML = '<div class="muted" style="margin-top:10px;">타임라인 로드 실패: ' + esc(e.message) + '</div>';
-      }
-    }
+          box.appendChild(item);
+          var mount = item.querySelector(".miniMount");
+          return renderTrackMiniTimeline(t, mount).catch(function(e){
+            mount.innerHTML = '<div class="muted" style="margin-top:10px;">타임라인 로드 실패: ' + esc(e.message) + '</div>';
+          });
+        });
+      });
+      return chain;
+    });
   }
 
-  document.getElementById("btnReload").onclick = loadTracks;
+  document.getElementById("btnReload").onclick = function(){ loadTracks(); };
 
-  document.getElementById("btnAdd").onclick = async () => {
-    const kind = document.getElementById("selectKind").value;
-    const kw = document.getElementById("keyword").value.trim();
-    const pid = document.getElementById("placeId").value.trim();
-    const city = $city.value;
-    const district = $district.value || null;
-    const deviceType = document.getElementById("deviceType").value;
-    const statusEl = document.getElementById("addStatus");
+  document.getElementById("btnAdd").onclick = function() {
+    var kind = document.getElementById("selectKind").value;
+    var kw = document.getElementById("keyword").value.trim();
+    var pid = document.getElementById("placeId").value.trim();
+    var city = $city.value;
+    var district = $district.value || null;
+    var deviceType = document.getElementById("deviceType").value;
+    var statusEl = document.getElementById("addStatus");
 
-    if(!kw) return alert("키워드를 입력하세요.");
-    if(!pid) return alert("플레이스 ID를 입력하세요.");
+    if(!kw){ alert("키워드를 입력하세요."); return; }
+    if(!pid){ alert("플레이스 ID를 입력하세요."); return; }
 
-    let xy = null;
-    const ds = REGIONS[city]?.districts || null;
+    var xy = null;
+    var ds = REGIONS[city] && REGIONS[city].districts ? REGIONS[city].districts : null;
     if(ds && district && ds[district]) xy = ds[district];
-    else xy = REGIONS[city]?.city;
-    if(!xy) return alert("지역 좌표를 찾을 수 없습니다.");
+    else xy = REGIONS[city] && REGIONS[city].city ? REGIONS[city].city : null;
+    if(!xy){ alert("지역 좌표를 찾을 수 없습니다."); return; }
 
     statusEl.textContent = "등록 중...";
-    try {
-      const r = await api("/api/track", {
-        method:"POST",
-        body: JSON.stringify({
-          workspaceId,
-          kind: kind,
-          keyword: kw,
-          targetPlaceId: pid,
-          regionCity: city,
-          regionDistrict: district,
-          x: xy.x,
-          y: xy.y,
-          deviceType
-        })
-      });
-
+    api("/api/track", {
+      method:"POST",
+      body: JSON.stringify({
+        workspaceId: workspaceId,
+        kind: kind,
+        keyword: kw,
+        targetPlaceId: pid,
+        regionCity: city,
+        regionDistrict: district,
+        x: xy.x,
+        y: xy.y,
+        deviceType: deviceType
+      })
+    }).then(function(r){
       statusEl.textContent = "등록 완료. 즉시 수집 중...";
-      await api("/api/collect?workspaceId=" + encodeURIComponent(workspaceId) + "&trackId=" + r.id, { method:"POST", body:"{}" });
-
+      return api("/api/collect?workspaceId=" + encodeURIComponent(workspaceId) + "&trackId=" + r.id, { method:"POST", body:"{}" });
+    }).then(function(){
       statusEl.textContent = "완료: 오늘 데이터가 저장되었습니다.";
-      await loadTracks();
-    } catch (e) {
+      return loadTracks();
+    }).catch(function(e){
       statusEl.textContent = "실패: " + e.message;
       alert(e.message);
-    }
+    });
   };
 
-  loadTracks().catch(e => alert(e.message));
+  loadTracks().catch(function(e){ alert(e.message); });
 </script>
 </body>
 </html>
