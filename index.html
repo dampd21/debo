@@ -70,12 +70,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .rank-table .highlight { background: #fff9c4; }
 
 .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-weight: 700; font-size: 11px; color: #fff; }
-.badge-1 { background: #e74c3c; }
-.badge-3 { background: #2ecc71; }
-.badge-5 { background: #3498db; }
-.badge-10 { background: #f39c12; }
-.badge-20 { background: #e67e22; }
-.badge-other { background: #95a5a6; }
+.badge-1 { background: #e74c3c; } .badge-3 { background: #2ecc71; } .badge-5 { background: #3498db; }
+.badge-10 { background: #f39c12; } .badge-20 { background: #e67e22; } .badge-other { background: #95a5a6; }
 
 .table-name { font-weight: 600; color: #1a1a2e; }
 .table-micro { font-size: 10px; color: #999; font-style: italic; display: block; margin-top: 2px; }
@@ -248,21 +244,18 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 (function() {
   "use strict";
 
-  // Worker A
   var PROXY = "https://naverrank.dampd21.workers.dev/";
-  // Worker C
   var DASH_BASE = "https://naverdashboard.dampd21.workers.dev";
-
   var TRACKER_PAGE = "tracker.html";
   var HKEY = "npt_rank_history";
+
   var allItems = [];
   var lastFound = null;
 
-  // ✅ FIX: comma is not defined
+  // ✅ comma
   function comma(n){
     if (n == null) return "-";
-    var s = String(n);
-    return s.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+    return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
 
   function ymd(d){
@@ -271,10 +264,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     var dd = String(d.getDate()).padStart(2,"0");
     return yyyy + "-" + mm + "-" + dd;
   }
-  // 오늘 미포함 (로컬 기준)
   function calcRange(days){
     var now = new Date();
-    var end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1);
+    var end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1); // 오늘 미포함
     var start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - (days - 1));
     return { startDate: ymd(start), endDate: ymd(end) };
   }
@@ -544,7 +536,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
   var rmCharts = { gender:null, sentiment:null, daily:null, sources:null };
 
   function sumRef(arr){ arr = arr || []; var s=0; for(var i=0;i<arr.length;i++) s += (arr[i].value||0); return s; }
-
   function computeSent(themes){
     themes = themes || [];
     var pos=0, neg=0;
@@ -557,7 +548,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     if(!den) return null;
     return Math.round((pos/den)*1000)/10;
   }
-
   function kwList(themes, pref){
     themes = themes || [];
     var a = themes.filter(function(t){
@@ -566,9 +556,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     a.sort(function(x,y){ return (y.value||0)-(x.value||0); });
     return a;
   }
-
   function mergeDaily(dailyObj){
-    // reservationDaily + receiptDaily를 합쳐서 date->value
     var map = {};
     function addArr(arr){
       arr = arr || [];
@@ -580,8 +568,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     if(!dailyObj) return [];
     addArr(dailyObj.reservationDaily);
     addArr(dailyObj.receiptDaily);
-    var out = Object.keys(map).sort().map(function(k){ return {date:k, value:map[k]}; });
-    return out;
+    return Object.keys(map).sort().map(function(k){ return {date:k,value:map[k]}; });
   }
 
   function apiOne(businessId, startDate, endDate){
@@ -615,14 +602,13 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 
     var topAge = (data.characters || []).slice().sort(function(a,b){ return (b.ratio||0)-(a.ratio||0); }).slice(0,3);
 
-    // daily series
     var revDaily = mergeDaily(data.reviews && data.reviews.daily);
     var rvrDaily = mergeDaily(data.reviewers && data.reviewers.daily);
 
-    // sources
     var sources = ((data.reviews && data.reviews.referrers) || []).slice()
       .filter(function(r){ return (r.value||0) > 0; })
-      .sort(function(a,b){ return (b.value||0)-(a.value||0); });
+      .sort(function(a,b){ return (b.value||0)-(a.value||0); })
+      .slice(0,6);
 
     rmContent.innerHTML =
       '<div class="kv">' +
@@ -658,7 +644,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
         (negKW.length ? negKW.map(function(k){ return '<span class="tag tag-neg">' + esc(k.name) + "(" + k.value + ")</span>"; }).join(" ") : '<span class="muted">없음</span>') +
       '</div>';
 
-    // charts
     var male = data.charactersRatio ? (data.charactersRatio.male||0) : 0;
     var female = data.charactersRatio ? (data.charactersRatio.female||0) : 0;
 
@@ -682,7 +667,6 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
       options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:"bottom" } } }
     });
 
-    // daily unify x labels
     var map = {};
     revDaily.forEach(function(r){ map[r.date] = map[r.date] || {}; map[r.date].rev = r.value; });
     rvrDaily.forEach(function(r){ map[r.date] = map[r.date] || {}; map[r.date].rvr = r.value; });
@@ -706,18 +690,12 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
       }
     });
 
-    var srcTop = sources.slice(0,6);
     rmCharts.sources = new Chart(document.getElementById("chSrc"), {
       type: "bar",
-      data: {
-        labels: srcTop.map(function(s){ return s.name; }),
-        datasets: [{ label:"리뷰", data: srcTop.map(function(s){ return s.value||0; }), backgroundColor:"#f39c12", borderRadius:6 }]
+      data: { labels: sources.map(function(s){ return s.name; }),
+        datasets: [{ label:"리뷰", data: sources.map(function(s){ return s.value||0; }), backgroundColor:"#f39c12", borderRadius:6 }]
       },
-      options: {
-        indexAxis:"y",
-        responsive:true, maintainAspectRatio:false,
-        plugins:{ legend:{ display:false } }
-      }
+      options: { indexAxis:"y", responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } }
     });
   }
 
@@ -772,7 +750,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     runOne({ startDate:s, endDate:e });
   };
 
-  // ✅ 다운로드도 “시각적 대시보드” 형태로
+  // ✅ 다운로드 (중요: </script> 문자열을 소스에 직접 쓰지 않음)
   document.getElementById("rmDownload").onclick = function(){
     if(!rmState.data || !rmState.range) return alert("다운로드할 데이터가 없습니다.");
 
@@ -780,158 +758,77 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
     var data = rmState.data;
     var meta = { name: rmState.name, businessId: rmState.businessId, range: rmState.range };
 
-    var html = `
-<!doctype html>
-<html lang="ko">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>${esc(title)}</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<style>
-body{font-family:system-ui,Segoe UI,Malgun Gothic,sans-serif;background:#f5f5f5;color:#222;margin:0;padding:18px}
-.card{max-width:980px;margin:0 auto;background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:16px}
-h1{margin:0 0 6px;font-size:18px}
-.muted{color:#777;font-size:12px}
-.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}
-.box{border:1px solid #eee;border-radius:12px;padding:12px}
-.box b{display:block;font-size:18px}
-.box span{font-size:11px;color:#777}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}
-.chart{border:1px solid #eee;border-radius:12px;padding:12px}
-.chart h3{margin:0 0 8px;font-size:13px}
-.wrap{height:260px;position:relative}
-.tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#eef2ff;color:#1a1a2e;font-size:11px;font-weight:700;margin:2px 4px 0 0}
-.tag-neg{background:#ffecec;color:#b12b2b}
-@media(max-width:900px){.kv{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
-</style>
-</head>
-<body>
-<div class="card">
-  <h1>리뷰 대시보드: ${esc(meta.name)}</h1>
-  <div class="muted">businessId(placeId): <b>${esc(meta.businessId)}</b> / 기간: <b>${esc(meta.range.startDate)} ~ ${esc(meta.range.endDate)}</b> (오늘 미포함)</div>
+    var SCRIPT_OPEN = "<scr" + "ipt>";
+    var SCRIPT_OPEN_SRC = '<scr' + 'ipt src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></scr' + 'ipt>';
+    var SCRIPT_CLOSE = "</scr" + "ipt>";
 
-  <div id="root"></div>
-
-  <div style="margin-top:14px;">
-    <details>
-      <summary class="muted">원본 JSON 보기</summary>
-      <pre style="white-space:pre-wrap;background:#fafafa;border:1px solid #eee;padding:12px;border-radius:12px;overflow:auto;max-height:60vh;">${esc(JSON.stringify(data,null,2))}</pre>
-    </details>
-  </div>
-</div>
-
-<script>
-const DATA = ${JSON.stringify(data)};
-function comma(n){ if(n==null) return "-"; return String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ","); }
-function sumRef(a){ a=a||[]; let s=0; for(const r of a) s += (r.value||0); return s; }
-function computeSent(themes){
-  themes = themes || [];
-  let pos=0, neg=0;
-  for(const t of themes){
-    if(t.name==="total" && t.preference==="positive") pos += (t.value||0);
-    if(t.name==="total" && t.preference==="negative") neg += (t.value||0);
-  }
-  const den = pos+neg;
-  if(!den) return null;
-  return Math.round((pos/den)*1000)/10;
-}
-function kwList(themes, pref){
-  themes = themes || [];
-  const a = themes.filter(t=>t.preference===pref && t.name!=="total" && (t.value||0)>0).sort((x,y)=>(y.value||0)-(x.value||0));
-  return a;
-}
-function mergeDaily(dailyObj){
-  const map = {};
-  const addArr = (arr)=>{ (arr||[]).forEach(r=>{ map[r.date]=(map[r.date]||0)+(r.value||0); }); };
-  if(!dailyObj) return [];
-  addArr(dailyObj.reservationDaily);
-  addArr(dailyObj.receiptDaily);
-  return Object.keys(map).sort().map(k=>({date:k,value:map[k]}));
-}
-
-const totalReviews = sumRef(DATA.reviews?.referrers);
-const totalReviewers = sumRef(DATA.reviewers?.referrers);
-const sent = computeSent(DATA.themes);
-
-const male = DATA.charactersRatio?.male || 0;
-const female = DATA.charactersRatio?.female || 0;
-
-const themes = DATA.themes || [];
-let pos=0, neg=0, neu=0;
-themes.forEach(t=>{
-  if(t.name==="total" && t.preference==="positive") pos=t.value||0;
-  if(t.name==="total" && t.preference==="negative") neg=t.value||0;
-  if(t.name==="total" && t.preference==="neutral") neu=t.value||0;
-});
-
-const posKW = kwList(DATA.themes, "positive").slice(0,8);
-const negKW = kwList(DATA.themes, "negative").slice(0,8);
-
-const revDaily = mergeDaily(DATA.reviews?.daily);
-const rvrDaily = mergeDaily(DATA.reviewers?.daily);
-const map = {};
-revDaily.forEach(r=>{ map[r.date]=map[r.date]||{}; map[r.date].rev=r.value; });
-rvrDaily.forEach(r=>{ map[r.date]=map[r.date]||{}; map[r.date].rvr=r.value; });
-const labels = Object.keys(map).sort();
-const revSeries = labels.map(d=>map[d].rev||0);
-const rvrSeries = labels.map(d=>map[d].rvr||0);
-
-const sources = (DATA.reviews?.referrers || []).filter(r=>(r.value||0)>0).sort((a,b)=>(b.value||0)-(a.value||0)).slice(0,6);
-
-document.getElementById("root").innerHTML = \`
-  <div class="kv">
-    <div class="box"><b>\${comma(totalReviews)}</b><span>총 리뷰 수</span></div>
-    <div class="box"><b>\${comma(totalReviewers)}</b><span>총 리뷰어 수</span></div>
-    <div class="box"><b>\${male}% / \${female}%</b><span>성별(M/F)</span></div>
-    <div class="box"><b>\${sent==null?'-':sent+'%'}</b><span>긍정률(총합)</span></div>
-  </div>
-
-  <div class="grid2">
-    <div class="chart"><h3>성별 비율</h3><div class="wrap"><canvas id="chG"></canvas></div></div>
-    <div class="chart"><h3>감성(총합)</h3><div class="wrap"><canvas id="chS"></canvas></div></div>
-  </div>
-
-  <div class="grid2">
-    <div class="chart"><h3>일별 리뷰/리뷰어</h3><div class="wrap"><canvas id="chD"></canvas></div></div>
-    <div class="chart"><h3>리뷰 유입경로(Top)</h3><div class="wrap"><canvas id="chR"></canvas></div></div>
-  </div>
-
-  <div style="margin-top:12px">
-    <div style="font-weight:900;margin-bottom:6px">긍정 키워드</div>
-    \${posKW.length ? posKW.map(k=>\`<span class="tag">\${k.name}(\${k.value})</span>\`).join(' ') : '<span class="muted">없음</span>'}
-  </div>
-  <div style="margin-top:12px">
-    <div style="font-weight:900;margin-bottom:6px">부정 키워드</div>
-    \${negKW.length ? negKW.map(k=>\`<span class="tag tag-neg">\${k.name}(\${k.value})</span>\`).join(' ') : '<span class="muted">없음</span>'}
-  </div>
-\`;
-
-new Chart(document.getElementById("chG"), { type:"pie",
-  data:{ labels:["남","여"], datasets:[{ data:[male,female], backgroundColor:["#4285f4","#ea4335"] }] },
-  options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:"bottom" } } }
-});
-
-new Chart(document.getElementById("chS"), { type:"doughnut",
-  data:{ labels:["긍정","부정","중립"], datasets:[{ data:[pos,neg,neu], backgroundColor:["#34a853","#ea4335","#9aa0a6"] }] },
-  options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:"bottom" } } }
-});
-
-new Chart(document.getElementById("chD"), { type:"line",
-  data:{ labels, datasets:[
-    { label:"리뷰", data:revSeries, borderColor:"#1a73e8", backgroundColor:"rgba(26,115,232,0.15)", tension:0.2 },
-    { label:"리뷰어", data:rvrSeries, borderColor:"#34a853", backgroundColor:"rgba(52,168,83,0.15)", tension:0.2 }
-  ]},
-  options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:"bottom" } } }
-});
-
-new Chart(document.getElementById("chR"), { type:"bar",
-  data:{ labels: sources.map(s=>s.name), datasets:[{ data:sources.map(s=>s.value||0), backgroundColor:"#f39c12", borderRadius:6 }] },
-  options:{ indexAxis:"y", responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } }
-});
-</script>
-</body></html>
-`;
+    var html =
+      '<!doctype html><html lang="ko"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>' +
+      '<title>' + esc(title) + '</title>' +
+      SCRIPT_OPEN_SRC +
+      '<style>' +
+      'body{font-family:system-ui,Segoe UI,Malgun Gothic,sans-serif;background:#f5f5f5;color:#222;margin:0;padding:18px}' +
+      '.card{max-width:980px;margin:0 auto;background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:16px}' +
+      'h1{margin:0 0 6px;font-size:18px}.muted{color:#777;font-size:12px}' +
+      '.kv{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:12px}' +
+      '.box{border:1px solid #eee;border-radius:12px;padding:12px}.box b{display:block;font-size:18px}.box span{font-size:11px;color:#777}' +
+      '.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}' +
+      '.chart{border:1px solid #eee;border-radius:12px;padding:12px}.chart h3{margin:0 0 8px;font-size:13px}' +
+      '.wrap{height:260px;position:relative}' +
+      '.tag{display:inline-block;padding:3px 8px;border-radius:999px;background:#eef2ff;color:#1a1a2e;font-size:11px;font-weight:700;margin:2px 4px 0 0}' +
+      '.tag-neg{background:#ffecec;color:#b12b2b}' +
+      '@media(max-width:900px){.kv{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}' +
+      '</style></head><body>' +
+      '<div class="card">' +
+      '<h1>리뷰 대시보드: ' + esc(meta.name) + '</h1>' +
+      '<div class="muted">businessId(placeId): <b>' + esc(meta.businessId) + '</b> / 기간: <b>' + esc(meta.range.startDate) + ' ~ ' + esc(meta.range.endDate) + '</b> (오늘 미포함)</div>' +
+      '<div id="root"></div>' +
+      '<div style="margin-top:14px;"><details><summary class="muted">원본 JSON 보기</summary>' +
+      '<pre style="white-space:pre-wrap;background:#fafafa;border:1px solid #eee;padding:12px;border-radius:12px;overflow:auto;max-height:60vh;">' +
+      esc(JSON.stringify(data,null,2)) + '</pre></details></div>' +
+      '</div>' +
+      SCRIPT_OPEN +
+      'const DATA = ' + JSON.stringify(data) + ';' +
+      'function comma(n){ if(n==null) return "-"; return String(n).replace(/\\B(?=(\\d{3})+(?!\\d))/g, ","); }' +
+      'function sumRef(a){ a=a||[]; let s=0; for(const r of a) s += (r.value||0); return s; }' +
+      'function computeSent(themes){ themes=themes||[]; let pos=0,neg=0; for(const t of themes){ if(t.name==="total"&&t.preference==="positive") pos+=(t.value||0); if(t.name==="total"&&t.preference==="negative") neg+=(t.value||0);} const den=pos+neg; if(!den) return null; return Math.round((pos/den)*1000)/10; }' +
+      'function kwList(themes,pref){ themes=themes||[]; const a=themes.filter(t=>t.preference===pref&&t.name!=="total"&&(t.value||0)>0).sort((x,y)=>(y.value||0)-(x.value||0)); return a; }' +
+      'function mergeDaily(dailyObj){ const map={}; const addArr=(arr)=>{(arr||[]).forEach(r=>{map[r.date]=(map[r.date]||0)+(r.value||0);});}; if(!dailyObj) return []; addArr(dailyObj.reservationDaily); addArr(dailyObj.receiptDaily); return Object.keys(map).sort().map(k=>({date:k,value:map[k]})); }' +
+      'const totalReviews=sumRef(DATA.reviews?.referrers); const totalReviewers=sumRef(DATA.reviewers?.referrers); const sent=computeSent(DATA.themes);' +
+      'const male=DATA.charactersRatio?.male||0; const female=DATA.charactersRatio?.female||0;' +
+      'let pos=0,neg=0,neu=0; (DATA.themes||[]).forEach(t=>{ if(t.name==="total"&&t.preference==="positive") pos=t.value||0; if(t.name==="total"&&t.preference==="negative") neg=t.value||0; if(t.name==="total"&&t.preference==="neutral") neu=t.value||0; });' +
+      'const posKW=kwList(DATA.themes,"positive").slice(0,8); const negKW=kwList(DATA.themes,"negative").slice(0,8);' +
+      'const revDaily=mergeDaily(DATA.reviews?.daily); const rvrDaily=mergeDaily(DATA.reviewers?.daily);' +
+      'const map={}; revDaily.forEach(r=>{map[r.date]=map[r.date]||{}; map[r.date].rev=r.value;}); rvrDaily.forEach(r=>{map[r.date]=map[r.date]||{}; map[r.date].rvr=r.value;});' +
+      'const labels=Object.keys(map).sort(); const revSeries=labels.map(d=>map[d].rev||0); const rvrSeries=labels.map(d=>map[d].rvr||0);' +
+      'const sources=(DATA.reviews?.referrers||[]).filter(r=>(r.value||0)>0).sort((a,b)=>(b.value||0)-(a.value||0)).slice(0,6);' +
+      'document.getElementById("root").innerHTML = ' +
+      '`<div class="kv">' +
+      '<div class="box"><b>${comma(totalReviews)}</b><span>총 리뷰 수</span></div>' +
+      '<div class="box"><b>${comma(totalReviewers)}</b><span>총 리뷰어 수</span></div>' +
+      '<div class="box"><b>${male}% / ${female}%</b><span>성별(M/F)</span></div>' +
+      '<div class="box"><b>${sent==null?"-":sent+"%"}</b><span>긍정률(총합)</span></div>' +
+      '</div>' +
+      '<div class="grid2">' +
+      '<div class="chart"><h3>성별 비율</h3><div class="wrap"><canvas id="chG"></canvas></div></div>' +
+      '<div class="chart"><h3>감성(총합)</h3><div class="wrap"><canvas id="chS"></canvas></div></div>' +
+      '</div>' +
+      '<div class="grid2">' +
+      '<div class="chart"><h3>일별 리뷰/리뷰어</h3><div class="wrap"><canvas id="chD"></canvas></div></div>' +
+      '<div class="chart"><h3>리뷰 유입경로(Top)</h3><div class="wrap"><canvas id="chR"></canvas></div></div>' +
+      '</div>' +
+      '<div style="margin-top:12px"><div style="font-weight:900;margin-bottom:6px">긍정 키워드</div>' +
+      '${posKW.length ? posKW.map(k=>`<span class="tag">${k.name}(${k.value})</span>`).join(" ") : `<span class="muted">없음</span>`}' +
+      '</div>' +
+      '<div style="margin-top:12px"><div style="font-weight:900;margin-bottom:6px">부정 키워드</div>' +
+      '${negKW.length ? negKW.map(k=>`<span class="tag tag-neg">${k.name}(${k.value})</span>`).join(" ") : `<span class="muted">없음</span>`}' +
+      '</div>`;' +
+      'new Chart(document.getElementById("chG"),{type:"pie",data:{labels:["남","여"],datasets:[{data:[male,female],backgroundColor:["#4285f4","#ea4335"]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}});' +
+      'new Chart(document.getElementById("chS"),{type:"doughnut",data:{labels:["긍정","부정","중립"],datasets:[{data:[pos,neg,neu],backgroundColor:["#34a853","#ea4335","#9aa0a6"]}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}});' +
+      'new Chart(document.getElementById("chD"),{type:"line",data:{labels:labels,datasets:[{label:"리뷰",data:revSeries,borderColor:"#1a73e8",backgroundColor:"rgba(26,115,232,0.15)",tension:0.2},{label:"리뷰어",data:rvrSeries,borderColor:"#34a853",backgroundColor:"rgba(52,168,83,0.15)",tension:0.2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom"}}}});' +
+      'new Chart(document.getElementById("chR"),{type:"bar",data:{labels:sources.map(s=>s.name),datasets:[{data:sources.map(s=>s.value||0),backgroundColor:"#f39c12",borderRadius:6}]},options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});' +
+      SCRIPT_CLOSE +
+      '</body></html>';
 
     var blob = new Blob([html], {type:"text/html;charset=utf-8"});
     var a = document.createElement("a");
@@ -939,7 +836,7 @@ new Chart(document.getElementById("chR"), { type:"bar",
     a.download = title + ".html";
     a.click();
   };
-  // =====
+  // ===== end dashboard =====
 
   document.getElementById("btnSearch").onclick = doSearch;
   document.getElementById("inputKeyword").onkeydown = function(e) { if (e.key === "Enter") doSearch(); };
