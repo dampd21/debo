@@ -136,9 +136,15 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
     <div id="tracksEmpty" class="muted" style="display:none;padding:10px 0;">등록된 트랙이 없습니다.</div>
   </div>
 
+  <!-- 스냅샷 -->
   <div class="card" id="snapCard" style="display:none;">
     <h2 id="snapTitle">스냅샷</h2>
     <div class="muted" id="snapSub"></div>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+      <button class="btn btn-primary" id="btnOpenDash">리뷰 대시보드 보기(Top50)</button>
+    </div>
+
     <div id="targetNote" class="note" style="display:none;"></div>
     <div style="overflow:auto;max-height:650px;">
       <table>
@@ -153,11 +159,58 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
       </table>
     </div>
   </div>
+
+  <!-- 리뷰 대시보드(Top50) -->
+  <div class="card" id="dashCard" style="display:none;">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;">
+      <h2 id="dashTitle">리뷰 대시보드</h2>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="btn btn-ghost" id="btnDashBack">← 뒤로(스냅샷)</button>
+        <button class="btn btn-ghost" id="btnDashDownload">HTML 다운로드</button>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+      <button class="btn btn-ghost" id="btnRange7">7일</button>
+      <button class="btn btn-ghost" id="btnRange30">30일</button>
+      <button class="btn btn-ghost" id="btnRangeCustom">직접입력</button>
+      <span class="muted" id="dashRangeText"></span>
+    </div>
+
+    <div id="dashCustom" style="display:none; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+      <input id="dashStart" placeholder="YYYY-MM-DD" />
+      <input id="dashEnd" placeholder="YYYY-MM-DD" />
+      <button class="btn btn-primary" id="btnDashRunCustom">적용</button>
+    </div>
+
+    <div class="muted" id="dashProgress" style="margin-bottom:10px;"></div>
+
+    <div style="overflow:auto; max-height:650px;">
+      <table>
+        <thead>
+          <tr>
+            <th>순위</th><th>업체</th>
+            <th class="num">스냅샷(블/방/저/이미지)</th>
+            <th class="num">리뷰수</th>
+            <th class="num">리뷰어</th>
+            <th class="num">성별(M/F)</th>
+            <th class="num">긍정률</th>
+            <th>키워드(긍정 Top3)</th>
+            <th>상태</th>
+          </tr>
+        </thead>
+        <tbody id="dashBody"></tbody>
+      </table>
+    </div>
+  </div>
 </div>
 
 <script>
-  // ★★★ Worker B 도메인 ★★★
+  // Worker B (ranktracker)
   var API_BASE = "https://ranktracker.dampd21.workers.dev";
+
+  // Worker C (naverdashboard: 리뷰통계)
+  var DASH_BASE = "https://naverdashboard.dampd21.workers.dev";
 
   // 기본 좌표 (서울시청)
   var DEFAULT_X = "126.9783882";
@@ -222,6 +275,9 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
     });
   }
 
+  // ===== 스냅샷 로딩 =====
+  var currentSnap = { track: null, date: null, items: [], targetPlaceId: null };
+
   function loadSnapshot(trackId, date, targetPlaceId){
     return api("/api/snapshot?workspaceId=" + encodeURIComponent(workspaceId) + "&trackId=" + trackId + "&date=" + encodeURIComponent(date)).then(function(data){
       var snapCard = document.getElementById("snapCard");
@@ -236,6 +292,11 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
         snapSub.textContent = "해당 날짜 데이터가 없습니다.";
         snapBody.innerHTML = "";
         targetNote.style.display="none";
+
+        currentSnap.track = { id: trackId };
+        currentSnap.date = date;
+        currentSnap.items = [];
+        currentSnap.targetPlaceId = targetPlaceId;
         return;
       }
 
@@ -267,9 +328,16 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
       } else {
         targetNote.style.display="none";
       }
+
+      // ✅ 대시보드 기준 상태 저장(스냅샷 기반)
+      currentSnap.track = { id: trackId };
+      currentSnap.date = data.snapshot.base_date;
+      currentSnap.items = data.items || [];
+      currentSnap.targetPlaceId = targetPlaceId;
     });
   }
 
+  // ===== 타임라인 =====
   function renderTrackMiniTimeline(track, mountEl){
     return api("/api/timeline?workspaceId=" + encodeURIComponent(workspaceId) + "&trackId=" + track.id + "&limit=14").then(function(data){
       var tl = data.timeline || [];
@@ -321,6 +389,7 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
     var empty = document.getElementById("tracksEmpty");
     box.innerHTML = "";
     document.getElementById("snapCard").style.display = "none";
+    document.getElementById("dashCard").style.display = "none";
 
     return api("/api/tracks?workspaceId=" + encodeURIComponent(workspaceId)).then(function(data){
       var tracks = data.tracks || [];
@@ -392,7 +461,7 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
         kind: kind,
         keyword: kw,
         targetPlaceId: pid,
-        regionCity: "",
+        regionCity: "서울",
         regionDistrict: null,
         x: DEFAULT_X,
         y: DEFAULT_Y,
@@ -409,6 +478,268 @@ td{padding:8px 6px;border-bottom:1px solid #eee;vertical-align:top}
       alert(e.message);
     });
   };
+
+  // ====== Top50 리뷰 대시보드 ======
+  var lastDash = { range: null, rows: [] };
+
+  function ymd(d){
+    var yyyy = d.getFullYear();
+    var mm = String(d.getMonth()+1).padStart(2,"0");
+    var dd = String(d.getDate()).padStart(2,"0");
+    return yyyy + "-" + mm + "-" + dd;
+  }
+  function calcRange(days){
+    var now = new Date();
+    var end = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1); // 오늘 미포함: 어제
+    var start = new Date(end.getFullYear(), end.getMonth(), end.getDate() - (days - 1));
+    return { startDate: ymd(start), endDate: ymd(end) };
+  }
+  function isYMD(s){ return /^\d{4}-\d{2}-\d{2}$/.test(String(s||"")); }
+
+  function sumReferrers(arr){
+    arr = arr || [];
+    var sum = 0;
+    for (var i=0;i<arr.length;i++) sum += (arr[i].value || 0);
+    return sum;
+  }
+  function computeSentiment(themes){
+    themes = themes || [];
+    var pos = 0, neg = 0;
+    for (var i=0;i<themes.length;i++){
+      var t = themes[i];
+      if (t.name === "total" && t.preference === "positive") pos += (t.value||0);
+      if (t.name === "total" && t.preference === "negative") neg += (t.value||0);
+    }
+    var den = pos + neg;
+    if (!den) return null;
+    return Math.round((pos/den)*1000)/10; // 0.1%
+  }
+  function topKeywords(themes){
+    themes = themes || [];
+    var pos = themes.filter(function(t){
+      return t.preference === "positive" && t.name !== "total" && (t.value||0) > 0;
+    });
+    pos.sort(function(a,b){ return (b.value||0)-(a.value||0); });
+    return pos.slice(0,3).map(function(t){ return t.name + "(" + t.value + ")"; }).join(", ");
+  }
+
+  function apiDashStats(businessId, startDate, endDate){
+    var u = DASH_BASE.replace(/\/+$/,"") + "/stats?businessId=" + encodeURIComponent(businessId)
+      + "&startDate=" + encodeURIComponent(startDate)
+      + "&endDate=" + encodeURIComponent(endDate);
+    return fetch(u, { method:"GET" }).then(function(r){
+      return r.json().then(function(j){
+        if(!r.ok || !j.ok) throw new Error(j.error || ("HTTP " + r.status));
+        return j.data;
+      });
+    });
+  }
+
+  // 동시성 제한 큐
+  function runQueue(list, concurrency, workerFn, onProgress){
+    var idx = 0, active = 0, done = 0;
+    return new Promise(function(resolve){
+      function next(){
+        while(active < concurrency && idx < list.length){
+          (function(item){
+            active++;
+            workerFn(item).catch(function(){})
+              .then(function(){
+                active--; done++;
+                if(onProgress) onProgress(done, list.length);
+                if(done >= list.length) resolve();
+                else next();
+              });
+          })(list[idx++]);
+        }
+      }
+      next();
+    });
+  }
+
+  function showDash(){ document.getElementById("dashCard").style.display="block"; document.getElementById("snapCard").style.display="none"; }
+  function hideDash(){ document.getElementById("dashCard").style.display="none"; document.getElementById("snapCard").style.display="block"; }
+  function setProgress(txt){ document.getElementById("dashProgress").textContent = txt; }
+
+  function buildDashRows(snapshotItems){
+    var body = document.getElementById("dashBody");
+    body.innerHTML = "";
+
+    lastDash.rows = snapshotItems.map(function(it){
+      return {
+        rank: it.rank,
+        place_id: it.place_id,
+        name: it.name,
+        category: it.category,
+        blog_count: it.blog_count||0,
+        visitor_count: it.visitor_count||0,
+        save_count: it.save_count||0,
+        image_count: it.image_count||0,
+        status: "waiting",
+        stats: null,
+        error: null
+      };
+    });
+
+    lastDash.rows.forEach(function(r){
+      var tr = document.createElement("tr");
+      tr.id = "dashRow_" + r.rank;
+
+      tr.innerHTML =
+        '<td class="num"><b>' + r.rank + '</b></td>' +
+        '<td><div><b>' + esc(r.name||"-") + '</b></div><div class="muted mono">' + esc(r.place_id) + '</div></td>' +
+        '<td class="num">' + comma(r.blog_count) + ' / ' + comma(r.visitor_count) + ' / ' + comma(r.save_count) + ' / ' + comma(r.image_count) + '</td>' +
+        '<td class="num" data-k="reviews">-</td>' +
+        '<td class="num" data-k="reviewers">-</td>' +
+        '<td class="num" data-k="gender">-</td>' +
+        '<td class="num" data-k="sent">-</td>' +
+        '<td data-k="kw">-</td>' +
+        '<td data-k="st"><span class="muted">대기</span></td>';
+
+      body.appendChild(tr);
+    });
+  }
+
+  function updateDashRow(rank, patch){
+    var tr = document.getElementById("dashRow_" + rank);
+    if(!tr) return;
+
+    if(patch.status === "loading"){
+      tr.querySelector('[data-k="st"]').innerHTML = '<span class="muted">로딩중...</span>';
+      return;
+    }
+    if(patch.status === "error"){
+      tr.querySelector('[data-k="st"]').innerHTML = '<span style="color:#e74c3c;font-weight:800;">실패</span> <span class="muted">' + esc(patch.error||"") + '</span>';
+      return;
+    }
+    if(patch.status === "success"){
+      var s = patch.stats;
+      var totalReviews = sumReferrers(s.reviews && s.reviews.referrers);
+      var totalReviewers = sumReferrers(s.reviewers && s.reviewers.referrers);
+      var sent = computeSentiment(s.themes);
+      var kw = topKeywords(s.themes);
+
+      tr.querySelector('[data-k="reviews"]').textContent = comma(totalReviews);
+      tr.querySelector('[data-k="reviewers"]').textContent = comma(totalReviewers);
+      tr.querySelector('[data-k="gender"]').textContent = (s.charactersRatio?.male ?? "-") + "/" + (s.charactersRatio?.female ?? "-");
+      tr.querySelector('[data-k="sent"]').textContent = (sent==null) ? "-" : (sent + "%");
+      tr.querySelector('[data-k="kw"]').textContent = kw || "-";
+      tr.querySelector('[data-k="st"]').innerHTML = '<span style="color:#2ecc71;font-weight:900;">완료</span>';
+    }
+  }
+
+  function runDashboard(range){
+    if(!currentSnap.items || currentSnap.items.length === 0){
+      alert("먼저 스냅샷을 선택하세요.");
+      return;
+    }
+
+    lastDash.range = range;
+    document.getElementById("dashTitle").textContent =
+      "리뷰 대시보드 (Top" + currentSnap.items.length + ") - " + (currentSnap.date || "");
+
+    document.getElementById("dashRangeText").textContent =
+      "기간: " + range.startDate + " ~ " + range.endDate + " (오늘 미포함)";
+
+    showDash();
+    buildDashRows(currentSnap.items);
+    setProgress("0 / " + currentSnap.items.length);
+
+    var okCnt = 0, failCnt = 0;
+
+    runQueue(
+      lastDash.rows,
+      5, // ✅ 동시성 5
+      function(row){
+        updateDashRow(row.rank, { status:"loading" });
+
+        return apiDashStats(row.place_id, range.startDate, range.endDate)
+          .then(function(stats){
+            row.status = "success";
+            row.stats = stats;
+            okCnt++;
+            updateDashRow(row.rank, { status:"success", stats: stats });
+          })
+          .catch(function(e){
+            row.status = "error";
+            row.error = e.message;
+            failCnt++;
+            updateDashRow(row.rank, { status:"error", error: e.message });
+          });
+      },
+      function(done, total){
+        setProgress(done + " / " + total + " (성공 " + okCnt + ", 실패 " + failCnt + ")");
+      }
+    );
+  }
+
+  document.getElementById("btnDashBack").onclick = function(){ hideDash(); };
+
+  document.getElementById("btnRange7").onclick = function(){ runDashboard(calcRange(7)); };
+  document.getElementById("btnRange30").onclick = function(){ runDashboard(calcRange(30)); };
+
+  document.getElementById("btnRangeCustom").onclick = function(){
+    var box = document.getElementById("dashCustom");
+    box.style.display = (box.style.display === "none" ? "flex" : "none");
+  };
+
+  document.getElementById("btnDashRunCustom").onclick = function(){
+    var s = document.getElementById("dashStart").value.trim();
+    var e = document.getElementById("dashEnd").value.trim();
+    if(!isYMD(s) || !isYMD(e)) return alert("YYYY-MM-DD 형식으로 입력하세요.");
+    runDashboard({ startDate: s, endDate: e });
+  };
+
+  document.getElementById("btnOpenDash").onclick = function(){
+    runDashboard(calcRange(7)); // 기본 7일
+  };
+
+  document.getElementById("btnDashDownload").onclick = function(){
+    if(!lastDash.rows || !lastDash.rows.length) return alert("다운로드할 데이터가 없습니다.");
+
+    var title = "dashboard_" + (currentSnap.date || "snapshot") + "_" + (lastDash.range?.startDate || "") + "_" + (lastDash.range?.endDate || "");
+    var rows = lastDash.rows;
+
+    var html = '<!doctype html><html lang="ko"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>' +
+      '<title>' + esc(title) + '</title>' +
+      '<style>body{font-family:system-ui,Segoe UI,Malgun Gothic,sans-serif;padding:18px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{border-bottom:1px solid #eee;padding:8px;text-align:left}th{background:#f7f7f7;position:sticky;top:0}</style>' +
+      '</head><body>' +
+      '<h2>리뷰 대시보드</h2>' +
+      '<div>스냅샷: ' + esc(currentSnap.date) + ' / 기간: ' + esc(lastDash.range.startDate) + ' ~ ' + esc(lastDash.range.endDate) + '</div>' +
+      '<br/>' +
+      '<table><thead><tr><th>순위</th><th>업체</th><th>placeId</th><th>스냅샷(블/방/저/이미지)</th><th>리뷰수</th><th>리뷰어</th><th>M/F</th><th>긍정률</th><th>키워드</th><th>상태</th></tr></thead><tbody>';
+
+    rows.forEach(function(r){
+      var s = r.stats;
+      var totalReviews = s ? sumReferrers(s.reviews && s.reviews.referrers) : "-";
+      var totalReviewers = s ? sumReferrers(s.reviewers && s.reviewers.referrers) : "-";
+      var gender = s ? ((s.charactersRatio?.male ?? "-") + "/" + (s.charactersRatio?.female ?? "-")) : "-";
+      var sent = s ? computeSentiment(s.themes) : null;
+      var kw = s ? topKeywords(s.themes) : "-";
+
+      html += '<tr>' +
+        '<td>' + r.rank + '</td>' +
+        '<td>' + esc(r.name||"") + '</td>' +
+        '<td>' + esc(r.place_id||"") + '</td>' +
+        '<td>' + esc((r.blog_count||0) + "/" + (r.visitor_count||0) + "/" + (r.save_count||0) + "/" + (r.image_count||0)) + '</td>' +
+        '<td>' + esc(String(totalReviews)) + '</td>' +
+        '<td>' + esc(String(totalReviewers)) + '</td>' +
+        '<td>' + esc(String(gender)) + '</td>' +
+        '<td>' + esc(sent==null ? "-" : (sent + "%")) + '</td>' +
+        '<td>' + esc(kw) + '</td>' +
+        '<td>' + esc(r.status) + '</td>' +
+      '</tr>';
+    });
+
+    html += '</tbody></table></body></html>';
+
+    var blob = new Blob([html], {type:"text/html;charset=utf-8"});
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = title + ".html";
+    a.click();
+  };
+  // ======
 
   loadTracks().catch(function(e){ alert(e.message); });
 </script>
