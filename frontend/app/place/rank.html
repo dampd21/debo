@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>플레이스 순위 조회 - Sherpain21</title>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/variable/pretendardvariable.css">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="../../src/css/app.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* ── 페이지 탭 ── */
+    .page-tabs { display: flex; gap: 0; margin-bottom: var(--space-5); border-bottom: 1px solid var(--color-gray-200); }
+    .page-tab { padding: 10px 20px; font-size: 13px; font-weight: 600; color: var(--color-gray-500); background: none; border: none; border-bottom: 2px solid transparent; cursor: pointer; transition: var(--transition-fast); }
+    .page-tab:hover { color: var(--color-gray-700); }
+    .page-tab.is-active { color: var(--color-accent); border-bottom-color: var(--color-accent); }
+
+    /* ── 검색 폼 ── */
+    .search-row { display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: flex-end; }
+    .search-field { flex: 1; min-width: 180px; }
+    .search-field-sm { flex: 0 0 140px; min-width: 140px; }
+    .search-field-btn { flex: 0 0 auto; }
+    .search-label { display: block; font-size: 12px; font-weight: 600; color: var(--color-gray-600); margin-bottom: 4px; }
+    .search-input { width: 100%; padding: 9px 12px; font-size: 13px; border: 1px solid var(--color-gray-200); border-radius: var(--radius-sm); outline: none; transition: var(--transition-fast); }
+    .search-input:focus { border-color: var(--color-accent); box-shadow: 0 0 0 3px var(--color-accent-ring); }
+    .search-select { width: 100%; padding: 9px 12px; font-size: 13px; border: 1px solid var(--color-gray-200); border-radius: var(--radius-sm); background: var(--color-white); outline: none; }
+    .search-btn { display: inline-flex; align-items: center; gap: 6px; padding: 9px 18px; font-size: 13px; font-weight: 600; color: white; background: var(--color-accent); border: none; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition-fast); white-space: nowrap; }
+    .search-btn:hover { background: var(--color-accent-hover); }
+    .search-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── 상세 옵션 ── */
+    .search-advanced-toggle { margin-top: var(--space-3); font-size: 12px; color: var(--color-gray-400); background: none; border: none; cursor: pointer; padding: 4px 0; }
+    .search-advanced-toggle:hover { color: var(--color-accent); }
+    .search-advanced { display: none; margin-top: var(--space-3); padding-top: var(--space-3); border-top: 1px solid var(--color-gray-100); }
+    .search-advanced.is-open { display: block; }
+    .search-row-compact { display: flex; gap: var(--space-3); flex-wrap: wrap; align-items: flex-end; }
+
+    /* ── 스탯 그리드 ── */
+    .stat-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--space-3); }
+    .stat-card-sm { padding: var(--space-4); display: flex; align-items: center; gap: var(--space-3); background: var(--color-white); border: 1px solid var(--color-gray-200); border-radius: var(--radius-md); }
+    .stat-icon-sm { width: 40px; height: 40px; border-radius: var(--radius-sm); display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+    .stat-icon-sm.si-blue { background: rgba(37,99,235,0.08); color: var(--color-accent); }
+    .stat-icon-sm.si-gray { background: var(--color-gray-100); color: var(--color-gray-600); }
+    .stat-icon-sm.si-green { background: rgba(16,185,129,0.08); color: var(--color-success); }
+    .stat-body-sm { flex: 1; min-width: 0; }
+    .stat-label-sm { font-size: 11px; color: var(--color-gray-400); }
+    .stat-value-sm { font-family: var(--font-mono); font-size: 18px; font-weight: 800; color: var(--color-gray-900); }
+    .stat-sub-sm { font-size: 11px; color: var(--color-gray-400); margin-top: 1px; }
+
+    /* ── 순위 테이블 ── */
+    .rank-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .rank-table thead { position: sticky; top: 0; z-index: 1; }
+    .rank-table th { background: var(--color-gray-50); font-size: 11px; font-weight: 600; color: var(--color-gray-500); text-transform: uppercase; letter-spacing: 0.3px; padding: 8px 10px; text-align: center; border-bottom: 1px solid var(--color-gray-200); white-space: nowrap; }
+    .rank-table td { padding: 8px 10px; text-align: center; border-bottom: 1px solid var(--color-gray-100); font-size: 12px; color: var(--color-gray-700); }
+    .rank-table tr:hover td { background: var(--color-gray-50); }
+    .rank-table td:nth-child(2) { text-align: left; }
+    .rank-table th:nth-child(2) { text-align: left; }
+
+    .rank-num { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 12px; font-weight: 800; }
+    .rank-num.r1 { background: var(--color-accent); color: white; }
+    .rank-num.r2 { background: rgba(37,99,235,0.1); color: var(--color-accent); }
+    .rank-num.r3 { background: var(--color-gray-100); color: var(--color-gray-700); }
+    .rank-num.r4 { background: none; color: var(--color-gray-400); font-weight: 600; }
+
+    .rank-highlight { background: rgba(37,99,235,0.04) !important; }
+    .rank-target-label { font-size: 9px; font-weight: 700; color: var(--color-accent); margin-left: 4px; }
+    .rank-store-label { font-size: 9px; font-weight: 600; color: var(--color-warning); margin-left: 4px; }
+
+    /* ── 타겟 카드 ── */
+    .target-info { display: flex; gap: var(--space-3); align-items: center; padding: var(--space-3) 0; }
+    .target-thumb { width: 48px; height: 48px; border-radius: var(--radius-sm); overflow: hidden; background: var(--color-gray-100); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .target-thumb img { width: 100%; height: 100%; object-fit: cover; }
+    .target-thumb i { font-size: 20px; color: var(--color-gray-400); }
+    .target-detail { flex: 1; min-width: 0; }
+    .target-name { font-size: 14px; font-weight: 700; color: var(--color-gray-900); }
+    .target-cat { font-size: 11px; color: var(--color-gray-400); margin-top: 2px; }
+    .target-stats { display: flex; flex-wrap: wrap; gap: var(--space-3); margin-top: 4px; }
+    .target-stat { font-size: 11px; color: var(--color-gray-500); }
+    .target-stat b { color: var(--color-gray-700); }
+
+    /* ── 추적 아이템 ── */
+    .track-item { padding: var(--space-4); border: 1px solid var(--color-gray-200); border-radius: var(--radius-md); margin-bottom: var(--space-3); }
+    .track-item:last-child { margin-bottom: 0; }
+    .track-header { display: flex; justify-content: space-between; align-items: center; gap: var(--space-3); flex-wrap: wrap; }
+    .track-keyword { font-size: 14px; font-weight: 700; color: var(--color-gray-900); }
+    .track-meta { font-size: 11px; color: var(--color-gray-400); margin-top: 2px; }
+    .track-actions { display: flex; gap: var(--space-2); }
+    .track-btn { padding: 6px 12px; font-size: 11px; font-weight: 600; border: 1px solid var(--color-gray-200); border-radius: var(--radius-sm); background: var(--color-white); color: var(--color-gray-600); cursor: pointer; transition: var(--transition-fast); display: inline-flex; align-items: center; gap: 4px; }
+    .track-btn:hover { border-color: var(--color-gray-300); background: var(--color-gray-50); }
+    .track-btn-danger { color: var(--color-danger); }
+    .track-btn-danger:hover { background: #FEF2F2; border-color: #FECACA; }
+
+    /* ── 미니 타임라인 ── */
+    .mini-wrap { margin-top: var(--space-3); overflow-x: auto; }
+    .mini-grid { display: flex; gap: 6px; padding-bottom: 4px; }
+    .mini-cell { min-width: 72px; padding: 8px; border: 1px solid var(--color-gray-200); border-radius: var(--radius-sm); cursor: pointer; text-align: center; transition: var(--transition-fast); flex-shrink: 0; }
+    .mini-cell:hover { border-color: var(--color-gray-300); }
+    .mini-cell.active { border-color: var(--color-accent); background: var(--color-accent-light); }
+    .mini-date { font-size: 10px; color: var(--color-gray-400); margin-bottom: 4px; }
+    .mini-rank { font-family: var(--font-mono); font-size: 16px; font-weight: 800; color: var(--color-gray-900); }
+    .mini-rank.mini-out { color: var(--color-gray-400); font-size: 12px; }
+    .mini-metric { font-size: 9px; color: var(--color-gray-400); margin-top: 4px; line-height: 1.5; }
+
+    /* ── 델타 ── */
+    .snap-delta { font-size: 10px; font-weight: 700; margin-left: 2px; }
+    .snap-delta.snap-up { color: var(--color-success); }
+    .snap-delta.snap-down { color: var(--color-danger); }
+    .snap-delta.snap-flat { color: var(--color-gray-400); }
+    .snap-pill { font-size: 9px; background: var(--color-accent); color: white; padding: 1px 6px; border-radius: var(--radius-full); font-weight: 600; }
+
+    /* ── 모자이크 (Basic 플랜) ── */
+    .snapshot-blur td:nth-child(n+4) { filter: blur(4px); user-select: none; pointer-events: none; }
+    .snapshot-blur-overlay { padding: var(--space-6); text-align: center; background: var(--color-gray-50); border-radius: var(--radius-md); margin-top: var(--space-4); }
+    .snapshot-blur-overlay .btn { margin-top: var(--space-3); }
+
+    /* ── 차트 ── */
+    .rank-chart-wrap { height: 220px; }
+
+    /* ── 액션 버튼 영역 ── */
+    .result-actions { display: flex; gap: var(--space-3); margin-bottom: var(--space-4); flex-wrap: wrap; align-items: center; }
+
+    /* ── 슬롯 인포 ── */
+    .slot-info { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-3) var(--space-4); background: var(--color-gray-50); border-radius: var(--radius-sm); font-size: 12px; color: var(--color-gray-600); margin-bottom: var(--space-4); }
+    .slot-info strong { color: var(--color-gray-900); font-family: var(--font-mono); }
+
+    /* ── 조회 제한 안내 ── */
+    .rate-limit-notice { padding: var(--space-3) var(--space-4); background: #FEF3C7; border: 1px solid #FCD34D; border-radius: var(--radius-sm); font-size: 12px; color: #92400E; margin-bottom: var(--space-4); display: none; }
+
+    /* ── 로딩 ── */
+    .loading-spinner { text-align: center; padding: var(--space-10); color: var(--color-gray-400); font-size: 14px; }
+    .loading-spinner i { animation: spin 1s linear infinite; margin-right: 6px; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+    /* ── 반응형 ── */
+    @media (max-width: 1024px) { .stat-grid-3 { grid-template-columns: 1fr; } }
+    @media (max-width: 768px) {
+      .search-row { flex-direction: column; }
+      .search-field, .search-field-sm { min-width: 100%; flex: auto; }
+      .search-row-compact { flex-direction: column; }
+      .track-header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-layout">
+    <div id="sidebar-container"></div>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <div class="app-main-wrapper">
+      <div id="topbar-container"></div>
+
+      <main class="app-content">
+        <!-- 페이지 헤더 -->
+        <div class="flex items-center justify-between" style="margin-bottom: var(--space-5);">
+          <div>
+            <h1 style="font-size:18px; font-weight:800; color:var(--color-gray-900);">플레이스 순위 조회</h1>
+            <p style="font-size:12px; color:var(--color-gray-400); margin-top:2px;">네이버 플레이스 키워드별 순위를 실시간으로 확인합니다</p>
+          </div>
+          <div style="font-family:var(--font-mono); font-size:12px; color:var(--color-gray-400);" id="header-date"></div>
+        </div>
+
+        <!-- Place ID 안내 -->
+        <div style="padding:10px 14px; background:var(--color-accent-light); border:1px solid rgba(37,99,235,0.15); border-radius:var(--radius-sm); font-size:12px; color:var(--color-gray-600); margin-bottom:var(--space-4);">
+          <i class="fa-solid fa-info-circle" style="color:var(--color-accent);"></i>
+          Place ID는 네이버 플레이스 URL에서 확인합니다. (예: m.place.naver.com/restaurant/<strong>1234567890</strong>)
+        </div>
+
+        <!-- 조회 제한 안내 (Basic) -->
+        <div class="rate-limit-notice" id="rate-limit-notice">
+          <i class="fa-solid fa-clock"></i>
+          <span id="rate-limit-msg">Basic 플랜은 1시간당 5회 조회 가능합니다.</span>
+        </div>
+
+        <!-- 탭 -->
+        <div class="page-tabs">
+          <button class="page-tab is-active" data-tab="search">순위 조회</button>
+          <button class="page-tab" data-tab="tracking">추적 관리</button>
+        </div>
+
+        <!-- ═══ TAB: 순위 조회 ═══ -->
+        <div id="tab-search">
+          <div class="card" style="margin-bottom:var(--space-4);">
+            <div class="card-header">
+              <div class="card-title">순위 조회</div>
+            </div>
+            <div class="card-body">
+              <div class="search-row">
+                <div class="search-field search-field-sm">
+                  <label class="search-label">업종 *</label>
+                  <select class="search-select" id="s-kind">
+                    <option value="restaurant">음식점</option>
+                    <option value="hairshop">미용실</option>
+                    <option value="nailshop">네일샵</option>
+                    <option value="hospital">병원</option>
+                    <option value="accommodation">숙박</option>
+                  </select>
+                </div>
+                <div class="search-field">
+                  <label class="search-label">검색 키워드 *</label>
+                  <input type="text" class="search-input" id="s-keyword" placeholder="예: 강남 치킨">
+                </div>
+                <div class="search-field">
+                  <label class="search-label">Place ID *</label>
+                  <input type="text" class="search-input" id="s-place-id" placeholder="예: 1234567890">
+                </div>
+                <div class="search-field-btn">
+                  <button class="search-btn" id="btn-search"><i class="fa-solid fa-search"></i> 조회</button>
+                </div>
+              </div>
+              <div class="search-row" style="margin-top:var(--space-3);">
+                <div class="search-field">
+                  <label class="search-label">매장명 <span style="color:var(--color-gray-400);font-weight:400;">(선택 - 하이라이트용)</span></label>
+                  <input type="text" class="search-input" id="s-store" placeholder="결과 목록에서 하이라이트 표시">
+                </div>
+              </div>
+              <button type="button" class="search-advanced-toggle" id="btn-advanced">상세 옵션 펼치기</button>
+              <div class="search-advanced" id="advanced-area">
+                <div class="search-row-compact">
+                  <div class="search-field" style="flex:1;min-width:200px;">
+                    <label class="search-label">주소 검색 (좌표 자동 설정)</label>
+                    <div style="display:flex;gap:6px;">
+                      <input type="text" class="search-input" id="s-addr" placeholder="예: 부평구 부평동" style="flex:1;">
+                      <button class="track-btn" id="btn-geocode" style="white-space:nowrap;"><i class="fa-solid fa-location-dot"></i> 검색</button>
+                    </div>
+                  </div>
+                  <div class="search-field search-field-sm">
+                    <label class="search-label">경도 (x)</label>
+                    <input type="text" class="search-input" id="s-x" value="126.9783882">
+                  </div>
+                  <div class="search-field search-field-sm">
+                    <label class="search-label">위도 (y)</label>
+                    <input type="text" class="search-input" id="s-y" value="37.5666103">
+                  </div>
+                  <div class="search-field search-field-sm">
+                    <label class="search-label">기기</label>
+                    <select class="search-select" id="s-device">
+                      <option value="pc">PC</option>
+                      <option value="mobile">모바일</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 로딩 -->
+          <div id="search-loading" class="loading-spinner" style="display:none;">
+            <i class="fa-solid fa-spinner"></i> 네이버 플레이스에서 순위를 조회하고 있습니다...
+          </div>
+          <!-- 에러 -->
+          <div id="search-error" style="display:none;padding:12px 16px;background:#FEF2F2;border:1px solid #FECACA;border-radius:var(--radius-sm);font-size:13px;color:#991B1B;margin-bottom:var(--space-4);">
+            <i class="fa-solid fa-circle-exclamation"></i> <span id="search-error-msg"></span>
+          </div>
+
+          <!-- 결과 -->
+          <div id="search-result" style="display:none;">
+            <div class="stat-grid-3" style="margin-bottom:var(--space-4);">
+              <div class="stat-card-sm">
+                <div class="stat-icon-sm si-blue"><i class="fa-solid fa-map-marker-alt"></i></div>
+                <div class="stat-body-sm">
+                  <div class="stat-label-sm">해당 업체 순위</div>
+                  <div class="stat-value-sm" id="r-rank">-</div>
+                  <div class="stat-sub-sm" id="r-rank-sub">-</div>
+                </div>
+              </div>
+              <div class="stat-card-sm">
+                <div class="stat-icon-sm si-gray"><i class="fa-solid fa-list-ol"></i></div>
+                <div class="stat-body-sm">
+                  <div class="stat-label-sm">총 검색 결과</div>
+                  <div class="stat-value-sm" id="r-total">-</div>
+                  <div class="stat-sub-sm" id="r-kw">-</div>
+                </div>
+              </div>
+              <div class="stat-card-sm">
+                <div class="stat-icon-sm si-green"><i class="fa-solid fa-clock"></i></div>
+                <div class="stat-body-sm">
+                  <div class="stat-label-sm">조회 시각</div>
+                  <div class="stat-value-sm" id="r-time" style="font-size:13px;">-</div>
+                  <div class="stat-sub-sm">실시간</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 대상 업체 카드 -->
+            <div class="card" style="margin-bottom:var(--space-4);" id="r-target-card">
+              <div class="card-header"><div class="card-title">조회 업체 정보</div></div>
+              <div class="card-body" id="r-target-body"></div>
+            </div>
+
+            <!-- 추적 등록 버튼 -->
+            <div class="result-actions">
+              <button class="search-btn" id="btn-track-register" style="background:var(--color-gray-900);">
+                <i class="fa-solid fa-bookmark"></i> 추적 등록 + 즉시 수집
+              </button>
+              <span id="slot-remain-text" style="font-size:11px;color:var(--color-gray-400);"></span>
+            </div>
+
+            <!-- 전체 결과 테이블 -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">전체 검색 결과</div>
+                <span id="r-count" style="font-size:11px;color:var(--color-gray-400);"></span>
+              </div>
+              <div class="card-body" style="padding:0;">
+                <div style="max-height:600px;overflow:auto;">
+                  <table class="rank-table" id="r-result-table">
+                    <thead>
+                      <tr>
+                        <th style="width:50px">순위</th>
+                        <th>업체명</th>
+                        <th>카테고리</th>
+                        <th>블로그</th>
+                        <th>방문자</th>
+                        <th>별점</th>
+                        <th>저장</th>
+                        <th>이미지</th>
+                      </tr>
+                    </thead>
+                    <tbody id="r-result-body"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div id="r-loadmore-wrap" style="display:none;padding:10px;text-align:center;border-top:1px solid var(--color-gray-100);">
+                <button class="search-btn" id="btn-loadmore" style="padding:7px 20px;font-size:12px;background:var(--color-gray-900);">
+                  <i class="fa-solid fa-angles-down"></i> 더보기
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 빈 상태 -->
+          <div id="search-empty" class="empty-state">
+            <div class="empty-state-icon"><i class="fa-solid fa-map-marker-alt"></i></div>
+            <div class="empty-state-title">키워드와 Place ID를 입력하고 조회하세요</div>
+            <div class="empty-state-desc">해당 업체가 검색 결과 몇 위에 노출되는지 확인할 수 있습니다.</div>
+          </div>
+        </div>
+
+        <!-- ═══ TAB: 추적 관리 ═══ -->
+        <div id="tab-tracking" style="display:none;">
+
+          <!-- 슬롯 정보 -->
+          <div class="slot-info" id="slot-info">
+            <i class="fa-solid fa-bookmark"></i>
+            <span>추적 슬롯: <strong id="slot-used">0</strong> / <strong id="slot-max">1</strong> 사용 중</span>
+            <button class="track-btn" id="btn-buy-slot" style="margin-left:auto;display:none;">
+              <i class="fa-solid fa-plus"></i> 슬롯 추가 (1,000 눈덩이)
+            </button>
+          </div>
+
+          <div style="padding:10px 14px;background:var(--color-gray-50);border-radius:var(--radius-sm);font-size:12px;color:var(--color-gray-500);margin-bottom:var(--space-4);">
+            <i class="fa-solid fa-clock"></i> 자동 순위 추적은 매일 <strong>오전 6시(KST)</strong>에 수집됩니다. 날짜 카드를 클릭하면 스냅샷을 확인할 수 있습니다.
+          </div>
+
+          <div class="card" style="margin-bottom:var(--space-4);">
+            <div class="card-header">
+              <div class="card-title">추적 중인 키워드</div>
+              <button class="track-btn" id="btn-refresh-tracks"><i class="fa-solid fa-arrows-rotate"></i> 새로고침</button>
+            </div>
+            <div class="card-body" id="track-list">
+              <div class="loading-spinner"><i class="fa-solid fa-spinner"></i> 불러오는 중...</div>
+            </div>
+          </div>
+
+          <!-- 순위 차트 -->
+          <div id="rank-chart-area" style="display:none;">
+            <div class="card" style="margin-bottom:var(--space-4);">
+              <div class="card-header">
+                <div class="card-title">순위 변동 추이</div>
+                <span id="rank-chart-title" style="font-size:11px;color:var(--color-gray-400);"></span>
+              </div>
+              <div class="card-body">
+                <div class="rank-chart-wrap"><canvas id="chart-rank-trend"></canvas></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 스냅샷 -->
+          <div id="snapshot-area" style="display:none;">
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title"><span id="snap-title">스냅샷</span></div>
+                <span id="snap-sub" style="font-size:11px;color:var(--color-gray-400);"></span>
+              </div>
+              <div class="card-body" style="padding:0;">
+                <div id="snap-target-note" style="display:none;padding:10px 14px;margin:10px;background:#FEF3C7;border-radius:var(--radius-sm);font-size:12px;color:#92400E;"></div>
+                <!-- Basic 플랜 모자이크 안내 -->
+                <div id="snap-blur-notice" class="snapshot-blur-overlay" style="display:none;">
+                  <i class="fa-solid fa-lock" style="font-size:24px;color:var(--color-gray-400);"></i>
+                  <p style="margin-top:var(--space-3);font-size:14px;font-weight:600;color:var(--color-gray-700);">스냅샷 상세 데이터는 Standard 이상 플랜에서 확인할 수 있습니다</p>
+                  <p style="font-size:12px;color:var(--color-gray-400);margin-top:4px;">블로그/방문자/저장/이미지 수치가 모자이크 처리됩니다</p>
+                  <a href="/app/settings/billing.html" class="btn btn-primary btn-sm" style="margin-top:var(--space-3);">플랜 업그레이드</a>
+                </div>
+                <div style="overflow:auto;max-height:600px;">
+                  <table class="rank-table" id="snap-table">
+                    <thead><tr>
+                      <th>순위</th><th>업체명</th><th>카테고리</th>
+                      <th>블로그</th><th>방문자</th><th>별점</th><th>저장</th><th>이미지</th>
+                    </tr></thead>
+                    <tbody id="snap-body"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 빈 상태 -->
+          <div id="track-empty" class="empty-state" style="display:none;">
+            <div class="empty-state-icon"><i class="fa-solid fa-bookmark"></i></div>
+            <div class="empty-state-title">추적 중인 키워드가 없습니다</div>
+            <div class="empty-state-desc">"순위 조회" 탭에서 키워드를 검색한 뒤 추적 등록할 수 있습니다.</div>
+          </div>
+        </div>
+
+      </main>
+    </div>
+  </div>
+
+  <script src="../../src/js/config.js"></script>
+  <script src="../../src/js/auth.js"></script>
+  <script src="../../src/js/api.js"></script>
+  <script src="../../src/js/sidebar.js"></script>
+  <script src="../../src/js/topbar.js"></script>
+  <script src="../../src/js/place-rank.js"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9f346976b838aa38',t:'MTc3NzM2MTk1NA=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
