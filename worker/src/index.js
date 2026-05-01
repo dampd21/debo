@@ -1,15 +1,19 @@
 /**
  * SHERPAIN21 - Worker API (v2.1 통합)
- * 
+ *
  * [기존 유지] 순위 조회 + 트래커 + 키워드 + 상세 + 리뷰 대시보드 + 이메일 인증
  *             + 유튜브 + 부동산 + 트렌드 + AI + 소상공인 + 퍼페티어 + 스마트플레이스
- * 
+ *
  * [v2.1 신규] 에스크로 미션 + 커뮤니티 게시판 + 출석체크 + 눈덩이 거래내역
  *             + 자유홍보 + 대시보드 통계
- * 
+ *
  * [v2.1 변경] DB tokens 컬럼 유지, 코드에서 snowball로 매핑
  */
 var KEEP_DAYS = 90;
+
+// 오라클 프록시 설정 (2026-05-01 변경)
+var ORACLE_PUPPETEER_URL = 'http://152.69.239.221:3000';
+var ORACLE_API_KEY = 'sherpa2026proxy';
 
 var REVIEW_QUERY = 'query GetReviewDashboard($businessId:String!,$startDate:String!,$endDate:String!){reviewStatistics(businessId:$businessId,startDate:$startDate,endDate:$endDate){id startDate endDate characters{age gender ratio}charactersRatio{female male}reviewers{referrers{name value diff ratio}daily{reservationDaily{date value}receiptDaily{date value}}}reviews{referrers{name value diff ratio}daily{reservationDaily{date value}receiptDaily{date value}}}themes{name preference value}}}';
 
@@ -100,7 +104,6 @@ async function optionalAuth(request, env) {
   if (!auth.startsWith('Bearer ') || !env.JWT_SECRET) return null;
   return verifyJWT(auth.slice(7), env.JWT_SECRET);
 }
-/** 인증 필수 — null이면 401 반환용 */
 async function requireAuth(request, env) {
   var payload = await optionalAuth(request, env);
   return payload;
@@ -136,13 +139,11 @@ async function issueUserToken(user, env) {
 // DB 컬럼은 tokens, 코드에서 snowball로 매핑
 // ════════════════════════════════════════
 
-/** 눈덩이 잔액 조회 */
 async function getSnowballBalance(db, userId) {
   var user = await db.prepare('SELECT tokens FROM users WHERE id=?').bind(userId).first();
   return user ? (user.tokens || 0) : 0;
 }
 
-/** 눈덩이 차감 (잔고 검증 포함) — 실패 시 null 반환 */
 async function deductSnowball(db, userId, amount, description, refType, refId) {
   var balance = await getSnowballBalance(db, userId);
   if (balance < amount) return null;
@@ -155,7 +156,6 @@ async function deductSnowball(db, userId, amount, description, refType, refId) {
   return newBalance;
 }
 
-/** 눈덩이 추가 */
 async function addSnowball(db, userId, amount, type, description, refType, refId) {
   var balance = await getSnowballBalance(db, userId);
   var newBalance = balance + amount;
@@ -166,7 +166,6 @@ async function addSnowball(db, userId, amount, type, description, refType, refId
   ]);
   return newBalance;
 }
-
 
 // ════════════════════════════════════════
 // AUTH
@@ -190,7 +189,6 @@ async function handleAuthSignup(request, env) {
   if (!name) return jsonResp({ ok: false, error: 'name required' }, 400);
   if (['general', 'marketer'].indexOf(role) === -1) return jsonResp({ ok: false, error: 'invalid role' }, 400);
 
-  // 추천인 보너스 결정
   var initialTokens = 150;
   if (referralCode) {
     var referrer = await db.prepare('SELECT id FROM users WHERE referral_code=?').bind(referralCode).first();
@@ -221,7 +219,6 @@ async function handleAuthSignup(request, env) {
       'INSERT INTO users(id, email, name, phone, role, plan, provider, provider_id, biz_type, store_name, agency_name, tokens, referral_code, login_id, password_hash, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
     ).bind(id, email, name, phone, role, 'a', 'email', null, bizType, storeName, agencyName, initialTokens, myReferralCode, loginId, passwordHash, nowIso, nowIso).run();
 
-    // 가입 눈덩이 거래내역 기록
     await db.prepare('INSERT INTO snowball_transactions(user_id, type, amount, balance_after, description, ref_type) VALUES(?,?,?,?,?,?)')
       .bind(id, 'earn', initialTokens, initialTokens, referralCode ? '추천인 가입 보너스' : '가입 축하 보너스', 'signup').run();
 
@@ -297,7 +294,6 @@ async function handleAuthMe(request, env) {
 
   if (!user) return jsonResp({ ok: false, error: 'User not found' }, 404);
 
-  // snowball 매핑
   var result = Object.assign({}, user);
   result.snowball = user.tokens || 0;
 
@@ -305,7 +301,7 @@ async function handleAuthMe(request, env) {
 }
 
 // ════════════════════════════════════════
-// NAVER PLACE GRAPHQL (기존 100% 유지)
+// NAVER PLACE GRAPHQL
 // ════════════════════════════════════════
 function buildGraphQL(kind, keyword, start, display, x, y, deviceType) {
   var dt = deviceType || 'pc';
@@ -365,26 +361,19 @@ function normalizeItem(kind, item) {
 async function naverFetchResults(kind, keyword, start, display, x, y, deviceType) {
   var MAX_RETRIES = 2;
   var RETRY_DELAYS = [3000, 6000];
-  var UA_POOL = [
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
-    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
-  ];
 
   for (var attempt = 0; attempt <= MAX_RETRIES; attempt++) {
     try {
       var gql = buildGraphQL(kind || 'restaurant', keyword, start, display, x, y, deviceType || 'pc');
-      var resp = await fetch('https://api.place.naver.com/graphql', {
+
+      // 오라클 프록시 경유 (IP 차단 우회)
+      var resp = await fetch(ORACLE_PUPPETEER_URL + '/naver/place', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept': '*/*',
-          'Accept-Language': 'ko',
-          'Origin': 'https://pcmap.place.naver.com',
-          'Referer': 'https://pcmap.place.naver.com/',
-          'User-Agent': UA_POOL[attempt % UA_POOL.length]
+          'x-api-key': ORACLE_API_KEY
         },
-        body: JSON.stringify([gql]),
+        body: JSON.stringify([gql])
       });
 
       var ct = resp.headers.get('content-type') || '';
@@ -429,7 +418,6 @@ async function naverFetchResults(kind, keyword, start, display, x, y, deviceType
 // D1 AUTO MIGRATION (v2.1 확장)
 // ════════════════════════════════════════
 async function autoMigrate(db) {
-  // 기존 마이그레이션
   try {
     var info = await db.prepare('PRAGMA table_info(tracks)').all();
     var cols = info.results.map(function(r) { return r.name; });
@@ -445,7 +433,6 @@ async function autoMigrate(db) {
     if (ucols.indexOf('referral_code') === -1) await db.exec('ALTER TABLE users ADD COLUMN referral_code TEXT');
   } catch (e) {}
 
-  // v2.1 신규 테이블 자동 생성
   try {
     await db.exec("CREATE TABLE IF NOT EXISTS snowball_transactions (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id TEXT NOT NULL, type TEXT NOT NULL, amount INTEGER NOT NULL, balance_after INTEGER NOT NULL, description TEXT, ref_type TEXT, ref_id TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
   } catch (e) {}
@@ -470,7 +457,7 @@ async function autoMigrate(db) {
 }
 
 // ════════════════════════════════════════
-// TRACKER CORE (기존 100% 유지)
+// TRACKER CORE
 // ════════════════════════════════════════
 async function collectTrack(db, tr) {
   var baseDate = kstDateString(); var collectedAt = kstNowString();
@@ -496,12 +483,10 @@ async function cleanupOld(db) {
   for (var i = 0; i < ids.length; i += 50) { var chunk = ids.slice(i, i + 50); var qs = chunk.map(function() { return '?'; }).join(','); await db.prepare('DELETE FROM snapshot_items WHERE snapshot_id IN (' + qs + ')').bind(...chunk).run(); await db.prepare('DELETE FROM snapshots WHERE id IN (' + qs + ')').bind(...chunk).run(); }
 }
 
-
 // ════════════════════════════════════════
 // v2.1 신규: 에스크로 미션
 // ════════════════════════════════════════
 
-/** 미션 생성 (의뢰자) */
 async function handleEscrowCreate(request, env) {
   var payload = await requireAuth(request, env);
   if (!payload) return jsonResp({ ok: false, error: 'Unauthorized' }, 401);
@@ -526,12 +511,10 @@ async function handleEscrowCreate(request, env) {
   if (!rewardPerPerson || rewardPerPerson < 100) return jsonResp({ ok: false, error: 'reward_per_person must be >= 100' }, 400);
   if (maxApplicants < 1 || maxApplicants > 100) return jsonResp({ ok: false, error: 'max_applicants must be 1~100' }, 400);
 
-  // 10% 수수료 계산
   var subtotal = rewardPerPerson * maxApplicants;
   var platformFee = Math.ceil(subtotal * 0.1);
   var totalDeposit = subtotal + platformFee;
 
-  // 잔고 검증 및 차감 (트랜잭션)
   var balance = await getSnowballBalance(db, payload.sub);
   if (balance < totalDeposit) {
     return jsonResp({ ok: false, error: '눈덩이가 부족합니다.', required: totalDeposit, balance: balance }, 400);
@@ -540,7 +523,6 @@ async function handleEscrowCreate(request, env) {
   var nowIso = new Date().toISOString();
   var newBalance = balance - totalDeposit;
 
-  // D1 Batch 트랜잭션으로 원자성 보장
   var insertMission = db.prepare(
     'INSERT INTO escrow_missions(requester_id, title, description, mission_type, category, location, place_id, place_name, reward_per_person, max_applicants, total_deposit, platform_fee, deadline, requirements, status, created_at, updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
   ).bind(payload.sub, title, description, missionType, category, location, placeId, placeName, rewardPerPerson, maxApplicants, totalDeposit, platformFee, deadline, requirements, 'open', nowIso, nowIso);
@@ -556,7 +538,6 @@ async function handleEscrowCreate(request, env) {
   return jsonResp({ ok: true, totalDeposit: totalDeposit, platformFee: platformFee, newBalance: newBalance });
 }
 
-/** 미션 목록 조회 */
 async function handleEscrowList(request, env) {
   var db = env.DB;
   var url = new URL(request.url);
@@ -574,7 +555,6 @@ async function handleEscrowList(request, env) {
   return jsonResp({ ok: true, missions: missions.results, total: countResult.cnt, page: page, limit: limit });
 }
 
-/** 미션 상세 */
 async function handleEscrowDetail(request, env) {
   var db = env.DB;
   var url = new URL(request.url);
@@ -593,7 +573,6 @@ async function handleEscrowDetail(request, env) {
   return jsonResp({ ok: true, mission: mission, applications: apps.results });
 }
 
-/** 미션 신청 (수행자) */
 async function handleEscrowApply(request, env) {
   var payload = await requireAuth(request, env);
   if (!payload) return jsonResp({ ok: false, error: 'Unauthorized' }, 401);
@@ -611,14 +590,12 @@ async function handleEscrowApply(request, env) {
   if (mission.is_locked) return jsonResp({ ok: false, error: '미션이 잠금 상태입니다.' }, 400);
   if (mission.requester_id === payload.sub) return jsonResp({ ok: false, error: '본인의 미션에는 신청할 수 없습니다.' }, 400);
 
-  // 중복 신청 방지
   var existing = await db.prepare('SELECT id FROM escrow_applications WHERE mission_id=? AND applicant_id=?').bind(missionId, payload.sub).first();
   if (existing) return jsonResp({ ok: false, error: '이미 신청한 미션입니다.' }, 409);
 
   var nowIso = new Date().toISOString();
   await db.prepare('INSERT INTO escrow_applications(mission_id, applicant_id, status, created_at, updated_at) VALUES(?,?,?,?,?)').bind(missionId, payload.sub, 'pending', nowIso, nowIso).run();
 
-  // 최대 수행자 도달 시 잠금
   var appCount = await db.prepare('SELECT COUNT(*) as cnt FROM escrow_applications WHERE mission_id=? AND status IN (?,?,?)').bind(missionId, 'pending', 'accepted', 'submitted').first();
   if (appCount.cnt >= mission.max_applicants) {
     await db.prepare('UPDATE escrow_missions SET is_locked=1, status=?, updated_at=? WHERE id=?').bind('in_progress', nowIso, missionId).run();
@@ -627,7 +604,6 @@ async function handleEscrowApply(request, env) {
   return jsonResp({ ok: true });
 }
 
-/** 미션 결과 승인 및 정산 (의뢰자) */
 async function handleEscrowApprove(request, env) {
   var payload = await requireAuth(request, env);
   if (!payload) return jsonResp({ ok: false, error: 'Unauthorized' }, 401);
@@ -644,17 +620,13 @@ async function handleEscrowApprove(request, env) {
   if (app.requester_id !== payload.sub) return jsonResp({ ok: false, error: '본인의 미션만 승인할 수 있습니다.' }, 403);
   if (app.status !== 'submitted') return jsonResp({ ok: false, error: '제출된 미션만 승인할 수 있습니다.' }, 400);
 
-  // 정산금 = 보상금 (수수료는 이미 예치 시 징수됨)
   var payoutAmount = app.reward_per_person;
   var nowIso = new Date().toISOString();
 
-  // 수행자에게 정산 지급
   var newBalance = await addSnowball(db, app.applicant_id, payoutAmount, 'escrow_payout', '에스크로 미션 #' + app.mid + ' 정산', 'escrow', String(app.mid));
 
-  // 신청 상태 업데이트
   await db.prepare('UPDATE escrow_applications SET status=?, approved_at=?, payout_amount=?, updated_at=? WHERE id=?').bind('approved', nowIso, payoutAmount, nowIso, applicationId).run();
 
-  // 모든 신청이 승인되었는지 확인 → 미션 완료 처리
   var pendingCount = await db.prepare("SELECT COUNT(*) as cnt FROM escrow_applications WHERE mission_id=? AND status NOT IN ('approved','rejected','cancelled')").bind(app.mid).first();
   if (pendingCount.cnt === 0) {
     await db.prepare("UPDATE escrow_missions SET status='completed', updated_at=? WHERE id=?").bind(nowIso, app.mid).run();
@@ -663,12 +635,10 @@ async function handleEscrowApprove(request, env) {
   return jsonResp({ ok: true, payoutAmount: payoutAmount });
 }
 
-
 // ════════════════════════════════════════
 // v2.1 신규: 커뮤니티 게시판
 // ════════════════════════════════════════
 
-/** 게시글 목록 */
 async function handlePostList(request, env) {
   var db = env.DB;
   var url = new URL(request.url);
@@ -686,7 +656,6 @@ async function handlePostList(request, env) {
   return jsonResp({ ok: true, posts: posts.results, total: countResult.cnt, page: page, limit: limit });
 }
 
-/** 게시글 상세 */
 async function handlePostDetail(request, env) {
   var db = env.DB;
   var url = new URL(request.url);
@@ -696,16 +665,13 @@ async function handlePostDetail(request, env) {
   var post = await db.prepare('SELECT p.*, u.name AS author_name FROM posts p LEFT JOIN users u ON u.id = p.user_id WHERE p.id=? AND p.is_deleted=0').bind(id).first();
   if (!post) return jsonResp({ ok: false, error: 'Post not found' }, 404);
 
-  // 조회수 증가
   await db.prepare('UPDATE posts SET view_count = view_count + 1 WHERE id=?').bind(id).run();
 
-  // 댓글
   var comments = await db.prepare('SELECT c.*, u.name AS author_name FROM comments c LEFT JOIN users u ON u.id = c.user_id WHERE c.post_id=? AND c.is_deleted=0 ORDER BY c.created_at ASC').bind(id).all();
 
   return jsonResp({ ok: true, post: post, comments: comments.results });
 }
 
-/** 게시글 작성 */
 async function handlePostCreate(request, env) {
   var payload = await requireAuth(request, env);
   if (!payload) return jsonResp({ ok: false, error: 'Unauthorized' }, 401);
@@ -729,7 +695,6 @@ async function handlePostCreate(request, env) {
   return jsonResp({ ok: true, id: result.meta.last_row_id });
 }
 
-/** 댓글 작성 */
 async function handleCommentCreate(request, env) {
   var payload = await requireAuth(request, env);
   if (!payload) return jsonResp({ ok: false, error: 'Unauthorized' }, 401);
@@ -753,7 +718,6 @@ async function handleCommentCreate(request, env) {
   return jsonResp({ ok: true });
 }
 
-
 // ════════════════════════════════════════
 // v2.1 신규: 출석체크
 // ════════════════════════════════════════
@@ -765,17 +729,14 @@ async function handleAttendanceCheck(request, env) {
 
   var today = kstDateString();
 
-  // 오늘 이미 출석했는지 확인
   var existing = await db.prepare('SELECT id FROM attendance WHERE user_id=? AND check_date=?').bind(payload.sub, today).first();
   if (existing) return jsonResp({ ok: false, error: '오늘은 이미 출석했습니다.' }, 409);
 
-  // 어제 출석 확인 (연속 출석)
   var yesterday = new Date(Date.now() + 9*60*60*1000 - 86400000).toISOString().slice(0, 10);
   var yesterdayRecord = await db.prepare('SELECT streak FROM attendance WHERE user_id=? AND check_date=?').bind(payload.sub, yesterday).first();
   var streak = yesterdayRecord ? (yesterdayRecord.streak + 1) : 1;
 
-  // 보상 계산 (연속 출석 보너스)
-  var reward = 10; // 기본 10 눈덩이
+  var reward = 10;
   if (streak >= 30) reward = 50;
   else if (streak >= 14) reward = 30;
   else if (streak >= 7) reward = 20;
@@ -787,7 +748,6 @@ async function handleAttendanceCheck(request, env) {
   return jsonResp({ ok: true, streak: streak, reward: reward, newBalance: newBalance });
 }
 
-/** 출석 현황 조회 */
 async function handleAttendanceStatus(request, env) {
   var payload = await requireAuth(request, env);
   if (!payload) return jsonResp({ ok: false, error: 'Unauthorized' }, 401);
@@ -796,7 +756,6 @@ async function handleAttendanceStatus(request, env) {
   var today = kstDateString();
   var todayRecord = await db.prepare('SELECT * FROM attendance WHERE user_id=? AND check_date=?').bind(payload.sub, today).first();
 
-  // 이번 달 출석 기록
   var monthStart = today.substring(0, 7) + '-01';
   var monthRecords = await db.prepare('SELECT check_date, reward, streak FROM attendance WHERE user_id=? AND check_date>=? ORDER BY check_date ASC').bind(payload.sub, monthStart).all();
 
@@ -807,7 +766,6 @@ async function handleAttendanceStatus(request, env) {
     monthRecords: monthRecords.results
   });
 }
-
 
 // ════════════════════════════════════════
 // v2.1 신규: 눈덩이 거래내역
@@ -844,7 +802,6 @@ async function handleSnowballHistory(request, env) {
   return jsonResp({ ok: true, transactions: transactions.results, total: countResult.cnt, balance: balance, page: page, limit: limit });
 }
 
-
 // ════════════════════════════════════════
 // v2.1 신규: 대시보드 통계
 // ════════════════════════════════════════
@@ -857,7 +814,6 @@ async function handleDashboardStats(request, env) {
   var user = await db.prepare('SELECT plan, tokens FROM users WHERE id=?').bind(payload.sub).first();
   if (!user) return jsonResp({ ok: false, error: 'User not found' }, 404);
 
-  // 진행 중 미션 수 (의뢰자 또는 수행자)
   var missionCount = await db.prepare(
     "SELECT COUNT(*) as cnt FROM escrow_missions WHERE requester_id=? AND status IN ('open','in_progress')"
   ).bind(payload.sub).first();
@@ -866,7 +822,6 @@ async function handleDashboardStats(request, env) {
     "SELECT COUNT(*) as cnt FROM escrow_applications WHERE applicant_id=? AND status IN ('pending','accepted','submitted')"
   ).bind(payload.sub).first();
 
-  // 이번 달 출석일수
   var monthStart = kstDateString().substring(0, 7) + '-01';
   var attendCount = await db.prepare('SELECT COUNT(*) as cnt FROM attendance WHERE user_id=? AND check_date>=?').bind(payload.sub, monthStart).first();
 
@@ -879,13 +834,9 @@ async function handleDashboardStats(request, env) {
   });
 }
 
-
 // ════════════════════════════════════════
-// 기존 핸들러 (100% 유지 — 생략 없이 전부 포함)
-// 아래는 기존 index.js에서 변경 없이 유지되는 핸들러들
-// ════════════════════════════════════════
-
 // NAVER SEARCH AD API
+// ════════════════════════════════════════
 function naverAdParseVol(val) { if (val === '< 10' || val === '<10') return 0; if (val == null || val === '') return 0; var n = Number(val); return isNaN(n) ? 0 : n; }
 
 async function naverAdHeaders(method, uri, env) {
@@ -947,18 +898,44 @@ async function handleAdAnalyze(request, env) {
   return jsonResp({ ok: false, error: 'invalid mode' }, 400);
 }
 
-// ════════════════════════════════════════
-// 기존 핸들러 (그대로 유지) — 중간 부분
-// YouTube, Land, Datalab, Google Trends, Blog, Parking, Biz, Puppeteer, Smartplace
-// Place Keywords/Detail/Themes/Reviews, Review Dashboard
-// 기존 코드와 100% 동일하므로 함수 선언부만 유지
-// ════════════════════════════════════════
-
 async function handleHealth() { return jsonResp({ ok: true, time: kstNowString(), version: '2.1.0' }); }
 
 async function handleRankPlace(request) { var url = new URL(request.url); var keyword = url.searchParams.get('keyword') || ''; var store = url.searchParams.get('store') || ''; var kind = url.searchParams.get('kind') || 'restaurant'; var start = parseInt(url.searchParams.get('start')) || 1; var display = parseInt(url.searchParams.get('display')) || 50; var x = url.searchParams.get('x') || '126.9783882'; var y = url.searchParams.get('y') || '37.5666103'; var deviceType = url.searchParams.get('deviceType') || 'pc'; if (!keyword) return jsonResp({ error: 'keyword required' }, 400); try { var result = await naverFetchResults(kind, keyword, start, display, x, y, deviceType); var myRank = null; if (store) { for (var i = 0; i < result.items.length; i++) { if (result.items[i].name.indexOf(store) !== -1) { myRank = i + 1; break; } } } return jsonResp({ keyword: keyword, store: store, kind: kind, myRank: myRank, total: result.total, results: result.items, nlu: result.nlu || null, checkedAt: kstNowString() }); } catch (e) { return jsonResp({ error: e.message, snippet: e.snippet || null }, 502); } }
 
-async function handleRankProxy(request) { var url = new URL(request.url); var kind = url.searchParams.get('kind') || 'restaurant'; var keyword = url.searchParams.get('keyword') || ''; var start = parseInt(url.searchParams.get('start')) || 1; var display = parseInt(url.searchParams.get('display')) || 100; var x = url.searchParams.get('x') || '126.9783882'; var y = url.searchParams.get('y') || '37.5666103'; var deviceType = url.searchParams.get('deviceType') || 'pc'; if (!keyword) return jsonResp({ error: 'keyword required' }, 400); var gql = buildGraphQL(kind, keyword, start, display, x, y, deviceType); try { var resp = await fetch('https://api.place.naver.com/graphql', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': '*/*', 'Accept-Language': 'ko', 'Origin': 'https://pcmap.place.naver.com', 'Referer': 'https://pcmap.place.naver.com/', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36' }, body: JSON.stringify([gql]) }); var data = await resp.text(); return new Response(data, { status: resp.status, headers: { 'Content-Type': resp.headers.get('content-type') || 'application/json', ...corsHeaders() } }); } catch (e) { return jsonResp({ error: e.message }, 500); } }
+async function handleRankProxy(request) {
+  var url = new URL(request.url);
+  var kind = url.searchParams.get('kind') || 'restaurant';
+  var keyword = url.searchParams.get('keyword') || '';
+  var start = parseInt(url.searchParams.get('start')) || 1;
+  var display = parseInt(url.searchParams.get('display')) || 100;
+  var x = url.searchParams.get('x') || '126.9783882';
+  var y = url.searchParams.get('y') || '37.5666103';
+  var deviceType = url.searchParams.get('deviceType') || 'pc';
+
+  if (!keyword) return jsonResp({ error: 'keyword required' }, 400);
+
+  var gql = buildGraphQL(kind, keyword, start, display, x, y, deviceType);
+
+  try {
+    // 오라클 프록시 경유
+    var resp = await fetch(ORACLE_PUPPETEER_URL + '/naver/place', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ORACLE_API_KEY
+      },
+      body: JSON.stringify([gql])
+    });
+
+    var data = await resp.text();
+    return new Response(data, {
+      status: resp.status,
+      headers: { 'Content-Type': resp.headers.get('content-type') || 'application/json', ...corsHeaders() }
+    });
+  } catch (e) {
+    return jsonResp({ error: e.message }, 500);
+  }
+}
 
 async function handleTrackCreate(request, env) { var db = env.DB; try { var body = await request.json(); var workspaceId = String(body.workspaceId || 'default').trim(); var kind = String(body.kind || 'restaurant').trim(); var keyword = String(body.keyword || '').trim(); var targetPlaceId = String(body.targetPlaceId || '').trim(); var targetName = body.targetName ? String(body.targetName).trim() : null; var regionCity = String(body.regionCity || '').trim(); var regionDistrict = body.regionDistrict ? String(body.regionDistrict).trim() : null; var bx = String(body.x || '').trim(); var by = String(body.y || '').trim(); var deviceType = String(body.deviceType || 'pc').trim(); if (!keyword || !targetPlaceId || !bx || !by) return jsonResp({ ok: false, error: 'keyword, targetPlaceId, x, y required' }, 400); var r = await db.prepare('INSERT INTO tracks(workspace_id, kind, keyword, target_place_id, target_name, region_city, region_district, x, y, device_type, created_at, active) VALUES(?,?,?,?,?,?,?,?,?,?,?,1)').bind(workspaceId, kind, keyword, targetPlaceId, targetName, regionCity, regionDistrict, bx, by, deviceType, new Date().toISOString()).run(); return jsonResp({ ok: true, id: r.meta.last_row_id }); } catch (e) { return jsonResp({ ok: false, error: e.message }, 500); } }
 
@@ -974,9 +951,6 @@ async function handleSnapshot(request, env) { var db = env.DB; var url = new URL
 
 async function handleKeywordVolume(request) { var url = new URL(request.url); var keyword = url.searchParams.get('keyword'); if (!keyword) return jsonResp({ error: 'keyword required' }, 400); return jsonResp({ keyword: keyword, monthly: { pc: 12400, mobile: 45600, total: 58000 }, competition: 'high', source: 'mock' }); }
 
-// Place Keywords / Detail / Themes / Reviews — 기존 코드 100% 유지
-// (이 부분은 기존 코드와 동일하므로 그대로 붙여넣습니다)
-
 async function handlePlaceKeywords(request) { var url = new URL(request.url); var placeId = url.searchParams.get('placeId'); var kind = url.searchParams.get('kind') || 'restaurant'; if (!placeId) return jsonResp({ error: 'placeId required' }, 400); var pageUrl = 'https://m.place.naver.com/' + kind + '/' + placeId + '/home'; try { var resp = await fetch(pageUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36', 'Accept': 'text/html,application/xhtml+xml', 'Accept-Language': 'ko-KR,ko;q=0.9', 'Referer': 'https://m.search.naver.com/' } }); if (resp.status === 429) return jsonResp({ error: 'RATE_LIMITED', placeId: placeId }, 429); var html = await resp.text(); var nameMatch = html.match(/"name"\s*:\s*"([^"]+)"/); var placeName = nameMatch ? nameMatch[1] : ''; var keywords = extractKeywordList(html); return jsonResp({ placeId: placeId, name: placeName, keywords: keywords, source: pageUrl }); } catch (e) { return jsonResp({ error: e.message, placeId: placeId }, 502); } }
 
 function extractKeywordList(html) { var nextMatch = html.match(/<script id="__NEXT_DATA__"[^>]*>([\s\S]*?)<\/script>/); if (nextMatch) { try { var nextData = JSON.parse(nextMatch[1]); var found = findDeepKey(nextData, 'keywordList'); if (found && Array.isArray(found) && found.length > 0) return normalizeKeywords(found); } catch (e) {} } var scriptBlocks = html.match(/<script[^>]*>([\s\S]*?)<\/script>/g) || []; for (var i = 0; i < scriptBlocks.length; i++) { var content = scriptBlocks[i].replace(/<\/?script[^>]*>/g, ''); if (content.indexOf('keywordList') === -1) continue; var kw = findKeywordListInText(content); if (kw && kw.length > 0) return normalizeKeywords(kw); } var kw2 = findKeywordListInText(html); if (kw2 && kw2.length > 0) return normalizeKeywords(kw2); return []; }
@@ -990,9 +964,40 @@ function extractPlaceDetail(html, placeId, kind) { var result = { placeId: place
 function findPlaceData(obj) { if (!obj || typeof obj !== 'object') return null; if (obj.name && (obj.roadAddress || obj.address) && (obj.category || obj.businessCategory)) return obj; var paths = [['props','pageProps','initialState','place','detailPlace'],['props','pageProps','initialData','place'],['props','pageProps','place'],['props','pageProps']]; for (var i = 0; i < paths.length; i++) { var node = obj; for (var j = 0; j < paths[i].length; j++) { if (!node || typeof node !== 'object') { node = null; break; } node = node[paths[i][j]]; } if (node && node.name && (node.roadAddress || node.address || node.category)) return node; } return findPlaceObject(obj, 0); }
 function findPlaceObject(obj, depth) { if (depth > 8 || !obj || typeof obj !== 'object') return null; if (Array.isArray(obj)) { for (var i = 0; i < obj.length; i++) { var r = findPlaceObject(obj[i], depth + 1); if (r) return r; } return null; } if (obj.name && typeof obj.name === 'string' && (obj.roadAddress || obj.address) && (obj.category || obj.businessCategory || obj.visitorReviewCount !== undefined)) return obj; var keys = Object.keys(obj); for (var j = 0; j < keys.length; j++) { var r = findPlaceObject(obj[keys[j]], depth + 1); if (r) return r; } return null; }
 
-async function handlePlaceDetailGql(request) { var url = new URL(request.url); var placeId = url.searchParams.get('placeId'); if (!placeId) return jsonResp({ error: 'placeId required' }, 400); var gql = { operationName: 'getPlaceDetail', variables: { id: String(placeId) }, query: 'query getPlaceDetail($id: String!) {\n  placeDetail(id: $id) {\n    id\n    name\n    category\n    businessCategory\n    roadAddress\n    address\n    fullAddress\n    commonAddress\n    phone\n    virtualPhone\n    x\n    y\n    imageUrl\n    imageCount\n    description\n    homepageUrl\n    blogUrl\n    bookingUrl\n    visitorReviewCount\n    visitorReviewScore\n    blogCafeReviewCount\n    bookingReviewCount\n    bookingReviewScore\n    saveCount\n    microReview\n    newOpening\n    hasBooking\n    hasNPay\n    __typename\n  }\n}' }; try { var resp = await fetch('https://api.place.naver.com/graphql', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': '*/*', 'Accept-Language': 'ko', 'Origin': 'https://pcmap.place.naver.com', 'Referer': 'https://pcmap.place.naver.com/', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36' }, body: JSON.stringify([gql]) }); var text = await resp.text(); var ct = resp.headers.get('content-type') || ''; if (!ct.includes('application/json')) return jsonResp({ error: 'Upstream error', status: resp.status }, 502); var data = JSON.parse(text); var detail = data[0] && data[0].data && data[0].data.placeDetail; return jsonResp({ ok: true, detail: detail || null }); } catch (e) { return jsonResp({ error: e.message }, 502); } }
+async function handlePlaceDetailGql(request) {
+  var url = new URL(request.url);
+  var placeId = url.searchParams.get('placeId');
+  if (!placeId) return jsonResp({ error: 'placeId required' }, 400);
 
-// Place Themes (기존 전체 유지 — 리뷰 문구 생성 포함)
+  var gql = {
+    operationName: 'getPlaceDetail',
+    variables: { id: String(placeId) },
+    query: 'query getPlaceDetail($id: String!) {\n  placeDetail(id: $id) {\n    id\n    name\n    category\n    businessCategory\n    roadAddress\n    address\n    fullAddress\n    commonAddress\n    phone\n    virtualPhone\n    x\n    y\n    imageUrl\n    imageCount\n    description\n    homepageUrl\n    blogUrl\n    bookingUrl\n    visitorReviewCount\n    visitorReviewScore\n    blogCafeReviewCount\n    bookingReviewCount\n    bookingReviewScore\n    saveCount\n    microReview\n    newOpening\n    hasBooking\n    hasNPay\n    __typename\n  }\n}'
+  };
+
+  try {
+    // 오라클 프록시 경유
+    var resp = await fetch(ORACLE_PUPPETEER_URL + '/naver/place', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ORACLE_API_KEY
+      },
+      body: JSON.stringify([gql])
+    });
+
+    var text = await resp.text();
+    var ct = resp.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) return jsonResp({ error: 'Upstream error', status: resp.status }, 502);
+
+    var data = JSON.parse(text);
+    var detail = data[0] && data[0].data && data[0].data.placeDetail;
+    return jsonResp({ ok: true, detail: detail || null });
+  } catch (e) {
+    return jsonResp({ error: e.message }, 502);
+  }
+}
+
 var REVIEW_PHRASE_POOLS = {"restaurant":{"tasteCore":["음식이 너무 맛있어요","전체적으로 맛이 좋았어요","맛이 기대 이상이에요","정말 맛있게 먹었어요","음식 맛이 딱 제 스타일이에요","맛있게 잘 먹었어요","여기 음식 진짜 맛있어요","음식이 깔끔하고 맛있어요","전체적으로 음식이 맛있었어요"],"tasteCoreMenu":["{menu} 너무 맛있어요","{menu} 맛이 정말 좋았어요","{menu} 먹었는데 기대 이상이에요","{menu} 진짜 맛있게 먹었어요","{menu} 맛이 일품이에요","{menu} 강력 추천해요"],"tasteDetail":["간이 딱 맞고","양념이 잘 배어있고","재료가 신선하고","고기가 부드럽고","국물이 진하고","소스가 맛있고","밑반찬도 맛있고","맛이 깔끔하고","식감이 좋고","풍미가 좋고","불맛이 살아있고","정성이 느껴지고"],"secondary":["만족스럽게 먹고 갑니다","다음에 또 올 것 같아요","재방문 의사 있어요","기분 좋게 식사했어요","잘 먹고 갑니다","만족스러운 식사였어요","또 방문하고 싶어요","다음에 또 올게요"]},"cafe":{"tasteCore":["커피가 맛있어요","음료가 맛있어요","맛있게 잘 먹었어요","전체적으로 맛이 좋았어요","커피 맛이 좋아요","음료가 깔끔하고 맛있어요"],"tasteCoreMenu":["{menu} 맛이 좋았어요","{menu} 너무 맛있어요","{menu} 추천해요"],"tasteDetail":["향이 좋고","달지 않고 깔끔하고","디저트도 맛있고","원두가 좋은 게 느껴지고","온도도 딱 맞고","비주얼도 예쁘고","맛이 부드럽고"],"secondary":["만족하고 갑니다","다음에 또 올게요","카공하기도 좋아요","좋은 시간 보냈어요","또 방문하고 싶어요","자주 올 것 같아요"]},"hairshop":{"tasteCore":["머리 너무 잘해주셨어요","원하는 스타일로 잘 해주셨어요","시술 결과가 너무 마음에 들어요","기대 이상으로 잘해주셨어요","정말 예쁘게 해주셨어요","딱 원하는 대로 나왔어요"],"tasteCoreMenu":["{menu} 결과가 너무 마음에 들어요","{menu} 너무 잘해주셨어요","{menu} 딱 원하는 대로 해주셨어요","{menu} 예쁘게 해주셨어요"],"tasteDetail":["색감이 예쁘고","컷라인이 깔끔하고","머리결도 안 상하고","자연스럽게 잘 나왔고","스타일링 팁도 알려주시고","두상에 맞게 잘 잡아주시고"],"secondary":["만족하고 갑니다","다음에 또 올게요","단골 될 것 같아요","앞으로도 계속 다닐 것 같아요","지인한테도 추천하고 싶어요"]},"nailshop":{"tasteCore":["네일 너무 예쁘게 해주셨어요","디자인이 너무 마음에 들어요","손이 예뻐졌어요","기대 이상으로 잘해주셨어요","정말 꼼꼼하게 해주셨어요"],"tasteCoreMenu":["{menu} 결과가 마음에 들어요","{menu} 너무 예쁘게 해주셨어요","{menu} 추천해요"],"tasteDetail":["지속력도 좋고","디자인이 깔끔하고","손정리도 꼼꼼하게 해주시고","색감이 예쁘고","마감이 깔끔하고"],"secondary":["만족하고 갑니다","다음에 또 올게요","주변에 추천하고 싶어요","네일 볼 때마다 기분 좋아요","단골 될 것 같아요"]},"hospital":{"tasteCore":["진료를 꼼꼼하게 해주세요","설명을 자세하게 해주셔서 좋았어요","진료 결과가 만족스러워요","믿고 다닐 수 있는 병원이에요","꼼꼼하게 봐주셔서 안심이 됐어요"],"tasteCoreMenu":["{menu} 관련 설명을 잘 해주셨어요","{menu} 진료가 꼼꼼했어요","{menu} 치료 결과가 좋았어요"],"tasteDetail":["원장님이 꼼꼼하시고","치료 과정도 자세히 알려주시고","대기 시간도 짧고","사후 관리도 잘 알려주시고","불안감 없이 편하게 받았고"],"secondary":["다음에도 여기서 진료받으려고요","안심이 되었어요","신뢰가 가는 병원이에요","지인한테도 추천했어요","계속 다닐 것 같아요"]},"accommodation":{"tasteCore":["방이 깨끗하고 좋았어요","시설이 전체적으로 좋았어요","편하게 잘 쉬었어요","가격 대비 만족스러워요","전체적으로 만족스러웠어요"],"tasteCoreMenu":["{menu} 시설이 좋았어요","{menu} 만족스러웠어요"],"tasteDetail":["침구도 깨끗하고","어메니티도 잘 갖춰져있고","조용하고 편했고","뷰도 좋고","냉난방도 잘 되고"],"secondary":["편하게 쉬다 갑니다","다음에 또 이용하고 싶어요","잘 쉬고 갑니다","만족스러운 숙박이었어요","재방문 의사 있어요"]}};
 
 var THEME_TO_BUCKET = {'taste':'skip','total':'skip','quality':'skip','service':'service','kindness':'service','friendliness':'service','staff':'service','mood':'atmosphere','ambiance':'atmosphere','interior':'atmosphere','comfort':'atmosphere','coziness':'atmosphere','view':'atmosphere','spaciousness':'atmosphere','facility':'atmosphere','quantity':'quantity','amount':'quantity','portion':'quantity','cleanliness':'cleanliness','hygiene':'cleanliness','sanitation':'cleanliness','waiting':'waiting','speed':'waiting','rapidness':'waiting','price':'price','value':'price','costEfficiency':'price','parking':'parking','variety':'variety','diversity':'variety','menu':'variety','freshness':'freshness','location':'location','accessibility':'location','convenience':'location'};
@@ -1003,30 +1008,138 @@ function buildPlaceData(placeId, placeName, kind, rawThemes, rawMenus) { var top
 
 var PLACE_THEMES_STATS_QUERY = 'query getVisitorReviewStats($input:VisitorReviewStatsInput){visitorReviewStats(input:$input){id name visitorReviewsTotal review{avgRating totalCount}analysis{themes{code label count}menus{code label count}}}}';
 
-async function handlePlaceThemes(request) { var url = new URL(request.url); var placeId = (url.searchParams.get('placeId') || '').trim(); var kind = url.searchParams.get('kind') || 'restaurant'; if (!placeId) return jsonResp({ ok: false, error: 'placeId required' }, 400); if (!/^\d+$/.test(placeId)) return jsonResp({ ok: false, error: 'placeId must be numeric' }, 400); var wtm = btoa(JSON.stringify({ arg: placeId, type: kind, source: 'place' })); try { var resp = await fetch('https://api.place.naver.com/graphql', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': '*/*', 'Accept-Language': 'ko', 'Origin': 'https://m.place.naver.com', 'Referer': 'https://m.place.naver.com/', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'x-wtm-graphql': wtm }, body: JSON.stringify([{ operationName: 'getVisitorReviewStats', variables: { input: { businessId: placeId, businessType: kind } }, query: PLACE_THEMES_STATS_QUERY }]) }); if (resp.status === 429) return jsonResp({ ok: false, error: 'RATE_LIMITED' }, 429); var text = await resp.text(); var ct = resp.headers.get('content-type') || ''; if (!ct.includes('application/json')) return jsonResp({ ok: false, error: 'UPSTREAM_ERROR', status: resp.status }, 502); var data = JSON.parse(text); if (!Array.isArray(data) || !data[0]) return jsonResp({ ok: false, error: 'INVALID_RESPONSE' }, 502); if (data[0].errors) return jsonResp({ ok: false, error: 'GRAPHQL_ERROR', errors: data[0].errors }, 502); var stats = data[0].data && data[0].data.visitorReviewStats; if (!stats) return jsonResp({ ok: false, error: 'NO_DATA' }, 502); var placeName = stats.name || ''; var analysis = stats.analysis || {}; var rawThemes = (analysis.themes || []).slice().sort(function(a, b) { return (b.count || 0) - (a.count || 0); }); var rawMenus = (analysis.menus || []).slice().sort(function(a, b) { return (b.count || 0) - (a.count || 0); }); var placeData = buildPlaceData(placeId, placeName, kind, rawThemes, rawMenus); return jsonResp({ ok: true, placeData: placeData, raw: { themes: rawThemes, menus: rawMenus, reviewTotal: stats.visitorReviewsTotal, avgRating: stats.review && stats.review.avgRating } }); } catch (e) { return jsonResp({ ok: false, error: e.message }, 502); } }
+async function handlePlaceThemes(request) {
+  var url = new URL(request.url);
+  var placeId = (url.searchParams.get('placeId') || '').trim();
+  var kind = url.searchParams.get('kind') || 'restaurant';
+  if (!placeId) return jsonResp({ ok: false, error: 'placeId required' }, 400);
+  if (!/^\d+$/.test(placeId)) return jsonResp({ ok: false, error: 'placeId must be numeric' }, 400);
 
-// Place Reviews (기존 100% 유지)
+  try {
+    // 오라클 프록시 경유
+    var resp = await fetch(ORACLE_PUPPETEER_URL + '/naver/place', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ORACLE_API_KEY
+      },
+      body: JSON.stringify([{
+        operationName: 'getVisitorReviewStats',
+        variables: { input: { businessId: placeId, businessType: kind } },
+        query: PLACE_THEMES_STATS_QUERY
+      }])
+    });
+
+    if (resp.status === 429) return jsonResp({ ok: false, error: 'RATE_LIMITED' }, 429);
+    var text = await resp.text();
+    var ct = resp.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) return jsonResp({ ok: false, error: 'UPSTREAM_ERROR', status: resp.status }, 502);
+
+    var data = JSON.parse(text);
+    if (!Array.isArray(data) || !data[0]) return jsonResp({ ok: false, error: 'INVALID_RESPONSE' }, 502);
+    if (data[0].errors) return jsonResp({ ok: false, error: 'GRAPHQL_ERROR', errors: data[0].errors }, 502);
+
+    var stats = data[0].data && data[0].data.visitorReviewStats;
+    if (!stats) return jsonResp({ ok: false, error: 'NO_DATA' }, 502);
+
+    var placeName = stats.name || '';
+    var analysis = stats.analysis || {};
+    var rawThemes = (analysis.themes || []).slice().sort(function(a, b) { return (b.count || 0) - (a.count || 0); });
+    var rawMenus = (analysis.menus || []).slice().sort(function(a, b) { return (b.count || 0) - (a.count || 0); });
+
+    var placeData = buildPlaceData(placeId, placeName, kind, rawThemes, rawMenus);
+
+    return jsonResp({
+      ok: true, placeData: placeData,
+      raw: { themes: rawThemes, menus: rawMenus, reviewTotal: stats.visitorReviewsTotal, avgRating: stats.review && stats.review.avgRating }
+    });
+  } catch (e) {
+    return jsonResp({ ok: false, error: e.message }, 502);
+  }
+}
+
 var PLACE_REVIEWS_GQL = 'query getVisitorReviews($input:VisitorReviewsInput){visitorReviews(input:$input){items{id reviewId rating author{nickname __typename}body media{type thumbnail __typename}tags created reply{body __typename}visitCount businessName __typename}total __typename}}';
-async function handlePlaceReviews(request) { var url = new URL(request.url); var placeId = (url.searchParams.get('placeId') || '').trim(); var kind = url.searchParams.get('kind') || 'restaurant'; var size = Math.min(parseInt(url.searchParams.get('size')) || 30, 50); var sort = url.searchParams.get('sort') || ''; if (!placeId) return jsonResp({ ok: false, error: 'placeId required' }, 400); if (!/^\d+$/.test(placeId)) return jsonResp({ ok: false, error: 'placeId must be numeric' }, 400); var wtm = btoa(JSON.stringify({ arg: placeId, type: kind, source: 'place' })); var vi = { businessId: placeId, businessType: kind, item: '0', size: size, isPhotoUsed: false, includeContent: true, getUserStats: false, includeReceiptPhotos: true, getReactions: false, getTrailer: false }; if (sort) vi.sort = sort; try { var resp = await fetch('https://api.place.naver.com/graphql', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': '*/*', 'Accept-Language': 'ko', 'Origin': 'https://m.place.naver.com', 'Referer': 'https://m.place.naver.com/', 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'x-wtm-graphql': wtm }, body: JSON.stringify([{ operationName: 'getVisitorReviews', variables: { input: vi }, query: PLACE_REVIEWS_GQL }]) }); if (resp.status === 429) return jsonResp({ ok: false, error: 'RATE_LIMITED' }, 429); var text = await resp.text(); var ct = resp.headers.get('content-type') || ''; if (!ct.includes('application/json')) return jsonResp({ ok: false, error: 'UPSTREAM_ERROR', status: resp.status }, 502); var data = JSON.parse(text); if (!Array.isArray(data) || !data[0]) return jsonResp({ ok: false, error: 'INVALID_RESPONSE' }, 502); if (data[0].errors) return jsonResp({ ok: false, error: 'GRAPHQL_ERROR', errors: data[0].errors }, 502); var vr = data[0].data && data[0].data.visitorReviews; if (!vr) return jsonResp({ ok: false, error: 'NO_DATA' }, 502); var reviews = []; var items = vr.items || []; for (var i = 0; i < items.length; i++) { var it = items[i]; var media = it.media || []; var imgCount = 0; var thumbnails = []; for (var m = 0; m < media.length; m++) { if (media[m].type === 'image') { imgCount++; if (media[m].thumbnail) thumbnails.push(String(media[m].thumbnail)); } } reviews.push({ id: it.id || '', reviewId: it.reviewId || '', rating: it.rating || 0, author: it.author ? it.author.nickname || '' : '', body: it.body || '', hasImage: imgCount > 0, imageCount: imgCount, thumbnails: thumbnails, businessName: it.businessName || '', date: it.created || '', hasReply: !!(it.reply && it.reply.body), visitCount: it.visitCount || 0, tags: it.tags || [] }); } return jsonResp({ ok: true, reviews: reviews, total: vr.total || 0 }); } catch (e) { return jsonResp({ ok: false, error: e.message }, 502); } }
 
-// Review Dashboard, YouTube, Land, Datalab, Google Trends, Blog AI, Parking, Biz, Puppeteer, Smartplace
-// 모두 기존 코드와 100% 동일 — 함수명만 참조하여 라우트 테이블에 연결
+async function handlePlaceReviews(request) {
+  var url = new URL(request.url);
+  var placeId = (url.searchParams.get('placeId') || '').trim();
+  var kind = url.searchParams.get('kind') || 'restaurant';
+  var size = Math.min(parseInt(url.searchParams.get('size')) || 30, 50);
+  var sort = url.searchParams.get('sort') || '';
+
+  if (!placeId) return jsonResp({ ok: false, error: 'placeId required' }, 400);
+  if (!/^\d+$/.test(placeId)) return jsonResp({ ok: false, error: 'placeId must be numeric' }, 400);
+
+  var vi = {
+    businessId: placeId, businessType: kind, item: '0', size: size,
+    isPhotoUsed: false, includeContent: true, getUserStats: false,
+    includeReceiptPhotos: true, getReactions: false, getTrailer: false
+  };
+  if (sort) vi.sort = sort;
+
+  try {
+    // 오라클 프록시 경유
+    var resp = await fetch(ORACLE_PUPPETEER_URL + '/naver/place', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': ORACLE_API_KEY
+      },
+      body: JSON.stringify([{ operationName: 'getVisitorReviews', variables: { input: vi }, query: PLACE_REVIEWS_GQL }])
+    });
+
+    if (resp.status === 429) return jsonResp({ ok: false, error: 'RATE_LIMITED' }, 429);
+    var text = await resp.text();
+    var ct = resp.headers.get('content-type') || '';
+    if (!ct.includes('application/json')) return jsonResp({ ok: false, error: 'UPSTREAM_ERROR', status: resp.status }, 502);
+
+    var data = JSON.parse(text);
+    if (!Array.isArray(data) || !data[0]) return jsonResp({ ok: false, error: 'INVALID_RESPONSE' }, 502);
+    if (data[0].errors) return jsonResp({ ok: false, error: 'GRAPHQL_ERROR', errors: data[0].errors }, 502);
+
+    var vr = data[0].data && data[0].data.visitorReviews;
+    if (!vr) return jsonResp({ ok: false, error: 'NO_DATA' }, 502);
+
+    var reviews = [];
+    var items = vr.items || [];
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      var media = it.media || [];
+      var imgCount = 0;
+      var thumbnails = [];
+      for (var m = 0; m < media.length; m++) {
+        if (media[m].type === 'image') {
+          imgCount++;
+          if (media[m].thumbnail) thumbnails.push(String(media[m].thumbnail));
+        }
+      }
+      reviews.push({
+        id: it.id || '', reviewId: it.reviewId || '', rating: it.rating || 0,
+        author: it.author ? it.author.nickname || '' : '',
+        body: it.body || '', hasImage: imgCount > 0, imageCount: imgCount,
+        thumbnails: thumbnails, businessName: it.businessName || '',
+        date: it.created || '', hasReply: !!(it.reply && it.reply.body),
+        visitCount: it.visitCount || 0, tags: it.tags || []
+      });
+    }
+    return jsonResp({ ok: true, reviews: reviews, total: vr.total || 0 });
+  } catch (e) {
+    return jsonResp({ ok: false, error: e.message }, 502);
+  }
+}
 
 var REVIEW_CACHE_TTL = 21600;
 async function handleReviewStats(request, env) { var url = new URL(request.url); var businessId = (url.searchParams.get('businessId') || '').trim(); var startDate = (url.searchParams.get('startDate') || '').trim(); var endDate = (url.searchParams.get('endDate') || '').trim(); var force = url.searchParams.get('force') === '1'; if (!businessId || !startDate || !endDate) return jsonResp({ ok: false, error: 'businessId, startDate, endDate required' }, 400); if (!/^\d+$/.test(businessId)) return jsonResp({ ok: false, error: 'businessId must be digits' }, 400); if (!/^\d{4}-\d{2}-\d{2}$/.test(startDate) || !/^\d{4}-\d{2}-\d{2}$/.test(endDate)) return jsonResp({ ok: false, error: 'startDate/endDate must be YYYY-MM-DD' }, 400); var cacheKey = 'reviewStats:' + businessId + ':' + startDate + ':' + endDate; if (!force && env.REVIEW_CACHE) { try { var cached = await env.REVIEW_CACHE.get(cacheKey, 'json'); if (cached) return jsonResp({ ok: true, cached: true, key: cacheKey, data: cached, themeMap: THEME_KO }); } catch (e) {} } var upstreamUrl = 'https://new.smartplace.naver.com/graphql?opName=GetReviewDashboard'; var payload = { operationName: 'GetReviewDashboard', variables: { businessId: businessId, startDate: startDate, endDate: endDate }, query: REVIEW_QUERY }; try { var r = await fetch(upstreamUrl, { method: 'POST', headers: { 'content-type': 'application/json', 'accept': 'application/json, text/plain, */*', 'from-system': 'smartplace', 'origin': 'https://new.smartplace.naver.com', 'referer': 'https://new.smartplace.naver.com/', 'user-agent': request.headers.get('user-agent') || 'Mozilla/5.0' }, body: JSON.stringify(payload) }); var text = await r.text(); var parsed; try { parsed = JSON.parse(text); } catch (e) { return jsonResp({ ok: false, error: 'UPSTREAM_NON_JSON', upstreamStatus: r.status, body: text.slice(0, 500) }, 502); } if (parsed && parsed.errors && parsed.errors.length) return jsonResp({ ok: false, error: 'GRAPHQL_ERROR', upstreamStatus: r.status, errors: parsed.errors }, 502); var data = parsed && parsed.data && parsed.data.reviewStatistics || null; if (!data) return jsonResp({ ok: false, error: 'NO_DATA', upstreamStatus: r.status }, 502); if (env.REVIEW_CACHE) { try { await env.REVIEW_CACHE.put(cacheKey, JSON.stringify(data), { expirationTtl: REVIEW_CACHE_TTL }); } catch (e) {} } return jsonResp({ ok: true, cached: false, key: cacheKey, data: data, themeMap: THEME_KO }); } catch (e) { return jsonResp({ ok: false, error: e.message }, 502); } }
 
-// YouTube handlers
 async function handleYoutubeSearch(request, env) { var ytKey = env.YOUTUBE_API_KEY; if (!ytKey) return jsonResp({ ok: false, error: 'YOUTUBE_API_KEY not configured' }, 500); var url = new URL(request.url); var params = new URLSearchParams(); params.set('part', 'snippet'); params.set('type', 'video'); params.set('maxResults', url.searchParams.get('maxResults') || '50'); params.set('regionCode', 'KR'); params.set('key', ytKey); var q = url.searchParams.get('q'); if (q) params.set('q', q); var order = url.searchParams.get('order'); if (order) params.set('order', order); var duration = url.searchParams.get('videoDuration'); if (duration && duration !== 'any') params.set('videoDuration', duration); var after = url.searchParams.get('publishedAfter'); if (after) params.set('publishedAfter', after); var pageToken = url.searchParams.get('pageToken'); if (pageToken) params.set('pageToken', pageToken); try { var r = await fetch('https://www.googleapis.com/youtube/v3/search?' + params.toString()); return jsonResp(await r.json()); } catch (e) { return jsonResp({ error: e.message }, 502); } }
 async function handleYoutubeVideos(request, env) { var ytKey = env.YOUTUBE_API_KEY; if (!ytKey) return jsonResp({ ok: false, error: 'YOUTUBE_API_KEY not configured' }, 500); var url = new URL(request.url); var id = url.searchParams.get('id'); if (!id) return jsonResp({ error: 'id required' }, 400); var part = url.searchParams.get('part') || 'snippet,contentDetails,statistics'; try { var r = await fetch('https://www.googleapis.com/youtube/v3/videos?part=' + encodeURIComponent(part) + '&id=' + encodeURIComponent(id) + '&key=' + ytKey); return jsonResp(await r.json()); } catch (e) { return jsonResp({ error: e.message }, 502); } }
 async function handleYoutubeChannels(request, env) { var ytKey = env.YOUTUBE_API_KEY; if (!ytKey) return jsonResp({ ok: false, error: 'YOUTUBE_API_KEY not configured' }, 500); var url = new URL(request.url); var id = url.searchParams.get('id'); if (!id) return jsonResp({ error: 'id required' }, 400); var part = url.searchParams.get('part') || 'statistics,snippet'; try { var r = await fetch('https://www.googleapis.com/youtube/v3/channels?part=' + encodeURIComponent(part) + '&id=' + encodeURIComponent(id) + '&key=' + ytKey); return jsonResp(await r.json()); } catch (e) { return jsonResp({ error: e.message }, 502); } }
 async function handleYoutubeTrending(request, env) { var ytKey = env.YOUTUBE_API_KEY; if (!ytKey) return jsonResp({ ok: false, error: 'YOUTUBE_API_KEY not configured' }, 500); var url = new URL(request.url); var params = new URLSearchParams(); params.set('part', 'snippet,contentDetails,statistics'); params.set('chart', 'mostPopular'); params.set('regionCode', 'KR'); params.set('maxResults', '50'); params.set('key', ytKey); var cat = url.searchParams.get('categoryId'); if (cat && cat !== '0') params.set('videoCategoryId', cat); try { var r = await fetch('https://www.googleapis.com/youtube/v3/videos?' + params.toString()); return jsonResp(await r.json()); } catch (e) { return jsonResp({ error: e.message }, 502); } }
 async function handleAiYoutubeAnalyze(request, env) { var geminiKey = env.GEMINI_API_KEY; if (!geminiKey) return jsonResp({ ok: false, error: 'GEMINI_API_KEY not configured' }, 500); var body; try { body = await request.json(); } catch (e) { return jsonResp({ error: 'invalid JSON' }, 400); } var title = body.title || ''; var channel = body.channel || ''; var duration = body.duration || ''; var ratio = body.ratio || ''; var tags = body.tags || ''; var prompt = '나는 유튜브 크리에이터다. 아래 영상을 벤치마킹해서 상세한 기획안을 작성해줘.\n\n[분석 대상]\n- 제목: ' + title + '\n- 채널: ' + channel + '\n- 길이: ' + duration + '\n- 성과: 구독자 대비 ' + ratio + '배 조회수\n- 태그: ' + tags + '\n\n[요청]\n1. 떡상 이유 분석\n2. 제목의 심리적 트리거 분석\n3. 비슷한 주제 제목 5개 추천\n4. 썸네일 전략\n5. 시청 지속시간 높이는 대본 구조\n6. 시리즈 확장 아이디어 3개\n\n구체적이고 실행 가능하게 답변해줘.'; try { var r = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + geminiKey, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.7, maxOutputTokens: 2048 } }) }); var data = await r.json(); if (!r.ok) return jsonResp({ ok: false, error: data.error ? data.error.message : 'Gemini API error' }, 502); var text = ''; if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) { text = data.candidates[0].content.parts[0].text || ''; } return jsonResp({ ok: true, result: text, prompt: prompt }); } catch (e) { return jsonResp({ ok: false, error: e.message, prompt: prompt }, 502); } }
 
-// Land proxy
 async function handleLandProxy(request) { var url = new URL(request.url); var targetUrl = url.searchParams.get('url'); if (!targetUrl) return jsonResp({ error: 'url parameter required' }, 400); if (targetUrl.indexOf('m.land.naver.com') === -1 && targetUrl.indexOf('fin.land.naver.com') === -1) return jsonResp({ error: 'only naver land URLs allowed' }, 403); var headers = { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1', 'Referer': 'https://m.land.naver.com/', 'Accept': 'application/json, text/plain, */*', 'Accept-Language': 'ko-KR,ko;q=0.9' }; if (targetUrl.indexOf('fin.land.naver.com') !== -1) { headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36'; headers['Referer'] = 'https://fin.land.naver.com/'; headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'; } try { var resp = await fetch(targetUrl, { headers: headers }); var body = await resp.text(); return new Response(body, { status: resp.status, headers: { 'Content-Type': resp.headers.get('Content-Type') || 'text/plain', ...corsHeaders() } }); } catch (e) { return jsonResp({ error: e.message }, 502); } }
 async function handleLandProxyPost(request) { var body; try { body = await request.json(); } catch(e) { return jsonResp({ error: 'invalid JSON' }, 400); } var targetUrl = body.url; var urls = body.urls; if (!targetUrl && (!urls || !Array.isArray(urls) || urls.length === 0)) return jsonResp({ error: 'url or urls required' }, 400); var headers = { 'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.1 Mobile/15E148 Safari/604.1', 'Referer': 'https://m.land.naver.com/', 'Accept': 'application/json, text/plain, */*', 'Accept-Language': 'ko-KR,ko;q=0.9' }; if (urls && Array.isArray(urls)) { var results = []; for (var i = 0; i < urls.length; i += 10) { var chunk = urls.slice(i, i + 10); var promises = chunk.map(function(u) { if (u.indexOf('m.land.naver.com') === -1 && u.indexOf('fin.land.naver.com') === -1) return Promise.resolve({ url: u, status: 403, body: '' }); var h = { ...headers }; if (u.indexOf('fin.land.naver.com') !== -1) { h['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36'; h['Referer'] = 'https://fin.land.naver.com/'; h['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'; } return fetch(u, { headers: h }).then(function(r) { return r.text().then(function(t) { return { url: u, status: r.status, body: t }; }); }).catch(function(e) { return { url: u, status: 0, body: '', error: e.message }; }); }); var chunkResults = await Promise.all(promises); results = results.concat(chunkResults); } return jsonResp({ ok: true, results: results }); } if (targetUrl.indexOf('m.land.naver.com') === -1 && targetUrl.indexOf('fin.land.naver.com') === -1) return jsonResp({ error: 'only naver land URLs allowed' }, 403); if (targetUrl.indexOf('fin.land.naver.com') !== -1) { headers['User-Agent'] = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36'; headers['Referer'] = 'https://fin.land.naver.com/'; headers['Accept'] = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8'; } try { var resp = await fetch(targetUrl, { headers: headers }); var respBody = await resp.text(); return jsonResp({ ok: true, status: resp.status, body: respBody }); } catch (e) { return jsonResp({ ok: false, error: e.message }, 502); } }
 
-// Datalab + Google Trends
 async function handleDatalabTrend(request, env) { var clientId = env.NAVER_DATALAB_CLIENT_ID; var clientSecret = env.NAVER_DATALAB_SECRET; if (!clientId || !clientSecret) return jsonResp({ ok: false, error: 'NAVER_DATALAB credentials not configured' }, 500); var body; try { body = await request.json(); } catch (e) { return jsonResp({ ok: false, error: 'invalid JSON' }, 400); } var startDate = body.startDate; var endDate = body.endDate; var timeUnit = body.timeUnit || 'date'; var keywordGroups = body.keywordGroups; var device = body.device || ''; var gender = body.gender || ''; var ages = body.ages || []; if (!startDate || !endDate || !keywordGroups || !keywordGroups.length) return jsonResp({ ok: false, error: 'startDate, endDate, keywordGroups required' }, 400); if (keywordGroups.length > 5) return jsonResp({ ok: false, error: 'max 5 keyword groups per request' }, 400); try { var resp = await fetch('https://openapi.naver.com/v1/datalab/search', { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Naver-Client-Id': clientId, 'X-Naver-Client-Secret': clientSecret }, body: JSON.stringify({ startDate: startDate, endDate: endDate, timeUnit: timeUnit, keywordGroups: keywordGroups, device: device, gender: gender, ages: ages }) }); var text = await resp.text(); if (!resp.ok) return jsonResp({ ok: false, error: 'DataLab API error', status: resp.status, body: text.substring(0, 500) }, 502); var data = JSON.parse(text); return jsonResp({ ok: true, data: data }); } catch (e) { return jsonResp({ ok: false, error: e.message }, 502); } }
 
 function extractXmlTag(xml, tag) { var patterns = [new RegExp('<' + tag + '><!\\[CDATA\\[([\\s\\S]*?)\\]\\]></' + tag + '>', 'i'), new RegExp('<' + tag + '>([\\s\\S]*?)</' + tag + '>', 'i')]; for (var i = 0; i < patterns.length; i++) { var m = xml.match(patterns[i]); if (m) return m[1].trim(); } return ''; }
@@ -1035,33 +1148,75 @@ async function handleGoogleTrendsDaily(request) { var urls = ['https://trends.go
 
 async function handleGoogleTrendsRealtime(request) { try { var resp = await fetch('https://news.google.com/rss?hl=ko&gl=KR&ceid=KR:ko', { headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'Accept': 'application/xml, text/xml, */*' } }); if (!resp.ok) return jsonResp({ ok: false, error: 'Google News unavailable', status: resp.status }, 502); var text = await resp.text(); var stories = []; var itemRegex = /<item>([\s\S]*?)<\/item>/g; var match; while ((match = itemRegex.exec(text)) !== null && stories.length < 20) { var itemXml = match[1]; var title = extractXmlTag(itemXml, 'title'); var link = extractXmlTag(itemXml, 'link'); var source = extractXmlTag(itemXml, 'source'); if (title) { stories.push({ title: title, entityNames: source ? [source] : [], articleTitle: title, articleUrl: link || '', imageUrl: '' }); } } return jsonResp({ ok: true, stories: stories }); } catch (e) { return jsonResp({ ok: false, error: e.message }, 502); } }
 
-// Blog AI Generate
 var BLOG_DEFAULT_PROMPT = '너는 네이버 블로그 전문 에디터다.\n아래 자료를 바탕으로 네이버 블로그 포스팅을 작성해라.\n\n=== 작동 원칙 ===\n- 제공된 정보만 사용. 임의 정보 생성 금지.\n- 첫 문장은 독자의 흥미를 끄는 질문형으로 시작\n- 글에 ** 이나 # 같은 마크다운 문자는 절대 넣지 않는다.\n- 소제목 앞에 이모지 1개 추가.\n- 반드시 한국어(한글)로만 작성한다.\n\n=== 문체 규칙 ===\n- 전문가스러운 말투\n- 대화체. 실제 경험을 말하듯 자연스럽게.\n- "안녕하세요 OO입니다" 식의 진부한 서론 금지.\n- AI 문체 금지\n- 문단은 모바일 가독성을 위해 2~3문장 단위로 끊는다.\n\n=== 제목 전략 (20자 내외) ===\n- 감정 + 궁금증 + 반전 + 공감 요소 포함\n- 키워드는 제목 앞쪽에 배치\n\n=== 본문 구성 ===\n도입부: 독자의 경험/궁금증을 건드리는 질문 (Hook)\n중간부: 소제목 4~5개, 각 소제목 본문 400자 이상\n마무리: 요약 + CTA\n\n=== SEO 규칙 ===\n- 핵심 키워드: 제목 + 소제목 + 본문에 총 5~10회\n\n=== 출력 형식 (JSON만 출력) ===\n{\n "title": "블로그 제목",\n "sections": [\n {\n "subtitle": "소제목1",\n "body": "본문 내용 (400자 이상)",\n "image_prompt": "영어 이미지 프롬프트"\n }\n ],\n "hashtags": "#태그1 #태그2 ...(8~12개)",\n "summary": "3줄 요약"\n}';
+
 async function handleBlogGenerate(request, env) { var groqKey = env.GROQ_API_KEY; if (!groqKey) return jsonResp({ ok: false, error: 'GROQ_API_KEY not configured' }, 500); var body; try { body = await request.json(); } catch (e) { return jsonResp({ ok: false, error: 'invalid JSON' }, 400); } var sources = body.sources || {}; var keyword = body.keyword || ''; var customPrompt = body.prompt || ''; var maxTokens = parseInt(body.maxTokens) || 3000; var sourceTexts = []; if (sources.youtube && sources.youtube.transcript) { var yt = sources.youtube; var transcript = String(yt.transcript || ''); if (transcript.length > 4000) transcript = transcript.substring(0, 2000) + '\n...(중략)...\n' + transcript.substring(transcript.length - 2000); sourceTexts.push('[유튜브 영상: ' + (yt.title || '제목 없음') + ']\n' + transcript); } if (sources.top_posts && Array.isArray(sources.top_posts)) { for (var i = 0; i < sources.top_posts.length; i++) { var post = sources.top_posts[i]; var postBody = String(post.body || ''); if (postBody.length > 1500) postBody = postBody.substring(0, 750) + '\n...(중략)...\n' + postBody.substring(postBody.length - 750); sourceTexts.push('[참고글 ' + (i + 1) + ': ' + (post.title || '') + ']\n' + postBody); } } if (sources.custom_urls && Array.isArray(sources.custom_urls)) { for (var j = 0; j < sources.custom_urls.length; j++) { var cu = sources.custom_urls[j]; var cuBody = String(cu.body || ''); if (cuBody.length > 2000) cuBody = cuBody.substring(0, 1000) + '\n...(중략)...\n' + cuBody.substring(cuBody.length - 1000); sourceTexts.push('[참고 URL ' + (j + 1) + ': ' + (cu.title || cu.url || '') + ']\n' + cuBody); } } if (!sourceTexts.length && !keyword) { return jsonResp({ ok: false, error: '소스 또는 키워드를 1개 이상 입력하세요.' }, 400); } var systemPrompt = customPrompt || BLOG_DEFAULT_PROMPT; var userContent = ''; if (keyword) userContent += '핵심 키워드: ' + keyword + '\n\n'; if (sourceTexts.length) userContent += '=== 참고 자료 ===\n' + sourceTexts.join('\n\n---\n\n'); else userContent += '위 키워드에 대해 전문적이고 흥미로운 블로그 글을 작성해주세요.'; userContent += '\n\n위 자료를 바탕으로 JSON 형식으로만 블로그 글을 작성해주세요.'; try { var groqResp = await fetch('https://api.groq.com/openai/v1/chat/completions', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + groqKey }, body: JSON.stringify({ model: body.model || 'llama-3.3-70b-versatile', messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userContent }], temperature: 0.7, max_tokens: maxTokens }) }); if (!groqResp.ok) { var errText = await groqResp.text(); return jsonResp({ ok: false, error: 'Groq API error: ' + groqResp.status, detail: errText.substring(0, 500) }, 502); } var groqData = await groqResp.json(); var content = ''; if (groqData.choices && groqData.choices[0] && groqData.choices[0].message) { content = groqData.choices[0].message.content || ''; } var jsonStr = content.replace(/```json\s*/gi, '').replace(/```\s*/g, ''); var startIdx = jsonStr.indexOf('{'); var endIdx = jsonStr.lastIndexOf('}'); if (startIdx !== -1 && endIdx > startIdx) jsonStr = jsonStr.substring(startIdx, endIdx + 1); var parsed = null; try { parsed = JSON.parse(jsonStr); } catch (parseErr) { return jsonResp({ ok: true, parsed: false, raw: content, error: 'JSON 파싱 실패', model: groqData.model || body.model }); } return jsonResp({ ok: true, parsed: true, content: parsed, model: groqData.model || body.model, usage: groqData.usage || null }); } catch (e) { return jsonResp({ ok: false, error: e.message }, 502); } }
 
-// Parking Scan
 async function handleParkingScan(request, env) { var geminiKey = env.GEMINI_API_KEY; if (!geminiKey) return jsonResp({ ok: false, error: 'GEMINI_API_KEY not configured' }, 500); var body; try { body = await request.json(); } catch (e) { return jsonResp({ ok: false, error: 'invalid JSON' }, 400); } var imageData = body.image; if (!imageData) return jsonResp({ ok: false, error: 'image required' }, 400); var base64 = imageData; var mimeType = 'image/jpeg'; if (imageData.indexOf(',') !== -1) { var parts = imageData.split(','); base64 = parts[1]; var mimeMatch = parts[0].match(/data:([^;]+)/); if (mimeMatch) mimeType = mimeMatch[1]; } var prompt = '이 이미지에서 한국 전화번호를 찾아주세요.\n규칙:\n- 010으로 시작하는 번호만 추출\n- 하이픈 포함 형식으로 반환\n- 번호가 없으면 빈 문자열만 반환'; try { var resp = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=' + geminiKey, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ contents: [{ parts: [{ text: prompt }, { inlineData: { mimeType: mimeType, data: base64 } }] }], generationConfig: { temperature: 0.1, maxOutputTokens: 100 } }) }); var data = await resp.json(); if (!resp.ok) return jsonResp({ ok: false, error: data.error ? data.error.message : 'Gemini API error' }, 502); var text = ''; if (data.candidates && data.candidates[0] && data.candidates[0].content && data.candidates[0].content.parts) { text = (data.candidates[0].content.parts[0].text || '').trim(); } var phoneMatch = text.match(/01[016789]-?\d{3,4}-?\d{4}/); var phone = ''; if (phoneMatch) { var digits = phoneMatch[0].replace(/[^0-9]/g, ''); if (digits.length === 11) phone = digits.substring(0, 3) + '-' + digits.substring(3, 7) + '-' + digits.substring(7); else if (digits.length === 10) phone = digits.substring(0, 3) + '-' + digits.substring(3, 6) + '-' + digits.substring(6); else phone = phoneMatch[0]; } return jsonResp({ ok: true, phone: phone, raw: text }); } catch (e) { return jsonResp({ ok: false, error: e.message }, 502); } }
 
-// Biz Data Collect
 function bizExtractPhones(text) { var normalized = []; var seen = {}; var re1 = /010[\s\-\.]*\d{4}[\s\-\.]*\d{4}/g; var m; while ((m = re1.exec(text)) !== null) { var d = m[0].replace(/[^\d]/g, ''); if (d.length === 11 && !seen[d]) { seen[d] = true; normalized.push(d.substring(0, 3) + '-' + d.substring(3, 7) + '-' + d.substring(7)); } } return normalized; }
 function bizParseBlogUrl(link) { var pvMatch = link.match(/blogId=([^&]+).*?logNo=(\d+)/); if (pvMatch) return { blogId: pvMatch[1], postNo: pvMatch[2] }; var directMatch = link.match(/blog\.naver\.com\/([^\/\?]+)\/(\d+)/); if (directMatch) return { blogId: directMatch[1], postNo: directMatch[2] }; return null; }
 async function bizFetchBlog(mobileUrl, originalUrl, searchTitle) { try { var resp = await fetch(mobileUrl, { headers: { 'User-Agent': 'Mozilla/5.0 (Linux; Android 13) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36', 'Accept': 'text/html,application/xhtml+xml', 'Accept-Language': 'ko-KR,ko;q=0.9', 'Referer': 'https://m.search.naver.com/' } }); if (!resp.ok) return null; var html = await resp.text(); var blogTitle = searchTitle; var titleM = html.match(/<title>([^<]+)<\/title>/i); if (titleM) blogTitle = titleM[1].replace(/\s*[:\-]\s*네이버.*$/i, '').trim(); var cleanHtml = html.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' '); var textOnly = cleanHtml.replace(/<[^>]+>/g, ' '); var phones = bizExtractPhones(textOnly); if (phones.length === 0) return null; var businessName = ''; var address = ''; var moduleRegex = /data-module(?:-v2)?='(\{[^']*"type"\s*:\s*"v2_map"[^']*\})'/g; var moduleMatch; while ((moduleMatch = moduleRegex.exec(html)) !== null) { try { var moduleData = JSON.parse(moduleMatch[1]); var places = moduleData.data && moduleData.data.places; if (places && places.length > 0) { var p = places[0]; if (p.name && p.name.trim()) businessName = p.name.trim(); if (p.address && p.address.trim()) address = p.address.trim(); break; } } catch (e) {} } return { phones: phones, businessName: businessName, address: address, blogTitle: blogTitle, originalUrl: originalUrl }; } catch (e) { return null; } }
 async function handleBizCollect(request, env) { var body; try { body = await request.json(); } catch (e) { return jsonResp({ ok: false, error: 'invalid JSON' }, 400); } var keyword = (body.keyword || '').trim(); var maxBlogs = Math.min(parseInt(body.maxBlogs) || 50, 200); if (!keyword) return jsonResp({ ok: false, error: 'keyword required' }, 400); var clientId = env.NAVER_DATALAB_CLIENT_ID; var clientSecret = env.NAVER_DATALAB_SECRET; if (!clientId || !clientSecret) return jsonResp({ ok: false, error: 'NAVER API credentials not configured' }, 500); var searchQuery = keyword + ' "010"'; var blogItems = []; var searchPages = maxBlogs > 100 ? 2 : 1; for (var sp = 0; sp < searchPages; sp++) { try { var startIdx = sp * 100 + 1; var searchResp = await fetch('https://openapi.naver.com/v1/search/blog.json?query=' + encodeURIComponent(searchQuery) + '&display=100&start=' + startIdx + '&sort=date', { headers: { 'X-Naver-Client-Id': clientId, 'X-Naver-Client-Secret': clientSecret } }); if (!searchResp.ok) { if (sp === 0) { var errText = await searchResp.text(); return jsonResp({ ok: false, error: 'Search API error ' + searchResp.status, detail: errText.substring(0, 300) }, 502); } break; } var searchData = await searchResp.json(); var pageItems = searchData.items || []; blogItems = blogItems.concat(pageItems); if (pageItems.length < 100) break; } catch (e) { if (sp === 0) return jsonResp({ ok: false, error: 'Search API: ' + e.message }, 502); break; } } var blogTargets = []; var seenUrls = {}; for (var i = 0; i < blogItems.length && blogTargets.length < maxBlogs; i++) { var item = blogItems[i]; var link = item.link || ''; var parsed = bizParseBlogUrl(link); if (!parsed) continue; var mobileUrl = 'https://m.blog.naver.com/' + parsed.blogId + '/' + parsed.postNo; if (seenUrls[mobileUrl]) continue; seenUrls[mobileUrl] = true; blogTargets.push({ mobileUrl: mobileUrl, originalUrl: link, searchTitle: (item.title || '').replace(/<[^>]+>/g, '').replace(/&[^;]+;/g, '') }); } var results = []; var seenCombo = {}; var processedCount = 0; var phoneFoundCount = 0; for (var batch = 0; batch < blogTargets.length; batch += 10) { var chunk = blogTargets.slice(batch, batch + 10); var promises = []; for (var c = 0; c < chunk.length; c++) { promises.push(bizFetchBlog(chunk[c].mobileUrl, chunk[c].originalUrl, chunk[c].searchTitle)); } var chunkResults = await Promise.all(promises); for (var j = 0; j < chunkResults.length; j++) { processedCount++; var cr = chunkResults[j]; if (!cr || !cr.phones || cr.phones.length === 0) continue; phoneFoundCount++; for (var k = 0; k < cr.phones.length; k++) { var comboKey = (cr.businessName || '') + '|' + cr.phones[k]; if (seenCombo[comboKey]) continue; seenCombo[comboKey] = true; results.push({ keyword: keyword, businessName: cr.businessName || '', address: cr.address || '', phone: cr.phones[k] }); } } if (batch + 10 < blogTargets.length) await sleep(300); } return jsonResp({ ok: true, keyword: keyword, searchTotal: blogItems.length, processedBlogs: processedCount, blogsWithPhone: phoneFoundCount, results: results, totalPhones: results.length }); }
 
-// Puppeteer
-var ORACLE_PUPPETEER_URL = 'http://168.107.51.140:3001';
-async function handlePuppeteerProxy(request) { var body; try { body = await request.json(); } catch (e) { return jsonResp({ ok: false, error: 'invalid JSON' }, 400); } var keyword = body.keyword; var blogId = body.blogId; var logNo = body.logNo; var sortByDate = body.sortByDate !== undefined ? body.sortByDate : true; if (!keyword || !blogId || !logNo) return jsonResp({ ok: false, error: 'keyword, blogId, logNo required' }, 400); try { var resp = await fetch(ORACLE_PUPPETEER_URL + '/generate-click-token', { method: 'POST', headers: { 'Content-Type': 'application/json; charset=utf-8' }, body: JSON.stringify({ keyword: keyword, blogId: blogId, logNo: logNo, sortByDate: sortByDate }) }); var text = await resp.text(); var ct = resp.headers.get('content-type') || ''; if (ct.includes('application/json')) return new Response(text, { status: resp.status, headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders() } }); return jsonResp({ ok: false, error: 'Oracle returned non-JSON', status: resp.status, snippet: text.substring(0, 300) }, 502); } catch (e) { return jsonResp({ ok: false, error: 'Oracle server unreachable: ' + e.message }, 502); } }
-async function handlePuppeteerHealth() { try { var resp = await fetch(ORACLE_PUPPETEER_URL + '/health', { headers: { 'Accept': 'application/json' } }); var data = await resp.json(); return jsonResp({ ok: true, oracle: data }); } catch (e) { return jsonResp({ ok: false, error: 'Oracle server unreachable: ' + e.message }, 502); } }
+async function handlePuppeteerProxy(request) {
+  var body;
+  try { body = await request.json(); } catch (e) { return jsonResp({ ok: false, error: 'invalid JSON' }, 400); }
 
-// Smartplace Keywords
+  var keyword = body.keyword;
+  var blogId = body.blogId;
+  var logNo = body.logNo;
+  var sortByDate = body.sortByDate !== undefined ? body.sortByDate : true;
+
+  if (!keyword || !blogId || !logNo) {
+    return jsonResp({ ok: false, error: 'keyword, blogId, logNo required' }, 400);
+  }
+
+  try {
+    var resp = await fetch(ORACLE_PUPPETEER_URL + '/generate-click-token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json; charset=utf-8',
+        'x-api-key': ORACLE_API_KEY
+      },
+      body: JSON.stringify({ keyword: keyword, blogId: blogId, logNo: logNo, sortByDate: sortByDate })
+    });
+
+    var text = await resp.text();
+    var ct = resp.headers.get('content-type') || '';
+    if (ct.includes('application/json')) {
+      return new Response(text, {
+        status: resp.status,
+        headers: { 'Content-Type': 'application/json; charset=utf-8', ...corsHeaders() }
+      });
+    }
+    return jsonResp({ ok: false, error: 'Oracle returned non-JSON', status: resp.status, snippet: text.substring(0, 300) }, 502);
+  } catch (e) {
+    return jsonResp({ ok: false, error: 'Oracle server unreachable: ' + e.message }, 502);
+  }
+}
+
+async function handlePuppeteerHealth() {
+  try {
+    var resp = await fetch(ORACLE_PUPPETEER_URL + '/health', {
+      headers: {
+        'Accept': 'application/json',
+        'x-api-key': ORACLE_API_KEY
+      }
+    });
+    var data = await resp.json();
+    return jsonResp({ ok: true, oracle: data });
+  } catch (e) {
+    return jsonResp({ ok: false, error: 'Oracle server unreachable: ' + e.message }, 502);
+  }
+}
+
 async function handleSmartplaceKeywords(request) { var body; try { body = await request.json(); } catch (e) { return jsonResp({ ok: false, error: 'invalid JSON' }, 400); } var token = (body.token || '').trim(); var siteId = (body.siteId || '').trim(); var startDate = (body.startDate || '').trim(); var endDate = (body.endDate || '').trim(); var metrics = (body.metrics || 'pv').trim(); if (!token || !siteId) return jsonResp({ ok: false, error: 'token and siteId required' }, 400); if (!startDate || !endDate) return jsonResp({ ok: false, error: 'startDate and endDate required' }, 400); if (['pv', 'visitor', 'click'].indexOf(metrics) === -1) metrics = 'pv'; var apiUrl = 'https://new.smartplace.naver.com/api/proxy/bizadvisor/api/v3/sites/' + encodeURIComponent(siteId) + '/report?dimensions=ref_keyword&endDate=' + encodeURIComponent(endDate) + '&metrics=' + encodeURIComponent(metrics) + '&sort=' + encodeURIComponent(metrics) + '&startDate=' + encodeURIComponent(startDate) + '&useIndex=revenue-search-channel-detail'; try { var resp = await fetch(apiUrl, { headers: { 'accept': 'application/json', 'authorization': 'Bearer ' + token, 'cache-control': 'no-cache', 'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36', 'referer': 'https://new.smartplace.naver.com/', 'origin': 'https://new.smartplace.naver.com' } }); if (resp.status === 401) return jsonResp({ ok: false, error: 'TOKEN_EXPIRED' }, 401); if (!resp.ok) { var errText = await resp.text(); return jsonResp({ ok: false, error: 'Smartplace API error', status: resp.status, detail: errText.substring(0, 300) }, 502); } var respData = await resp.json(); var keywords = respData.data || respData || []; if (!Array.isArray(keywords)) keywords = []; return jsonResp({ ok: true, data: keywords }); } catch (e) { return jsonResp({ ok: false, error: e.message }, 502); } }
 
-
 // ════════════════════════════════════════
-// ROUTE TABLE (기존 38개 + v2.1 신규 11개 = 49개)
+// ROUTE TABLE
 // ════════════════════════════════════════
 var routes = [
-  // 기존 라우트 (전부 유지)
   { method: 'GET', path: '/health', handler: handleHealth },
 
   { method: 'POST', path: '/auth/signup', handler: handleAuthSignup },
@@ -1112,29 +1267,22 @@ var routes = [
 
   { method: 'POST', path: '/smartplace/keywords', handler: handleSmartplaceKeywords },
 
-  // ── v2.1 신규 라우트 ──
-
-  // 에스크로
   { method: 'POST', path: '/escrow/create', handler: handleEscrowCreate },
   { method: 'GET', path: '/escrow/list', handler: handleEscrowList },
   { method: 'GET', path: '/escrow/detail', handler: handleEscrowDetail },
   { method: 'POST', path: '/escrow/apply', handler: handleEscrowApply },
   { method: 'POST', path: '/escrow/approve', handler: handleEscrowApprove },
 
-  // 커뮤니티
   { method: 'GET', path: '/post/list', handler: handlePostList },
   { method: 'GET', path: '/post/detail', handler: handlePostDetail },
   { method: 'POST', path: '/post/create', handler: handlePostCreate },
   { method: 'POST', path: '/comment/create', handler: handleCommentCreate },
 
-  // 출석체크
   { method: 'POST', path: '/attendance/check', handler: handleAttendanceCheck },
   { method: 'GET', path: '/attendance/status', handler: handleAttendanceStatus },
 
-  // 눈덩이
   { method: 'GET', path: '/snowball/history', handler: handleSnowballHistory },
 
-  // 대시보드 통계
   { method: 'GET', path: '/dashboard/stats', handler: handleDashboardStats },
 ];
 
